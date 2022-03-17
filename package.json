@@ -1,0 +1,79 @@
+{
+  "name": "electron-vite",
+  "version": "1.0.0",
+  "description": "Use vite for your electron app.",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "bin": {
+    "electron-vite": "bin/electron-vite.js"
+  },
+  "files": [
+    "bin",
+    "dist"
+  ],
+  "engines": {
+    "node": ">=12.2.0"
+  },
+  "author": "Alex Wei<https://github.com/alex8088>",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/alex8088/electron-vite.git"
+  },
+  "bugs": {
+    "url": "https://github.com/alex8088/electron-vite/issues"
+  },
+  "homepage": "https://github.com/alex8088/electron-vite#readme",
+  "keywords": [
+    "electron",
+    "vite",
+    "cli",
+    "plugin"
+  ],
+  "scripts": {
+    "format": "prettier --write .",
+    "lint": "eslint --ext .ts src/**",
+    "typecheck": "tsc --noEmit",
+    "build": "npm run lint && node scripts/build.js"
+  },
+  "simple-git-hooks": {
+    "pre-commit": "npx lint-staged",
+    "commit-msg": "node scripts/verifyCommit.js $1"
+  },
+  "lint-staged": {
+    "*.js": [
+      "prettier --write"
+    ],
+    "*.ts?(x)": [
+      "eslint",
+      "prettier --parser=typescript --write"
+    ]
+  },
+  "peerDependencies": {
+    "vite": "^2.6.0"
+  },
+  "devDependencies": {
+    "@microsoft/api-extractor": "^7.19.4",
+    "@rollup/plugin-node-resolve": "^13.1.3",
+    "@rollup/plugin-typescript": "^8.3.0",
+    "@types/node": "16.11.22",
+    "@typescript-eslint/eslint-plugin": "^5.11.0",
+    "@typescript-eslint/parser": "^5.11.0",
+    "eslint": "^8.7.0",
+    "eslint-config-prettier": "^8.3.0",
+    "eslint-plugin-prettier": "^4.0.0",
+    "fs-extra": "^10.0.0",
+    "lint-staged": "^12.3.6",
+    "prettier": "^2.5.1",
+    "rollup": "^2.64.0",
+    "simple-git-hooks": "^2.7.0",
+    "tslib": "^2.3.1",
+    "typescript": "^4.5.5",
+    "vite": "^2.8.0"
+  },
+  "dependencies": {
+    "cac": "^6.7.12",
+    "esbuild": "^0.14.21",
+    "picocolors": "^1.0.0"
+  }
+}
