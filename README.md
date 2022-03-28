@@ -73,10 +73,10 @@ function createWindow() {
 |  ├──preload
 |  |  ├──index.js
 |  |  └──...
-|  ├──renderer
-|  |  ├──src
-|  |  ├──index.html
-|  |  └──...
+|  └──renderer
+|     ├──src
+|     ├──index.html
+|     └──...
 ├──electron.vite.config.js
 └──package.json
 ```
@@ -178,6 +178,7 @@ See [vitejs.dev](https://vitejs.dev/config)
 - **outDir**: `out\renderer`(relative to project root)
 - **target**: `chrome*`, automatically match chrome target of `Electron`. For example, the chrome target of Electron 17 is `chrome98`
 - **lib.entry**: `src\renderer\index.html`(relative to project root), empty string if not found
+- **polyfillModulePreload**: `false`, there is no need to polyfill `Module Preload` for the Electron renderer
 - **rollupOptions.external**: the same as `main`
 
 #### Define option for `main` and `preload`

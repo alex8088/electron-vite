@@ -226,6 +226,7 @@ export function electronRendererVitePlugin(options?: ElectronPluginOptions): Plu
           build: {
             outDir: path.resolve(root, 'out', 'renderer'),
             target: chromeTarget,
+            polyfillModulePreload: false,
             rollupOptions: {
               input: findInput(root),
               external: [...builtinModules.flatMap(m => [m, `node:${m}`])]
