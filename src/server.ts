@@ -7,8 +7,27 @@ import { ensureElectronEntryFile, getElectronPath } from './utils'
 export async function createServer(inlineConfig: InlineConfig = {}): Promise<void> {
   const config = await resolveConfig(inlineConfig, 'serve', 'development')
   if (config.config) {
+    const logger = createLogger(inlineConfig.logLevel)
+
+    const mainViteConfig = config.config?.main
+    if (mainViteConfig) {
+      await viteBuild(mainViteConfig)
+
+      logger.info(colors.green(`\nbuild the electron main process successfully`))
+    }
+
+    const preloadViteConfig = config.config?.preload
+    if (preloadViteConfig) {
+      logger.info(colors.gray(`\n-----\n`))
+      await viteBuild(preloadViteConfig)
+
+      logger.info(colors.green(`\nbuild the electron preload files successfully`))
+    }
+
     const rendererViteConfig = config.config?.renderer
     if (rendererViteConfig) {
+      logger.info(colors.gray(`\n-----\n`))
+
       const server = await ViteCreateServer(rendererViteConfig)
 
       if (!server.httpServer) {
@@ -24,32 +43,13 @@ export async function createServer(inlineConfig: InlineConfig = {}): Promise<voi
       const port = conf.port
       process.env.ELECTRON_RENDERER_URL = `${protocol}//${host}:${port}`
 
-      const logger = server.config.logger
+      const slogger = server.config.logger
 
-      logger.info(colors.green(`dev server running for the electron renderer process at:\n`), {
-        clear: !logger.hasWarned
+      slogger.info(colors.green(`dev server running for the electron renderer process at:\n`), {
+        clear: !slogger.hasWarned
       })
 
       server.printUrls()
-    }
-
-    const logger = createLogger(inlineConfig.logLevel)
-
-    const mainViteConfig = config.config?.main
-    if (mainViteConfig) {
-      logger.info(colors.gray(`\n-----\n`))
-
-      await viteBuild(mainViteConfig)
-
-      logger.info(colors.green(`\nbuild the electron main process successfully`))
-    }
-
-    const preloadViteConfig = config.config?.preload
-    if (preloadViteConfig) {
-      logger.info(colors.gray(`\n-----\n`))
-      await viteBuild(preloadViteConfig)
-
-      logger.info(colors.green(`\nbuild the electron preload files successfully`))
     }
 
     ensureElectronEntryFile(inlineConfig.root)

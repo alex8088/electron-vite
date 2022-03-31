@@ -1,3 +1,9 @@
+### v1.0.2 (_2022-03-31_)
+
+#### Bug fixes
+
+- fix: an error occurred when `tsconfig` file changed
+
 ### v1.0.1 (_2022-03-28_)
 
 #### Prefs
