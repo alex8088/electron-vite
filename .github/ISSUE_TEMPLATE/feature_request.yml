@@ -10,7 +10,7 @@ body:
     id: feature-description
     attributes:
       label: Clear and concise description of the problem
-      description: 'As a developer using Vite I want [goal / wish] so that [benefit]. If you intend to submit a PR for this issue, tell us in the description. Thanks!'
+      description: 'As a developer using electron-vite I want [goal / wish] so that [benefit]. If you intend to submit a PR for this issue, tell us in the description. Thanks!'
     validations:
       required: true
   - type: textarea
