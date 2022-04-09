@@ -5,6 +5,8 @@
   <img src="https://img.shields.io/badge/vite->2.6.0-747bff.svg" alt="vite" />
 </p>
 
+English | [简体中文](./README.zh-CN.md)
+
 > An Electron CLI integrated with Vite
 
 ---
@@ -12,8 +14,8 @@
 ## Features
 
 - ⚡️Use the same way as [Vite](https://vitejs.dev)
-- 🔨Both main process and renderer process source code are built using Vite
-- 📃The main process and the renderer process Vite configuration are combined into one file
+- 🔨Main process, renderer process and preload script source code are built using Vite
+- 📃Main process, renderer process and preload script Vite configuration combined into one file
 - 📦Preset optimal build configuration
 - 🚀HMR for renderer processes
 
@@ -84,6 +86,10 @@ function createWindow() {
 ### Get started
 
 Clone the [electron-vite-boilerplate](https://github.com/alex8088/electron-vite-boilerplate) or use the [create-electron](https://github.com/alex8088/quick-start/tree/master/packages/create-electron) tool to scaffold your project.
+
+``` bash
+npm init @quick-start/electron
+```
 
 ## Configure
 
