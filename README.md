@@ -69,16 +69,16 @@ function createWindow() {
 
 ```shell
 ├──src
-|  ├──main
-|  |  ├──index.js
-|  |  └──...
-|  ├──preload
-|  |  ├──index.js
-|  |  └──...
-|  └──renderer
-|     ├──src
-|     ├──index.html
-|     └──...
+│  ├──main
+│  │  ├──index.js
+│  │  └──...
+│  ├──preload
+│  │  ├──index.js
+│  │  └──...
+│  └──renderer
+│     ├──src
+│     ├──index.html
+│     └──...
 ├──electron.vite.config.js
 └──package.json
 ```
@@ -332,4 +332,4 @@ async function resolveConfig(
 
 ## License
 
-[MIT](./LICENSE)
+[MIT](./LICENSE) © alex.wei
