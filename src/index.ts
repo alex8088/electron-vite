@@ -1,4 +1,4 @@
-export { LogLevel, createLogger } from 'vite'
+export { LogLevel, createLogger, splitVendorChunkPlugin } from 'vite'
 export * from './config'
 export { createServer } from './server'
 export { build } from './build'
