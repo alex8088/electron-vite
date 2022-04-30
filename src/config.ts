@@ -1,7 +1,16 @@
 import * as path from 'path'
 import * as fs from 'fs'
 import colors from 'picocolors'
-import { UserConfig as ViteConfig, ConfigEnv, Plugin, LogLevel, createLogger, mergeConfig, normalizePath } from 'vite'
+import {
+  UserConfig as ViteConfig,
+  UserConfigExport as UserViteConfigExport,
+  ConfigEnv,
+  Plugin,
+  LogLevel,
+  createLogger,
+  mergeConfig,
+  normalizePath
+} from 'vite'
 import { build } from 'esbuild'
 
 import { electronMainVitePlugin, electronPreloadVitePlugin, electronRendererVitePlugin } from './plugin'
@@ -15,19 +24,40 @@ export interface UserConfig {
    *
    * https://cn.vitejs.dev/config/
    */
-  main?: ViteConfig
+  main?: ViteConfig & { configFile?: string | false }
   /**
    * Vite config options for electron renderer process
    *
    * https://cn.vitejs.dev/config/
    */
-  renderer?: ViteConfig
+  renderer?: ViteConfig & { configFile?: string | false }
   /**
    * Vite config options for electron preload files
    *
    * https://cn.vitejs.dev/config/
    */
-  preload?: ViteConfig
+  preload?: ViteConfig & { configFile?: string | false }
+}
+
+export interface UserConfigSchema {
+  /**
+   * Vite config options for electron main process
+   *
+   * https://cn.vitejs.dev/config/
+   */
+  main?: UserViteConfigExport
+  /**
+   * Vite config options for electron renderer process
+   *
+   * https://cn.vitejs.dev/config/
+   */
+  renderer?: UserViteConfigExport
+  /**
+   * Vite config options for electron preload files
+   *
+   * https://cn.vitejs.dev/config/
+   */
+  preload?: UserViteConfigExport
 }
 
 export type InlineConfig = Omit<ViteConfig, 'base'> & {
@@ -36,7 +66,7 @@ export type InlineConfig = Omit<ViteConfig, 'base'> & {
   ignoreConfigWarning?: boolean
 }
 
-export type UserConfigExport = UserConfig | Promise<UserConfig>
+export type UserConfigExport = UserConfigSchema | Promise<UserConfigSchema>
 
 /**
  * Type helper to make it easier to use `electron.vite.config.ts`
@@ -99,6 +129,7 @@ export async function resolveConfig(
         mergePlugins(mainViteConfig, electronMainVitePlugin({ root }))
 
         loadResult.config.main = mainViteConfig
+        loadResult.config.main.configFile = false
       }
 
       if (loadResult.config.preload) {
@@ -110,6 +141,7 @@ export async function resolveConfig(
         mergePlugins(preloadViteConfig, electronPreloadVitePlugin({ root }))
 
         loadResult.config.preload = preloadViteConfig
+        loadResult.config.preload.configFile = false
       }
 
       if (loadResult.config.renderer) {
@@ -122,6 +154,7 @@ export async function resolveConfig(
         mergePlugins(rendererViteConfig, electronRendererVitePlugin({ root }))
 
         loadResult.config.renderer = rendererViteConfig
+        loadResult.config.renderer.configFile = false
       }
 
       userConfig = loadResult.config
