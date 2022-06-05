@@ -1,6 +1,6 @@
 ### v1.0.3 (_2022-05-01_)
 
-- fix: throw error when vite.config.* file in root ([#3](https://github.com/alex8088/electron-vite/issues/3))
+- fix: throw error when vite.config.\* file in root ([#3](https://github.com/alex8088/electron-vite/issues/3))
 - feat: export splitVendorChunkPlugin from vite
 - perf: build target for Electron 19
 

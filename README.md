@@ -87,7 +87,7 @@ function createWindow() {
 
 Clone the [electron-vite-boilerplate](https://github.com/alex8088/electron-vite-boilerplate) or use the [create-electron](https://github.com/alex8088/quick-start/tree/master/packages/create-electron) tool to scaffold your project.
 
-``` bash
+```bash
 npm init @quick-start/electron
 ```
 

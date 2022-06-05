@@ -13,11 +13,11 @@
 
 ## 特性
 
-- ⚡️使用方式与 [Vite](https://vitejs.dev) 相同
-- 🔨主进程/渲染进程/ preload 脚本都使用 Vite 构建
-- 📃统一所有配置，合并到一个文件中
-- 📦预设构建配置，无需关注配置
-- 🚀支持渲染进程热更新(HMR)
+- ⚡️ 使用方式与 [Vite](https://vitejs.dev) 相同
+- 🔨 主进程/渲染进程/ preload 脚本都使用 Vite 构建
+- 📃 统一所有配置，合并到一个文件中
+- 📦 预设构建配置，无需关注配置
+- 🚀 支持渲染进程热更新(HMR)
 
 ## 用法
 
@@ -87,7 +87,7 @@ function createWindow() {
 
 克隆 [electron-vite-boilerplate](https://github.com/alex8088/electron-vite-boilerplate) 模板或者使用 [create-electron](https://github.com/alex8088/quick-start/tree/master/packages/create-electron) 脚手架来搭建项目学习。
 
-``` bash
+```bash
 npm init @quick-start/electron
 ```
 
@@ -168,7 +168,7 @@ export default defineConfig({
 - **target**：`node*`，自动匹配 `Electron` 的 `node` 构建目标，如 Electron 17 为 `node16.13`
 - **lib.entry**：`src\main\{index|main}.{js|ts|mjs|cjs}`（相对于根目录），找不到则为空
 - **lib.formats**：`cjs`
-- **rollupOptions.external**：`electron` 和所有内置 node 模块(如果用户配置了外部模块ID，将自动合并)
+- **rollupOptions.external**：`electron` 和所有内置 node 模块(如果用户配置了外部模块 ID，将自动合并)
 
 #### `preload` 脚本编译项预设：
 
