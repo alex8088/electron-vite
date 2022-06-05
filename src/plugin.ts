@@ -57,7 +57,7 @@ export function electronMainVitePlugin(options?: ElectronPluginOptions): Plugin[
               formats: ['cjs']
             },
             rollupOptions: {
-              external: ['electron', ...builtinModules.flatMap(m => [m, `node:${m}`])],
+              external: ['electron', 'sqlite3', ...builtinModules.flatMap(m => [m, `node:${m}`])],
               output: {
                 entryFileNames: '[name].js'
               }
