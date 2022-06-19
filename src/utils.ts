@@ -37,3 +37,9 @@ export function getElectronPath(): string {
     throw new Error('Electron uninstall')
   }
 }
+
+export const wildcardHosts = new Set(['0.0.0.0', '::', '0000:0000:0000:0000:0000:0000:0000:0000'])
+
+export function resolveHostname(optionsHost: string | boolean | undefined): string {
+  return typeof optionsHost === 'string' && !wildcardHosts.has(optionsHost) ? optionsHost : 'localhost'
+}
