@@ -2,7 +2,7 @@ import { spawn } from 'child_process'
 import { createServer as ViteCreateServer, build as viteBuild, createLogger } from 'vite'
 import colors from 'picocolors'
 import { InlineConfig, resolveConfig } from './config'
-import { ensureElectronEntryFile, getElectronPath } from './utils'
+import { ensureElectronEntryFile, getElectronPath, resolveHostname } from './utils'
 
 export async function createServer(inlineConfig: InlineConfig = {}): Promise<void> {
   const config = await resolveConfig(inlineConfig, 'serve', 'development')
@@ -39,7 +39,7 @@ export async function createServer(inlineConfig: InlineConfig = {}): Promise<voi
       const conf = server.config.server
 
       const protocol = conf.https ? 'https:' : 'http:'
-      const host = conf.host || 'localhost'
+      const host = resolveHostname(conf.host)
       const port = conf.port
       process.env.ELECTRON_RENDERER_URL = `${protocol}//${host}:${port}`
 
