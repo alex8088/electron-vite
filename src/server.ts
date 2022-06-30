@@ -31,7 +31,7 @@ export function createElectron(root?: string, logger?: Logger): ChildProcessWith
 
 export function build(config: UserConfig, closeBundle?: PluginHooks['closeBundle']): ReturnType<typeof viteBuild> {
   const watchConfig: UserConfig = {
-    // Enable watch through `electron.vite.config.{ js | ts | mjs }`
+    // Enable watch through `electron.vite.config.{js|ts|mjs|cjs}`
     // build: { watch: {} },
     plugins: [
       {
