@@ -18,6 +18,7 @@ English | [简体中文](./README.zh-CN.md)
 - 📃Main process, renderer process and preload script Vite configuration combined into one file
 - 📦Preset optimal build configuration
 - 🚀HMR for renderer processes
+- 🌈Restart Electron after `main` or `preload` update
 
 ## Usage
 
@@ -162,7 +163,7 @@ See [vitejs.dev](https://vitejs.dev/config)
 
 ### Config presets
 
-#### Build options for `main`:
+#### Build options for `main`
 
 - **outDir**: `out\main`(relative to project root)
 - **target**: `node*`, automatically match node target of `Electron`. For example, the node target of Electron 17 is `node16.13`
@@ -170,7 +171,7 @@ See [vitejs.dev](https://vitejs.dev/config)
 - **lib.formats**: `cjs`
 - **rollupOptions.external**: `electron` and all builtin modules
 
-#### Build options for `preload`:
+#### Build options for `preload`
 
 - **outDir**: `out\preload`(relative to project root)
 - **target**: the same as `main`
@@ -178,7 +179,7 @@ See [vitejs.dev](https://vitejs.dev/config)
 - **lib.formats**: `cjs`
 - **rollupOptions.external**: the same as `main`
 
-#### Build options for `renderer`:
+#### Build options for `renderer`
 
 - **root**: `src\renderer`(relative to project root)
 - **outDir**: `out\renderer`(relative to project root)
@@ -233,6 +234,28 @@ export default {
     }
   }
 }
+```
+
+#### How to restart Electron after `main` or `preload` update？
+
+```js
+export default defineConfig({
+    main: ({ command }) => ({
+        build: {
+            watch: command === 'serve' ? {} : undefined,
+            // ...
+        },
+    }),
+    preload: ({ command }) => ({
+        build: {
+            watch: command === 'serve' ? {} : undefined,
+            // ...
+        }
+    }),
+    renderer: {
+        // ...
+    }
+})
 ```
 
 ## CLI options
