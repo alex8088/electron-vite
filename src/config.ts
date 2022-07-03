@@ -287,7 +287,7 @@ export async function loadConfigFromFile(
     if (config.preload) {
       const preloadViteConfig = config.preload
       preloadConfig = await (typeof preloadViteConfig === 'function' ? preloadViteConfig(configEnv) : preloadViteConfig)
-      if (!isObject(preloadViteConfig)) {
+      if (!isObject(preloadConfig)) {
         throw new Error(`preload config must export or return an object`)
       }
     } else {
