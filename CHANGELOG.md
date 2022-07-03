@@ -1,3 +1,9 @@
+### v1.0.4 (_2022-07-03_)
+
+- fix: error occurs when the preload config is a function (by @Beiluola)
+- fix: ELECTRON_RENDERER_URL is incorrect when host is true (by @Beiluola)
+- feat: add sqlite3 module to rollup external option
+
 ### v1.0.3 (_2022-05-01_)
 
 - fix: throw error when vite.config.\* file in root ([#3](https://github.com/alex8088/electron-vite/issues/3))
