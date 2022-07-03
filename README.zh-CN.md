@@ -18,6 +18,7 @@
 - 📃 统一所有配置，合并到一个文件中
 - 📦 预设构建配置，无需关注配置
 - 🚀 支持渲染进程热更新(HMR)
+- 🌈 支持 `main` 更新后 Electron 重启和 `preload` 更新后重新挂载
 
 ## 用法
 
@@ -162,7 +163,7 @@ export default defineConfig({
 
 ### 配置预设
 
-#### `主进程`编译项预设：
+#### `主进程`编译项预设
 
 - **outDir**：`out\main`（相对于根目录）
 - **target**：`node*`，自动匹配 `Electron` 的 `node` 构建目标，如 Electron 17 为 `node16.13`
@@ -170,7 +171,7 @@ export default defineConfig({
 - **lib.formats**：`cjs`
 - **rollupOptions.external**：`electron` 和所有内置 node 模块(如果用户配置了外部模块 ID，将自动合并)
 
-#### `preload` 脚本编译项预设：
+#### `preload` 脚本编译项预设
 
 - **outDir**：`out\preload`（相对于根目录）
 - **target**：同`主进程`
@@ -178,7 +179,7 @@ export default defineConfig({
 - **lib.formats**：`cjs`
 - **rollupOptions.external**：同`主进程`
 
-#### `渲染进程`编译项预设：
+#### `渲染进程`编译项预设
 
 - **root**：`src\renderer`（相对于根目录）
 - **outDir**：`out\renderer`（相对于根目录）
@@ -187,7 +188,7 @@ export default defineConfig({
 - **polyfillModulePreload**：`false`，不需要为渲染进程 polyfill `Module Preload`
 - **rollupOptions.external**：同`主进程`
 
-#### `主进程`和 `preload` 脚本的 `define` 项设置：
+#### `主进程`和 `preload` 脚本的 `define` 项设置
 
 在 Web 开发中，Vite 会将 `'process.env.'` 替换为 `'({}).'`，这是合理和正确的。但在 nodejs 开发中，我们有时候需要使用 `process.env` ，所以 `electron-vite` 重新预设全局变量替换，恢复其使用，预设如下：
 
@@ -233,6 +234,30 @@ export default {
     }
   }
 }
+```
+
+#### 如何支持 `main` 更新后 Electron 重启和 `preload` 更新后重新挂载？
+
+在 `serve` 命令下，`main` 和 `preload` 脚本更新后，你可能想要让 Electron 重启和 `preload` 重新挂载，你可以在配置中这样做：
+
+```js
+export default defineConfig({
+    main: ({ command }) => ({
+        build: {
+            watch: command === 'serve' ? {} : undefined,
+            // ...
+        },
+    }),
+    preload: ({ command }) => ({
+        build: {
+            watch: command === 'serve' ? {} : undefined,
+            // ...
+        }
+    }),
+    renderer: {
+        // ...
+    }
+})
 ```
 
 ## 命令行选项
