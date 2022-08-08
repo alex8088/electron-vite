@@ -7,7 +7,7 @@
 
 English | [简体中文](./README.zh-CN.md)
 
-> An Electron CLI integrated with Vite
+> Next generation Electron build tooling based on Vite
 
 ---
 
