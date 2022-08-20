@@ -1,3 +1,9 @@
+### v1.0.5 (_2022-08-20_)
+
+- fix: can not get import meta env variables in renderer
+- feat: define env prefix
+- feat: new official website released
+
 ### v1.0.4 (_2022-07-03_)
 
 - fix: error occurs when the preload config is a function (by @Beiluola)
