@@ -24,7 +24,6 @@
 
 <br />
 <br />
-<br />
 
 ## Features
 
