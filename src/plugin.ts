@@ -71,6 +71,8 @@ export function electronMainVitePlugin(options?: ElectronPluginOptions): Plugin[
 
         config.define = config.define || {}
         config.define = { ...processEnvDefine(), ...config.define }
+
+        config.envPrefix = config.envPrefix || 'MAIN_VITE_'
       }
     },
     {
@@ -150,6 +152,8 @@ export function electronPreloadVitePlugin(options?: ElectronPluginOptions): Plug
 
         config.define = config.define || {}
         config.define = { ...processEnvDefine(), ...config.define }
+
+        config.envPrefix = config.envPrefix || 'PRELOAD_VITE_'
       }
     },
     {
@@ -240,6 +244,8 @@ export function electronRendererVitePlugin(options?: ElectronPluginOptions): Plu
         config.build = buildConfig
 
         config.envDir = config.envDir || path.resolve(root)
+
+        config.envPrefix = config.envPrefix || 'RENDERER_VITE_'
       }
     },
     {
