@@ -1,3 +1,8 @@
+### v1.0.6 (_2022-08-25_)
+
+- chore: update deps
+- chore: use vite@3
+
 ### v1.0.5 (_2022-08-20_)
 
 - fix: can not get import meta env variables in renderer
