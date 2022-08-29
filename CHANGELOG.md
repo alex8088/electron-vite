@@ -1,3 +1,7 @@
+### v1.0.7 (_2022-08-29_)
+
+- feat: add sourcemap cli options for debugging
+
 ### v1.0.6 (_2022-08-25_)
 
 - chore: update deps
