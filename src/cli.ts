@@ -20,6 +20,7 @@ interface GlobalCLIOptions {
   m?: string
   mode?: string
   ignoreConfigWarning?: boolean
+  sourcemap?: boolean
   outDir?: string
 }
 
@@ -32,6 +33,7 @@ function createInlineConfig(root: string, options: GlobalCLIOptions): InlineConf
     clearScreen: options.clearScreen,
     ignoreConfigWarning: options.ignoreConfigWarning,
     build: {
+      sourcemap: options.sourcemap,
       outDir: options.outDir
     }
   }
@@ -45,6 +47,7 @@ cli
   .option('-f, --filter <filter>', `[string] filter debug logs`)
   .option('-m, --mode <mode>', `[string] set env mode`)
   .option('--ignoreConfigWarning', `[boolean] ignore config warning`)
+  .option('--sourcemap', `[boolean] output source maps for debug (default: false)`)
   .option('--outDir <dir>', `[string] output directory (default: out)`)
 
 // dev
