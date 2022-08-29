@@ -98,6 +98,31 @@ function createWindow() {
 }
 ```
 
+### Debugging in VSCode
+
+Add a file `.vscode/launch.json` with the following configuration:
+
+```json
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Debug Main Process",
+      "type": "node",
+      "request": "launch",
+      "cwd": "${workspaceRoot}",
+      "runtimeExecutable": "${workspaceRoot}/node_modules/.bin/electron-vite",
+      "windows": {
+        "runtimeExecutable": "${workspaceRoot}/node_modules/.bin/electron-vite.cmd"
+      },
+      "runtimeArgs": ["--sourcemap"]
+    }
+  ]
+}
+```
+
+Then, set some breakpoints in `main.ts` (source code), and start debugging in the `VSCode Debug View`.
+
 ### Getting Started
 
 Clone the [electron-vite-boilerplate](https://github.com/alex8088/electron-vite-boilerplate) or use the [create-electron](https://github.com/alex8088/quick-start/tree/master/packages/create-electron) tool to scaffold your project.
