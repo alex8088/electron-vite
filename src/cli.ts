@@ -21,6 +21,8 @@ interface GlobalCLIOptions {
   mode?: string
   ignoreConfigWarning?: boolean
   sourcemap?: boolean
+  w?: boolean
+  watch?: boolean
   outDir?: string
 }
 
@@ -34,7 +36,8 @@ function createInlineConfig(root: string, options: GlobalCLIOptions): InlineConf
     ignoreConfigWarning: options.ignoreConfigWarning,
     build: {
       sourcemap: options.sourcemap,
-      outDir: options.outDir
+      outDir: options.outDir,
+      ...(options.w || options.watch ? { watch: {} } : null)
     }
   }
 }
@@ -55,6 +58,7 @@ cli
   .command('[root]', 'start dev server and electron app')
   .alias('serve')
   .alias('dev')
+  .option('-w, --watch', `[boolean] rebuilds when main process or preload script modules have changed on disk`)
   .action(async (root: string, options: GlobalCLIOptions) => {
     const { createServer } = await import('./server')
     const inlineConfig = createInlineConfig(root, options)

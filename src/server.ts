@@ -1,17 +1,42 @@
-import { spawn } from 'child_process'
-import { createServer as ViteCreateServer, build as viteBuild, createLogger } from 'vite'
+import type { ChildProcessWithoutNullStreams } from 'child_process'
+import {
+  type UserConfig as ViteConfig,
+  type ViteDevServer,
+  createServer as ViteCreateServer,
+  build as viteBuild,
+  createLogger,
+  mergeConfig
+} from 'vite'
 import colors from 'picocolors'
-import { InlineConfig, resolveConfig } from './config'
-import { ensureElectronEntryFile, getElectronPath, resolveHostname } from './utils'
+import { type InlineConfig, resolveConfig } from './config'
+import { resolveHostname } from './utils'
+import { startElectron } from './electron'
 
 export async function createServer(inlineConfig: InlineConfig = {}): Promise<void> {
   const config = await resolveConfig(inlineConfig, 'serve', 'development')
   if (config.config) {
     const logger = createLogger(inlineConfig.logLevel)
 
+    let server: ViteDevServer | undefined
+    let ps: ChildProcessWithoutNullStreams | undefined
+
     const mainViteConfig = config.config?.main
     if (mainViteConfig) {
-      await viteBuild(mainViteConfig)
+      const watchHook = (): void => {
+        logger.info(colors.green(`\nrebuild the electron main process successfully`))
+
+        if (ps) {
+          logger.info(colors.cyan(`\n  waiting for electron to exit...`))
+
+          ps.removeAllListeners()
+          ps.kill()
+          ps = startElectron(inlineConfig.root, logger)
+
+          logger.info(colors.green(`\nrestart electron app...`))
+        }
+      }
+
+      await doBuild(mainViteConfig, watchHook)
 
       logger.info(colors.green(`\nbuild the electron main process successfully`))
     }
@@ -19,7 +44,18 @@ export async function createServer(inlineConfig: InlineConfig = {}): Promise<voi
     const preloadViteConfig = config.config?.preload
     if (preloadViteConfig) {
       logger.info(colors.gray(`\n-----\n`))
-      await viteBuild(preloadViteConfig)
+
+      const watchHook = (): void => {
+        logger.info(colors.green(`\nrebuild the electron preload files successfully`))
+
+        if (server) {
+          logger.info(colors.cyan(`\n  trigger renderer reload`))
+
+          server.ws.send({ type: 'full-reload' })
+        }
+      }
+
+      await doBuild(preloadViteConfig, watchHook)
 
       logger.info(colors.green(`\nbuild the electron preload files successfully`))
     }
@@ -28,7 +64,7 @@ export async function createServer(inlineConfig: InlineConfig = {}): Promise<voi
     if (rendererViteConfig) {
       logger.info(colors.gray(`\n-----\n`))
 
-      const server = await ViteCreateServer(rendererViteConfig)
+      server = await ViteCreateServer(rendererViteConfig)
 
       if (!server.httpServer) {
         throw new Error('HTTP server not available')
@@ -52,19 +88,41 @@ export async function createServer(inlineConfig: InlineConfig = {}): Promise<voi
       server.printUrls()
     }
 
-    ensureElectronEntryFile(inlineConfig.root)
-
-    const electronPath = getElectronPath()
-
-    const ps = spawn(electronPath, ['.'])
-    ps.stdout.on('data', chunk => {
-      chunk.toString().trim() && logger.info(chunk.toString())
-    })
-    ps.stderr.on('data', chunk => {
-      chunk.toString().trim() && logger.error(chunk.toString())
-    })
-    ps.on('close', process.exit)
+    ps = startElectron(inlineConfig.root, logger)
 
     logger.info(colors.green(`\nstart electron app...`))
   }
+}
+
+type UserConfig = ViteConfig & { configFile?: string | false }
+
+async function doBuild(config: UserConfig, watchHook: () => void): Promise<void> {
+  return new Promise(resolve => {
+    if (config.build?.watch) {
+      let firstBundle = true
+      const closeBundle = (): void => {
+        if (firstBundle) {
+          firstBundle = false
+          resolve()
+        } else {
+          watchHook()
+        }
+      }
+
+      config = mergeConfig(config, {
+        plugins: [
+          {
+            name: 'vite:electron-watcher',
+            closeBundle
+          }
+        ]
+      })
+    }
+
+    viteBuild(config).then(() => {
+      if (!config.build?.watch) {
+        resolve()
+      }
+    })
+  })
 }
