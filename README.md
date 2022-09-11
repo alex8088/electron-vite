@@ -27,11 +27,13 @@
 
 ## Features
 
-- ⚡️ Inherit all the benefits of Vite and use the same way as  [Vite](https://vitejs.dev).
+- ⚡️ Inherit all the benefits of Vite and use the same way as [Vite](https://vitejs.dev).
 - 📦The main process, renderers and preload scripts are all built with Vite.
 - 🛠The main process, renderers and preload scripts Vite configuration combined into one file.
 - 💡Pre-configured for Electron, don't worry about configuration.
 - 🚀HMR for renderer processes.
+- 🔥The main process and preload scripts support hot reloading.
+- 🔌Easy to debug
 
 ## Usage
 
@@ -97,6 +99,16 @@ function createWindow() {
   }
 }
 ```
+
+### Hot Reloading
+
+Hot reloading refers to quickly rebuilding and restarting the Electron app when the main process or preload scripts module changes. In fact, it's not really hot reloading, but similar. It also brings a good development experience to developers.
+
+There are two ways to enable it:
+
+1. Use CLI option `-w` or `--watch`, e.g. `electron-vite dev --watch`. This is the preferred way, it's more flexible.
+
+2. Use configuration option `build.watch` and set to `{}`. In addition, more watcher options can be configured, see [WatcherOptions](https://rollupjs.org/guide/en/#watch-options).
 
 ### Debugging in VSCode
 
