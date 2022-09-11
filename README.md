@@ -33,7 +33,7 @@
 - 💡Pre-configured for Electron, don't worry about configuration.
 - 🚀HMR for renderer processes.
 - 🔥The main process and preload scripts support hot reloading.
-- 🔌Easy to debug
+- 🔌Easy to debug.
 - 🔋Out-of-box support for TypeScript, Vue, React, Svelte, SolidJS and more.
 
 ## Usage
