@@ -34,6 +34,7 @@
 - 🚀HMR for renderer processes.
 - 🔥The main process and preload scripts support hot reloading.
 - 🔌Easy to debug
+- 🔋Out-of-box support for TypeScript, Vue, React, Svelte, SolidJS and more.
 
 ## Usage
 
