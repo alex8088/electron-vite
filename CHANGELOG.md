@@ -1,3 +1,7 @@
+### v1.0.8 (_2022-09-11_)
+
+- feat: the main process and preload scripts support hot reloading [#7](https://github.com/alex8088/electron-vite/issues/7)
+
 ### v1.0.7 (_2022-08-29_)
 
 - feat: add sourcemap cli options for debugging
