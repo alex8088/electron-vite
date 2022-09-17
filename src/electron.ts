@@ -1,6 +1,6 @@
 import path from 'node:path'
 import fs from 'node:fs'
-import { type ChildProcessWithoutNullStreams, spawn } from 'child_process'
+import { type ChildProcessWithoutNullStreams, spawn } from 'node:child_process'
 import { type Logger } from 'vite'
 
 const ensureElectronEntryFile = (root = process.cwd()): void => {
