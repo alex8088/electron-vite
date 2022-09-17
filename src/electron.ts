@@ -20,18 +20,23 @@ const ensureElectronEntryFile = (root = process.cwd()): void => {
   }
 }
 
-const getElectronPath = (): string => {
-  const electronModulePath = path.resolve(process.cwd(), 'node_modules', 'electron')
-  const pathFile = path.join(electronModulePath, 'path.txt')
-  let executablePath
-  if (fs.existsSync(pathFile)) {
-    executablePath = fs.readFileSync(pathFile, 'utf-8')
+export const getElectronPath = (): string => {
+  let electronExecPath = process.env.ELECTRON_EXEC_PATH || ''
+  if (!electronExecPath) {
+    const electronModulePath = path.resolve(process.cwd(), 'node_modules', 'electron')
+    const pathFile = path.join(electronModulePath, 'path.txt')
+    let executablePath
+    if (fs.existsSync(pathFile)) {
+      executablePath = fs.readFileSync(pathFile, 'utf-8')
+    }
+    if (executablePath) {
+      electronExecPath = path.join(electronModulePath, 'dist', executablePath)
+      process.env.ELECTRON_EXEC_PATH = electronExecPath
+    } else {
+      throw new Error('Electron uninstall')
+    }
   }
-  if (executablePath) {
-    return path.join(electronModulePath, 'dist', executablePath)
-  } else {
-    throw new Error('Electron uninstall')
-  }
+  return electronExecPath
 }
 
 export function startElectron(root: string | undefined, logger: Logger): ChildProcessWithoutNullStreams {
