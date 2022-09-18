@@ -34,7 +34,8 @@
 - 🚀HMR for renderer processes.
 - 🔥The main process and preload scripts support hot reloading.
 - 🔌Easy to debug.
-- 🔋Out-of-box support for TypeScript, Vue, React, Svelte, SolidJS and more.
+- 🔒Compile to v8 bytecode to protect source code.
+- 🔋Out-of-the-box support for TypeScript, Vue, React, Svelte, SolidJS and more.
 
 ## Usage
 
@@ -135,6 +136,28 @@ Add a file `.vscode/launch.json` with the following configuration:
 ```
 
 Then, set some breakpoints in `main.ts` (source code), and start debugging in the `VSCode Debug View`.
+
+### Source Code Protection
+
+Use the plugin `bytecodePlugin` to enable it:
+
+```js
+import { defineConfig, bytecodePlugin } from 'electron-vite'
+
+export default defineConfig({
+  main: {
+    plugins: [bytecodePlugin()]
+  },
+  preload: {
+    plugins: [bytecodePlugin()]
+  },
+  renderer: {
+    // ...
+  }
+})
+```
+
+`bytecodePlugin` only works in production and supports the main process and preload scripts.
 
 ### Getting Started
 
