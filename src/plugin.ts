@@ -2,10 +2,18 @@ import path from 'node:path'
 import fs from 'node:fs'
 import colors from 'picocolors'
 import { builtinModules, createRequire } from 'node:module'
-import { Plugin, mergeConfig, normalizePath } from 'vite'
+import { type Plugin, type ResolvedConfig, mergeConfig, normalizePath } from 'vite'
+import { compileToBytecode, bytecodeModuleLoaderCode } from './bytecode'
+import * as babel from '@babel/core'
 
 export interface ElectronPluginOptions {
   root?: string
+}
+
+export interface BytecodeOptions {
+  chunkAlias?: string | string[]
+  transformArrowFunctions?: boolean
+  removeBundleJS?: boolean
 }
 
 function findLibEntry(root: string, scope: string): string {
@@ -304,6 +312,147 @@ export function electronConfigServeVitePlugin(options: {
         } catch (e) {
           logger.error(colors.red('failed to restart server'), { error: e as Error })
         }
+      }
+    }
+  }
+}
+
+export function bytecodePlugin(options: BytecodeOptions = {}): Plugin | null {
+  if (process.env.NODE_ENV_ELECTRON_VITE !== 'production') {
+    return null
+  }
+
+  const { chunkAlias = [], transformArrowFunctions = false, removeBundleJS = true } = options
+  const _chunkAlias = Array.isArray(chunkAlias) ? chunkAlias : [chunkAlias]
+  const transformAllChunks = _chunkAlias.length === 0
+  const bytecodeChunks: string[] = []
+  const nonEntryChunks: string[] = []
+  const _transform = (code: string): string => {
+    const re = babel.transform(code, {
+      plugins: ['@babel/plugin-transform-arrow-functions']
+    })
+    return re.code || ''
+  }
+  const requireBytecodeLoaderStr = '"use strict";\nrequire("./bytecode-loader.js");'
+  let config: ResolvedConfig
+  let useInRenderer = false
+  let bytecodeFiles: { name: string; size: number }[] = []
+  return {
+    name: 'vite:bytecode',
+    apply: 'build',
+    enforce: 'post',
+    configResolved(resolvedConfig): void {
+      config = resolvedConfig
+      useInRenderer = config.plugins.some(p => p.name === 'vite:electron-renderer-preset-config')
+      if (useInRenderer) {
+        config.logger.warn(colors.yellow('bytecodePlugin is not support renderers'))
+      }
+    },
+    renderChunk(code, chunk): { code: string } | null {
+      if (useInRenderer) {
+        return null
+      }
+      if (!transformAllChunks) {
+        const isBytecodeChunk = _chunkAlias.some(alias => chunk.fileName.startsWith(alias))
+        if (isBytecodeChunk) {
+          bytecodeChunks.push(chunk.fileName)
+          if (!chunk.isEntry) {
+            nonEntryChunks.push(chunk.fileName)
+          }
+          if (transformArrowFunctions) {
+            return {
+              code: _transform(code)
+            }
+          }
+        }
+      } else {
+        if (chunk.type === 'chunk') {
+          bytecodeChunks.push(chunk.fileName)
+          if (!chunk.isEntry) {
+            nonEntryChunks.push(chunk.fileName)
+          }
+          if (transformArrowFunctions) {
+            return {
+              code: _transform(code)
+            }
+          }
+        }
+      }
+      return null
+    },
+    generateBundle(): void {
+      if (!useInRenderer && bytecodeChunks.length) {
+        this.emitFile({
+          type: 'asset',
+          source: bytecodeModuleLoaderCode.join('\n') + '\n',
+          name: 'Bytecode Loader File',
+          fileName: 'bytecode-loader.js'
+        })
+      }
+    },
+    async writeBundle(options, output): Promise<void> {
+      if (useInRenderer || bytecodeChunks.length === 0) {
+        return
+      }
+      const bundles = Object.keys(output)
+      const outDir = options.dir!
+      bytecodeFiles = []
+      await Promise.all(
+        bundles.map(async name => {
+          const chunk = output[name]
+          if (chunk.type === 'chunk') {
+            let _code = chunk.code
+            nonEntryChunks.forEach(bcc => {
+              if (bcc !== name) {
+                const reg = new RegExp(bcc, 'g')
+                _code = _code.replace(reg, `${bcc}c`)
+              }
+            })
+            const chunkFileName = path.resolve(outDir, name)
+            if (bytecodeChunks.includes(name)) {
+              const bytecodeBuffer = await compileToBytecode(_code)
+              const bytecodeFileName = path.resolve(outDir, name + 'c')
+              fs.writeFileSync(bytecodeFileName, bytecodeBuffer)
+              if (chunk.isEntry) {
+                if (!removeBundleJS) {
+                  const newFileName = path.resolve(outDir, `_${name}`)
+                  fs.renameSync(chunkFileName, newFileName)
+                }
+                const code = requireBytecodeLoaderStr + `\nrequire("./${normalizePath(name + 'c')}");\n`
+                fs.writeFileSync(chunkFileName, code)
+              } else {
+                if (removeBundleJS) {
+                  fs.unlinkSync(chunkFileName)
+                } else {
+                  const newFileName = path.resolve(outDir, `_${name}`)
+                  fs.renameSync(chunkFileName, newFileName)
+                }
+              }
+              bytecodeFiles.push({ name: name + 'c', size: bytecodeBuffer.length })
+            } else {
+              if (chunk.isEntry) {
+                _code = _code.replace('"use strict";', requireBytecodeLoaderStr)
+              }
+              fs.writeFileSync(chunkFileName, _code)
+            }
+          }
+        })
+      )
+    },
+    closeBundle(): void {
+      if (!useInRenderer) {
+        const chunkLimit = config.build.chunkSizeWarningLimit
+        const outDir = normalizePath(path.relative(config.root, path.resolve(config.root, config.build.outDir))) + '/'
+        config.logger.info(`${colors.green(`✓`)} ${bytecodeFiles.length} bundles compiled into bytecode.`)
+        bytecodeFiles.forEach(file => {
+          const kibs = file.size / 1024
+          config.logger.info(
+            `${colors.gray(colors.white(colors.dim(outDir)))}${colors.green(file.name)} ${
+              kibs > chunkLimit ? colors.yellow(`${kibs.toFixed(2)} KiB`) : colors.dim(`${kibs.toFixed(2)} KiB`)
+            }`
+          )
+        })
+        bytecodeFiles = []
       }
     }
   }
