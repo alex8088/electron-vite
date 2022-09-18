@@ -13,6 +13,7 @@ import { resolveHostname } from './utils'
 import { startElectron } from './electron'
 
 export async function createServer(inlineConfig: InlineConfig = {}): Promise<void> {
+  process.env.NODE_ENV_ELECTRON_VITE = 'development'
   const config = await resolveConfig(inlineConfig, 'serve', 'development')
   if (config.config) {
     const logger = createLogger(inlineConfig.logLevel)

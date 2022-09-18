@@ -5,6 +5,7 @@ import { InlineConfig, resolveConfig } from './config'
  * Bundles the electron app for production.
  */
 export async function build(inlineConfig: InlineConfig = {}): Promise<void> {
+  process.env.NODE_ENV_ELECTRON_VITE = 'production'
   const config = await resolveConfig(inlineConfig, 'build', 'production')
   if (config.config) {
     const mainViteConfig = config.config?.main
