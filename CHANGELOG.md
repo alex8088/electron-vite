@@ -1,3 +1,12 @@
+### v1.0.9 (_2022-09-19_)
+
+- feat: source code protection
+- fix: specify a config file error
+- fix: in the specified non-production mode, the `base` path is wrong
+- perf: cache electron executable path
+- chore: add electron-vite mode node env
+- chore: use node prefix
+
 ### v1.0.8 (_2022-09-11_)
 
 - feat: the main process and preload scripts support hot reloading [#7](https://github.com/alex8088/electron-vite/issues/7)
