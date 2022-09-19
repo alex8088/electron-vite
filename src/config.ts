@@ -209,7 +209,7 @@ export async function loadConfigFromFile(
   let resolvedPath: string
   let isESM = false
 
-  if (configFile && /^vite.config.(js)|(ts)|(mjs)|(cjs)$/.test(configFile)) {
+  if (configFile && /^vite.config.(js|ts|mjs|cjs)$/.test(configFile)) {
     throw new Error(`config file cannot be named ${configFile}.`)
   }
 
