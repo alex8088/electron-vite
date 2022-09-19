@@ -216,7 +216,8 @@ export function electronRendererVitePlugin(options?: ElectronPluginOptions): Plu
       config(config): void {
         const root = options?.root || process.cwd()
 
-        config.base = config.mode === 'production' ? './' : config.base
+        config.base =
+          config.mode === 'production' || process.env.NODE_ENV_ELECTRON_VITE === 'production' ? './' : config.base
         config.root = config.root || './src/renderer'
 
         const electornVer = getElectronMainVer(root)
