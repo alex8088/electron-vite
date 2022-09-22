@@ -323,7 +323,7 @@ export function bytecodePlugin(options: BytecodeOptions = {}): Plugin | null {
     return null
   }
 
-  const { chunkAlias = [], transformArrowFunctions = false, removeBundleJS = true } = options
+  const { chunkAlias = [], transformArrowFunctions = true, removeBundleJS = true } = options
   const _chunkAlias = Array.isArray(chunkAlias) ? chunkAlias : [chunkAlias]
   const transformAllChunks = _chunkAlias.length === 0
   const bytecodeChunks: string[] = []
