@@ -1,12 +1,14 @@
 import path from 'node:path'
 import fs from 'node:fs'
+import { pathToFileURL } from 'node:url'
+import { createRequire } from 'node:module'
 import colors from 'picocolors'
 import {
-  UserConfig as ViteConfig,
-  UserConfigExport as UserViteConfigExport,
-  ConfigEnv,
-  Plugin,
-  LogLevel,
+  type UserConfig as ViteConfig,
+  type UserConfigExport as UserViteConfigExport,
+  type ConfigEnv,
+  type Plugin,
+  type LogLevel,
   createLogger,
   mergeConfig,
   normalizePath
@@ -66,7 +68,8 @@ export type InlineConfig = Omit<ViteConfig, 'base'> & {
   ignoreConfigWarning?: boolean
 }
 
-export type UserConfigExport = UserConfigSchema | Promise<UserConfigSchema>
+export type UserConfigFn = () => UserConfigSchema | Promise<UserConfigSchema>
+export type UserConfigExport = UserConfigSchema | Promise<UserConfigSchema> | UserConfigFn
 
 /**
  * Type helper to make it easier to use `electron.vite.config.ts`
@@ -206,14 +209,13 @@ export async function loadConfigFromFile(
   config: UserConfig
   dependencies: string[]
 }> {
-  let resolvedPath: string
-  let isESM = false
-
-  if (configFile && /^vite.config.(js|ts|mjs|cjs)$/.test(configFile)) {
+  if (configFile && /^vite.config.(js|ts|mjs|cjs|mts|cts)$/.test(configFile)) {
     throw new Error(`config file cannot be named ${configFile}.`)
   }
 
-  resolvedPath = configFile ? path.resolve(configFile) : findConfigFile(configRoot, ['js', 'ts', 'mjs', 'cjs'])
+  const resolvedPath = configFile
+    ? path.resolve(configFile)
+    : findConfigFile(configRoot, ['js', 'ts', 'mjs', 'cjs', 'mts', 'cts'])
 
   if (!resolvedPath) {
     return {
@@ -223,34 +225,15 @@ export async function loadConfigFromFile(
     }
   }
 
-  if (resolvedPath.endsWith('.mjs')) {
+  // electron does not support adding type: "module" to package.json
+  let isESM = false
+  if (/\.m[jt]s$/.test(resolvedPath) || resolvedPath.endsWith('.ts')) {
     isESM = true
   }
 
-  if (resolvedPath.endsWith('.js')) {
-    const pkg = path.join(configRoot, 'package.json')
-    if (fs.existsSync(pkg)) {
-      isESM = require(pkg).type === 'module'
-    }
-  }
-
-  const configFilePath = resolvedPath
-
   try {
-    const bundled = await bundleConfigFile(resolvedPath)
-
-    if (!isESM) {
-      resolvedPath = path.resolve(configRoot, `${CONFIG_FILE_NAME}.mjs`)
-      fs.writeFileSync(resolvedPath, bundled.code)
-    }
-
-    const fileUrl = require('url').pathToFileURL(resolvedPath)
-
-    const userConfig = (await dynamicImport(fileUrl)).default
-
-    if (!isESM) {
-      fs.unlinkSync(resolvedPath)
-    }
+    const bundled = await bundleConfigFile(resolvedPath, isESM)
+    const userConfig = await loadConfigFormBundledFile(configRoot, resolvedPath, bundled.code, isESM)
 
     const config = await (typeof userConfig === 'function' ? userConfig() : userConfig)
     if (!isObject(config)) {
@@ -299,7 +282,7 @@ export async function loadConfigFromFile(
     }
 
     return {
-      path: normalizePath(configFilePath),
+      path: normalizePath(resolvedPath),
       config: {
         main: mainConfig,
         renderer: rendererConfig,
@@ -308,7 +291,7 @@ export async function loadConfigFromFile(
       dependencies: bundled.dependencies
     }
   } catch (e) {
-    createLogger(logLevel).error(colors.red(`failed to load config from ${configFilePath}`), { error: e as Error })
+    createLogger(logLevel).error(colors.red(`failed to load config from ${resolvedPath}`), { error: e as Error })
     throw e
   }
 }
@@ -323,14 +306,15 @@ function findConfigFile(configRoot: string, extensions: string[]): string {
   return ''
 }
 
-async function bundleConfigFile(fileName: string): Promise<{ code: string; dependencies: string[] }> {
+async function bundleConfigFile(fileName: string, isESM: boolean): Promise<{ code: string; dependencies: string[] }> {
   const result = await build({
     absWorkingDir: process.cwd(),
     entryPoints: [fileName],
     write: false,
+    target: ['node14.18', 'node16'],
     platform: 'node',
     bundle: true,
-    format: 'esm',
+    format: isESM ? 'esm' : 'cjs',
     sourcemap: false,
     metafile: true,
     plugins: [
@@ -351,12 +335,12 @@ async function bundleConfigFile(fileName: string): Promise<{ code: string; depen
       {
         name: 'replace-import-meta',
         setup(build): void {
-          build.onLoad({ filter: /\.[jt]s$/ }, async args => {
+          build.onLoad({ filter: /\.[cm]?[jt]s$/ }, async args => {
             const contents = await fs.promises.readFile(args.path, 'utf8')
             return {
               loader: args.path.endsWith('.ts') ? 'ts' : 'js',
               contents: contents
-                .replace(/\bimport\.meta\.url\b/g, JSON.stringify(`file://${args.path}`))
+                .replace(/\bimport\.meta\.url\b/g, JSON.stringify(pathToFileURL(args.path).href))
                 .replace(/\b__dirname\b/g, JSON.stringify(path.dirname(args.path)))
                 .replace(/\b__filename\b/g, JSON.stringify(args.path))
             }
@@ -369,5 +353,48 @@ async function bundleConfigFile(fileName: string): Promise<{ code: string; depen
   return {
     code: text,
     dependencies: result.metafile ? Object.keys(result.metafile.inputs) : []
+  }
+}
+
+interface NodeModuleWithCompile extends NodeModule {
+  /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
+  _compile(code: string, filename: string): any
+}
+
+const _require = createRequire(import.meta.url)
+async function loadConfigFormBundledFile(
+  configRoot: string,
+  configFile: string,
+  bundledCode: string,
+  isESM: boolean
+): Promise<UserConfigExport> {
+  if (isESM) {
+    const fileNameTmp = path.resolve(configRoot, `${CONFIG_FILE_NAME}.${Date.now()}.mjs`)
+    fs.writeFileSync(fileNameTmp, bundledCode)
+
+    const fileUrl = pathToFileURL(fileNameTmp)
+    try {
+      return (await dynamicImport(fileUrl)).default
+    } finally {
+      try {
+        fs.unlinkSync(fileNameTmp)
+      } catch {}
+    }
+  } else {
+    const extension = path.extname(configFile)
+    const realFileName = fs.realpathSync(configFile)
+    const loaderExt = extension in _require.extensions ? extension : '.js'
+    const defaultLoader = _require.extensions[loaderExt]!
+    _require.extensions[loaderExt] = (module: NodeModule, filename: string): void => {
+      if (filename === realFileName) {
+        ;(module as NodeModuleWithCompile)._compile(bundledCode, filename)
+      } else {
+        defaultLoader(module, filename)
+      }
+    }
+    delete _require.cache[_require.resolve(configFile)]
+    const raw = _require(configFile)
+    _require.extensions[loaderExt] = defaultLoader
+    return raw.__esModule ? raw.default : raw
   }
 }
