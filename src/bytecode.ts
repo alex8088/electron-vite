@@ -8,7 +8,7 @@ const getBytecodeCompilerPath = (): string => {
   return path.resolve(process.cwd(), 'node_modules', 'electron-vite', 'bin', 'electron-bytecode.js')
 }
 
-export const compileToBytecode = (code: string): Promise<Buffer> => {
+export function compileToBytecode(code: string): Promise<Buffer> {
   return new Promise((resolve, reject) => {
     let data = Buffer.from([])
 
