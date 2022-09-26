@@ -448,10 +448,15 @@ export function bytecodePlugin(options: BytecodeOptions = {}): Plugin | null {
         const chunkLimit = config.build.chunkSizeWarningLimit
         const outDir = normalizePath(path.relative(config.root, path.resolve(config.root, config.build.outDir))) + '/'
         config.logger.info(`${colors.green(`✓`)} ${bytecodeFiles.length} bundles compiled into bytecode.`)
+        let longest = 0
+        bytecodeFiles.forEach(file => {
+          const len = file.name.length
+          if (len > longest) longest = len
+        })
         bytecodeFiles.forEach(file => {
           const kibs = file.size / 1024
           config.logger.info(
-            `${colors.gray(colors.white(colors.dim(outDir)))}${colors.green(file.name)} ${
+            `${colors.gray(colors.white(colors.dim(outDir)))}${colors.green(file.name.padEnd(longest + 2))} ${
               kibs > chunkLimit ? colors.yellow(`${kibs.toFixed(2)} KiB`) : colors.dim(`${kibs.toFixed(2)} KiB`)
             }`
           )
