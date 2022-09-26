@@ -70,6 +70,7 @@ export function electronMainVitePlugin(options?: ElectronPluginOptions): Plugin[
                 entryFileNames: '[name].js'
               }
             },
+            reportCompressedSize: false,
             minify: false
           }
         }
@@ -138,6 +139,7 @@ export function electronPreloadVitePlugin(options?: ElectronPluginOptions): Plug
                 entryFileNames: '[name].js'
               }
             },
+            reportCompressedSize: false,
             minify: false
           }
         }
@@ -244,6 +246,7 @@ export function electronRendererVitePlugin(options?: ElectronPluginOptions): Plu
               input: findInput(root),
               external: [...builtinModules.flatMap(m => [m, `node:${m}`])]
             },
+            reportCompressedSize: false,
             minify: false,
             emptyOutDir: emptyOutDir()
           }
