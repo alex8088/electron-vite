@@ -484,6 +484,7 @@ function getElectronMainVer(root: string): string {
 
 function getElectronNodeTarget(electronVer: string): string {
   const nodeVer = {
+    '21': '16.16',
     '20': '16.15',
     '19': '16.14',
     '18': '16.13',
@@ -503,6 +504,7 @@ function getElectronNodeTarget(electronVer: string): string {
 
 function getElectronChromeTarget(electronVer: string): string {
   const chromeVer = {
+    '21': '106',
     '20': '104',
     '19': '102',
     '18': '100',
