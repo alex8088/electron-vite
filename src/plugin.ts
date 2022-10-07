@@ -497,7 +497,9 @@ function getElectronNodeTarget(electronVer: string): string {
     '11': '12.18'
   }
   if (electronVer && parseInt(electronVer) > 10) {
-    return 'node' + nodeVer[electronVer]
+    let target = nodeVer[electronVer]
+    if (!target) target = Object.values(nodeVer).reverse()[0]
+    return 'node' + target
   }
   return ''
 }
@@ -517,7 +519,9 @@ function getElectronChromeTarget(electronVer: string): string {
     '11': '87'
   }
   if (electronVer && parseInt(electronVer) > 10) {
-    return 'chrome' + chromeVer[electronVer]
+    let target = chromeVer[electronVer]
+    if (!target) target = Object.values(chromeVer).reverse()[0]
+    return 'chrome' + target
   }
   return ''
 }
