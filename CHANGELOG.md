@@ -1,3 +1,13 @@
+### v1.0.10 (_2022-10-07_)
+
+- feat: export splitVendorChunk from vite
+- fix: compatible with the latest version of Electron
+- refactor: load config file
+- perf: the bytecodePlugin transform arrow function by default
+- perf: disable gzip-compressed size reporting, increase build performance
+- perf: bytecode compilation log print format
+- perf: build compatilibity target for Electron 21
+
 ### v1.0.9 (_2022-09-19_)
 
 - feat: source code protection
