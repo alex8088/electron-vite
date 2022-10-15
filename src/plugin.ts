@@ -16,6 +16,11 @@ export interface BytecodeOptions {
   removeBundleJS?: boolean
 }
 
+export interface ExternalOptions {
+  exclude?: string[]
+  include?: string[]
+}
+
 function findLibEntry(root: string, scope: string): string {
   for (const name of ['index', scope]) {
     for (const ext of ['js', 'ts', 'mjs', 'cjs']) {
@@ -65,7 +70,7 @@ export function electronMainVitePlugin(options?: ElectronPluginOptions): Plugin[
               formats: ['cjs']
             },
             rollupOptions: {
-              external: ['electron', 'sqlite3', ...builtinModules.flatMap(m => [m, `node:${m}`])],
+              external: ['electron', ...builtinModules.flatMap(m => [m, `node:${m}`])],
               output: {
                 entryFileNames: '[name].js'
               }
@@ -463,6 +468,42 @@ export function bytecodePlugin(options: BytecodeOptions = {}): Plugin | null {
         })
         bytecodeFiles = []
       }
+    }
+  }
+}
+
+/**
+ * Automatically externalize dependencies
+ */
+export function externalizeDepsPlugin(options: ExternalOptions = {}): Plugin | null {
+  const { exclude = [], include = [] } = options
+
+  const packagePath = path.resolve(process.cwd(), 'package.json')
+  const require = createRequire(import.meta.url)
+  const pkg = require(packagePath)
+  let deps = Object.keys(pkg.dependencies || {})
+
+  if (include.length) {
+    deps = deps.concat(include)
+  }
+
+  if (exclude.length) {
+    deps = deps.filter(dep => !exclude.includes(dep))
+  }
+
+  return {
+    name: 'vite:externalize-deps',
+    enforce: 'pre',
+    config(config): void {
+      const defaultConfig = {
+        build: {
+          rollupOptions: {
+            external: [...new Set(deps)]
+          }
+        }
+      }
+      const buildConfig = mergeConfig(defaultConfig.build, config.build || {})
+      config.build = buildConfig
     }
   }
 }
