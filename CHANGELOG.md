@@ -1,3 +1,7 @@
+### v1.0.11 (_2022-10-16_)
+
+- feat: externalize deps plugin
+
 ### v1.0.10 (_2022-10-07_)
 
 - feat: export splitVendorChunk from vite
