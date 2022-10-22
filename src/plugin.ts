@@ -511,8 +511,8 @@ export function externalizeDepsPlugin(options: ExternalOptions = {}): Plugin | n
 function getElectronMainVer(root: string): string {
   let mainVer = process.env.ELECTRON_MAIN_VER || ''
   if (!mainVer) {
-    const electronModulePath = path.resolve(root, 'node_modules', 'electron')
-    const pkg = path.join(electronModulePath, 'package.json')
+    const electronModulePath = require.resolve('electron')
+    const pkg = path.join(electronModulePath, '../package.json')
     if (fs.existsSync(pkg)) {
       const require = createRequire(import.meta.url)
       const version = require(pkg).version
