@@ -3,6 +3,7 @@ import fs from 'node:fs'
 import colors from 'picocolors'
 import { builtinModules, createRequire } from 'node:module'
 import { type Plugin, type ResolvedConfig, mergeConfig, normalizePath } from 'vite'
+import { getElectronNodeTarget, getElectronChromeTarget } from './electron'
 import { compileToBytecode, bytecodeModuleLoaderCode } from './bytecode'
 import * as babel from '@babel/core'
 
@@ -58,8 +59,7 @@ export function electronMainVitePlugin(options?: ElectronPluginOptions): Plugin[
       config(config): void {
         const root = options?.root || process.cwd()
 
-        const electornVer = getElectronMainVer(root)
-        const nodeTarget = getElectronNodeTarget(electornVer)
+        const nodeTarget = getElectronNodeTarget()
 
         const defaultConfig = {
           build: {
@@ -131,8 +131,7 @@ export function electronPreloadVitePlugin(options?: ElectronPluginOptions): Plug
       config(config): void {
         const root = options?.root || process.cwd()
 
-        const electornVer = getElectronMainVer(root)
-        const nodeTarget = getElectronNodeTarget(electornVer)
+        const nodeTarget = getElectronNodeTarget()
 
         const defaultConfig = {
           build: {
@@ -227,8 +226,7 @@ export function electronRendererVitePlugin(options?: ElectronPluginOptions): Plu
           config.mode === 'production' || process.env.NODE_ENV_ELECTRON_VITE === 'production' ? './' : config.base
         config.root = config.root || './src/renderer'
 
-        const electornVer = getElectronMainVer(root)
-        const chromeTarget = getElectronChromeTarget(electornVer)
+        const chromeTarget = getElectronChromeTarget()
 
         const emptyOutDir = (): boolean => {
           let outDir = config.build?.outDir
@@ -506,63 +504,4 @@ export function externalizeDepsPlugin(options: ExternalOptions = {}): Plugin | n
       config.build = buildConfig
     }
   }
-}
-
-function getElectronMainVer(root: string): string {
-  let mainVer = process.env.ELECTRON_MAIN_VER || ''
-  if (!mainVer) {
-    const electronModulePath = require.resolve('electron')
-    const pkg = path.join(electronModulePath, '../package.json')
-    if (fs.existsSync(pkg)) {
-      const require = createRequire(import.meta.url)
-      const version = require(pkg).version
-      mainVer = version.split('.')[0]
-      process.env.ELECTRON_MAIN_VER = mainVer
-    }
-  }
-  return mainVer
-}
-
-function getElectronNodeTarget(electronVer: string): string {
-  const nodeVer = {
-    '21': '16.16',
-    '20': '16.15',
-    '19': '16.14',
-    '18': '16.13',
-    '17': '16.13',
-    '16': '16.9',
-    '15': '16.5',
-    '14': '14.17',
-    '13': '14.17',
-    '12': '14.16',
-    '11': '12.18'
-  }
-  if (electronVer && parseInt(electronVer) > 10) {
-    let target = nodeVer[electronVer]
-    if (!target) target = Object.values(nodeVer).reverse()[0]
-    return 'node' + target
-  }
-  return ''
-}
-
-function getElectronChromeTarget(electronVer: string): string {
-  const chromeVer = {
-    '21': '106',
-    '20': '104',
-    '19': '102',
-    '18': '100',
-    '17': '98',
-    '16': '96',
-    '15': '94',
-    '14': '93',
-    '13': '91',
-    '12': '89',
-    '11': '87'
-  }
-  if (electronVer && parseInt(electronVer) > 10) {
-    let target = chromeVer[electronVer]
-    if (!target) target = Object.values(chromeVer).reverse()[0]
-    return 'chrome' + target
-  }
-  return ''
 }
