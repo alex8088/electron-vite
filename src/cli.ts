@@ -92,12 +92,13 @@ cli.command('build [root]', 'build for production').action(async (root: string, 
 // preview
 cli
   .command('preview [root]', 'start electron app to preview production build')
-  .action(async (root: string, options: GlobalCLIOptions) => {
+  .option('--skipBuild', `[boolean] skip build`)
+  .action(async (root: string, options: { skipBuild?: boolean } & GlobalCLIOptions) => {
     const { preview } = await import('./preview')
     const inlineConfig = createInlineConfig(root, options)
 
     try {
-      await preview(inlineConfig)
+      await preview(inlineConfig, { skipBuild: options.skipBuild })
     } catch (e) {
       const error = e as Error
       createLogger(options.logLevel).error(colors.red(`error during preview electron app:\n${error.stack}`), { error })
