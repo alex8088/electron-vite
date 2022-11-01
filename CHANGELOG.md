@@ -1,3 +1,11 @@
+### v1.0.12 (_2022-11-02_)
+
+- feat: support monorepo (by @ianstormtaylor)
+- feat: add `--skipBuild` flag to preview command
+- feat: make a SWC plugin to support TypeScript decorators (`emitDecoratorMetadata`)
+- fix: use `modulePreload.polyfill` instead `polyfillModulePreload`
+- chore: update deps
+
 ### v1.0.11 (_2022-10-16_)
 
 - feat: externalize deps plugin
