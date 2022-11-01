@@ -35,6 +35,7 @@
 - 🔥The main process and preload scripts support hot reloading.
 - 🔌Easy to debug.
 - 🔒Compile to v8 bytecode to protect source code.
+- 🏷️Support for TypeScript decorators.
 - 🔋Out-of-the-box support for TypeScript, Vue, React, Svelte, SolidJS and more.
 
 ## Usage
