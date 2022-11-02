@@ -23,9 +23,11 @@ async function transformWithSWC(code: string, id: string, options: SwcTransformO
 
   const require = createRequire(import.meta.url)
 
-  const swc: typeof import('@swc/core') = require('@swc/core')
+  let swc: typeof import('@swc/core')
 
-  if (!swc) {
+  try {
+    swc = require('@swc/core')
+  } catch {
     throw new Error('swc plugin require @swc/core, you need to install it.')
   }
 
