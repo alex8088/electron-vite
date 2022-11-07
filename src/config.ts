@@ -16,6 +16,7 @@ import {
 import { build } from 'esbuild'
 
 import { electronMainVitePlugin, electronPreloadVitePlugin, electronRendererVitePlugin } from './plugin'
+import workerPlugin from './plugins/worker'
 import { isObject, dynamicImport } from './utils'
 
 export { defineConfig as defineViteConfig } from 'vite'
@@ -129,7 +130,7 @@ export async function resolveConfig(
           resetOutDir(mainViteConfig, outDir, 'main')
         }
 
-        mergePlugins(mainViteConfig, electronMainVitePlugin({ root }))
+        mergePlugins(mainViteConfig, [...electronMainVitePlugin({ root }), workerPlugin()])
 
         loadResult.config.main = mainViteConfig
         loadResult.config.main.configFile = false

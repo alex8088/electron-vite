@@ -17,6 +17,7 @@ specifiers:
   eslint-plugin-prettier: ^4.2.1
   fs-extra: ^10.1.0
   lint-staged: ^13.0.3
+  magic-string: ^0.26.7
   picocolors: ^1.0.0
   prettier: ^2.7.1
   rollup: ^2.79.1
@@ -30,6 +31,7 @@ dependencies:
   '@babel/plugin-transform-arrow-functions': 7.18.6_@babel+core@7.19.6
   cac: 6.7.14
   esbuild: 0.15.12
+  magic-string: 0.26.7
   picocolors: 1.0.0
 
 devDependencies:
@@ -1916,6 +1918,13 @@ packages:
       yallist: 4.0.0
     dev: true
 
+  /magic-string/0.26.7:
+    resolution: {integrity: sha512-hX9XH3ziStPoPhJxLq1syWuZMxbDvGNbVchfrdCtanC7D13888bMFow61x8axrx+GfHLtVeAx2kxL7tTGRl+Ow==}
+    engines: {node: '>=12'}
+    dependencies:
+      sourcemap-codec: 1.4.8
+    dev: false
+
   /merge-stream/2.0.0:
     resolution: {integrity: sha512-abv/qOcuPfk3URPfDzmZU1LKmuw8kT+0nIHvKrKgFrwifol/doWcdA4ZqsWQ8ENrFKkd67Mfpo/LovbIUsbt3w==}
     dev: true
@@ -2276,6 +2285,10 @@ packages:
     resolution: {integrity: sha512-UjgapumWlbMhkBgzT7Ykc5YXUT46F0iKu8SGXq0bcwP5dz/h0Plj6enJqjz1Zbq2l5WaqYnrVbwWOWMyF3F47g==}
     engines: {node: '>=0.10.0'}
     dev: true
+
+  /sourcemap-codec/1.4.8:
+    resolution: {integrity: sha512-9NykojV5Uih4lgo5So5dtw+f0JgJX30KCNI8gwhz2J9A15wD0Ml6tjHKwf6fTSa6fAdVBdZeNOs9eJ71qCk8vA==}
+    dev: false
 
   /sprintf-js/1.0.3:
     resolution: {integrity: sha512-D9cPgkvLlV3t3IzL0D0YLvGA9Ahk4PcvVwUbN0dSGr1aP0Nrt4AEnTUbuGvquEC0mA64Gqt1fzirlRs5ibXx8g==}
