@@ -15,7 +15,7 @@ import {
 } from 'vite'
 import { build } from 'esbuild'
 
-import { electronMainVitePlugin, electronPreloadVitePlugin, electronRendererVitePlugin } from './plugin'
+import { electronMainVitePlugin, electronPreloadVitePlugin, electronRendererVitePlugin } from './plugins/electron'
 import workerPlugin from './plugins/worker'
 import { isObject, dynamicImport } from './utils'
 

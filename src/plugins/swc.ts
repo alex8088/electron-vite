@@ -72,6 +72,10 @@ export type SwcOptions = {
   transformOptions?: TransformConfig
 }
 
+/**
+ * Use SWC to support for emitting type metadata for decorators.
+ * When using `swcPlugin`, you need to install `@swc/core`.
+ */
 export function swcPlugin(options: SwcOptions = {}): Plugin {
   const filter = createFilter(options.include || /\.(m?ts|[jt]sx)$/, options.exclude || /\.js$/)
   let sourcemap: boolean | 'inline' = false
