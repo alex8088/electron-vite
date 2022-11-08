@@ -308,6 +308,9 @@ function findConfigFile(configRoot: string, extensions: string[]): string {
 }
 
 async function bundleConfigFile(fileName: string, isESM: boolean): Promise<{ code: string; dependencies: string[] }> {
+  const dirnameVarName = '__electron_vite_injected_dirname'
+  const filenameVarName = '__electron_vite_injected_filename'
+  const importMetaUrlVarName = '__electron_vite_injected_import_meta_url'
   const result = await build({
     absWorkingDir: process.cwd(),
     entryPoints: [fileName],
@@ -318,6 +321,11 @@ async function bundleConfigFile(fileName: string, isESM: boolean): Promise<{ cod
     format: isESM ? 'esm' : 'cjs',
     sourcemap: false,
     metafile: true,
+    define: {
+      __dirname: dirnameVarName,
+      __filename: filenameVarName,
+      'import.meta.url': importMetaUrlVarName
+    },
     plugins: [
       {
         name: 'externalize-deps',
@@ -338,12 +346,14 @@ async function bundleConfigFile(fileName: string, isESM: boolean): Promise<{ cod
         setup(build): void {
           build.onLoad({ filter: /\.[cm]?[jt]s$/ }, async args => {
             const contents = await fs.promises.readFile(args.path, 'utf8')
+            const injectValues =
+              `const ${dirnameVarName} = ${JSON.stringify(path.dirname(args.path))};` +
+              `const ${filenameVarName} = ${JSON.stringify(args.path)};` +
+              `const ${importMetaUrlVarName} = ${JSON.stringify(pathToFileURL(args.path).href)};`
+
             return {
-              loader: args.path.endsWith('.ts') ? 'ts' : 'js',
-              contents: contents
-                .replace(/\bimport\.meta\.url\b/g, JSON.stringify(pathToFileURL(args.path).href))
-                .replace(/\b__dirname\b/g, JSON.stringify(path.dirname(args.path)))
-                .replace(/\b__filename\b/g, JSON.stringify(args.path))
+              loader: args.path.endsWith('ts') ? 'ts' : 'js',
+              contents: injectValues + contents
             }
           })
         }
