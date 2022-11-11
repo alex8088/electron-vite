@@ -1,3 +1,12 @@
+### v1.0.13 (_2022-11-11_)
+
+- feat: support for node worker
+- refactor: plugins
+- fix(swcPlugin): unreachable code
+- fix(bytecodePlugin): bytecode loader injection and chunk module parsing errors [#49](https://github.com/alex8088/electron-vite/issues/49)
+- fix: incorrect replace __dirname/__filename in config file
+- fix: output format error under multiple entries
+
 ### v1.0.12 (_2022-11-02_)
 
 - feat: support monorepo (by @ianstormtaylor)
