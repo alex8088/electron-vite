@@ -52,10 +52,7 @@ export function electronMainVitePlugin(options?: ElectronPluginOptions): Plugin[
           build: {
             outDir: path.resolve(root, 'out', 'main'),
             target: nodeTarget,
-            lib: {
-              entry: findLibEntry(root, 'main'),
-              formats: ['cjs']
-            },
+            assetsDir: 'chunks',
             rollupOptions: {
               external: ['electron', ...builtinModules.flatMap(m => [m, `node:${m}`])],
               output: {
@@ -67,7 +64,18 @@ export function electronMainVitePlugin(options?: ElectronPluginOptions): Plugin[
           }
         }
 
-        const buildConfig = mergeConfig(defaultConfig.build, config.build || {})
+        const build = config.build || {}
+        const rollupOptions = build.rollupOptions || {}
+        if (!rollupOptions.input) {
+          defaultConfig.build['lib'] = {
+            entry: findLibEntry(root, 'main'),
+            formats: ['cjs']
+          }
+        } else {
+          defaultConfig.build.rollupOptions.output['format'] = 'cjs'
+        }
+
+        const buildConfig = mergeConfig(defaultConfig.build, build)
         config.build = buildConfig
 
         config.define = config.define || {}
@@ -93,7 +101,18 @@ export function electronMainVitePlugin(options?: ElectronPluginOptions): Plugin[
 
         const lib = build.lib
         if (!lib) {
-          throw new Error('build lib field required for the electron vite main config')
+          const rollupOptions = build.rollupOptions
+          if (!rollupOptions?.input) {
+            throw new Error('build lib field required for the electron vite main config')
+          } else {
+            const output = rollupOptions?.output
+            if (output) {
+              const formats = Array.isArray(output) ? output : [output]
+              if (!formats.some(f => f !== 'cjs')) {
+                throw new Error('the electron vite main config output format must be cjs')
+              }
+            }
+          }
         } else {
           if (!lib.entry) {
             throw new Error('build entry field required for the electron vite main config')
@@ -124,6 +143,7 @@ export function electronPreloadVitePlugin(options?: ElectronPluginOptions): Plug
           build: {
             outDir: path.resolve(root, 'out', 'preload'),
             target: nodeTarget,
+            assetsDir: 'chunks',
             rollupOptions: {
               external: ['electron', ...builtinModules.flatMap(m => [m, `node:${m}`])],
               output: {
@@ -143,12 +163,10 @@ export function electronPreloadVitePlugin(options?: ElectronPluginOptions): Plug
             formats: ['cjs']
           }
         } else {
-          if (!rollupOptions.output) {
-            defaultConfig.build.rollupOptions.output['format'] = 'cjs'
-          }
+          defaultConfig.build.rollupOptions.output['format'] = 'cjs'
         }
 
-        const buildConfig = mergeConfig(defaultConfig.build, config.build || {})
+        const buildConfig = mergeConfig(defaultConfig.build, build)
         config.build = buildConfig
 
         config.define = config.define || {}
