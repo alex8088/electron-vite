@@ -4,6 +4,7 @@ import { spawn } from 'node:child_process'
 import colors from 'picocolors'
 import { type Plugin, type ResolvedConfig, normalizePath } from 'vite'
 import * as babel from '@babel/core'
+import MagicString from 'magic-string'
 import { getElectronPath } from '../electron'
 
 // Inspired by https://github.com/bytenode/bytenode
@@ -151,19 +152,27 @@ export function bytecodePlugin(options: BytecodeOptions = {}): Plugin | null {
 
   const { chunkAlias = [], transformArrowFunctions = true, removeBundleJS = true } = options
   const _chunkAlias = Array.isArray(chunkAlias) ? chunkAlias : [chunkAlias]
-  const transformAllChunks = _chunkAlias.length === 0
+
   const bytecodeChunks: string[] = []
-  const nonEntryChunks: string[] = []
+
+  const transformAllChunks = _chunkAlias.length === 0
+  const isBytecodeChunk = (chunkName: string): boolean => {
+    return transformAllChunks || _chunkAlias.some(alias => alias === chunkName)
+  }
+
   const _transform = (code: string): string => {
     const re = babel.transform(code, {
       plugins: ['@babel/plugin-transform-arrow-functions']
     })
     return re.code || ''
   }
+
   const requireBytecodeLoaderStr = '"use strict";\nrequire("./bytecode-loader.js");'
+
   let config: ResolvedConfig
   let useInRenderer = false
   let bytecodeFiles: { name: string; size: number }[] = []
+
   return {
     name: 'vite:bytecode',
     apply: 'build',
@@ -179,29 +188,11 @@ export function bytecodePlugin(options: BytecodeOptions = {}): Plugin | null {
       if (useInRenderer) {
         return null
       }
-      if (!transformAllChunks) {
-        const isBytecodeChunk = _chunkAlias.some(alias => chunk.fileName.startsWith(alias))
-        if (isBytecodeChunk) {
-          bytecodeChunks.push(chunk.fileName)
-          if (!chunk.isEntry) {
-            nonEntryChunks.push(chunk.fileName)
-          }
-          if (transformArrowFunctions) {
-            return {
-              code: _transform(code)
-            }
-          }
-        }
-      } else {
-        if (chunk.type === 'chunk') {
-          bytecodeChunks.push(chunk.fileName)
-          if (!chunk.isEntry) {
-            nonEntryChunks.push(chunk.fileName)
-          }
-          if (transformArrowFunctions) {
-            return {
-              code: _transform(code)
-            }
+      if (chunk.type === 'chunk' && isBytecodeChunk(chunk.name)) {
+        bytecodeChunks.push(chunk.fileName)
+        if (transformArrowFunctions) {
+          return {
+            code: _transform(code)
           }
         }
       }
@@ -224,17 +215,27 @@ export function bytecodePlugin(options: BytecodeOptions = {}): Plugin | null {
       const bundles = Object.keys(output)
       const outDir = options.dir!
       bytecodeFiles = []
+      const bytecodeRE = new RegExp(bytecodeChunks.map(chunk => `(${chunk})`).join('|'), 'g')
+      const keepBundle = (chunkFileName: string): void => {
+        const newFileName = path.resolve(path.dirname(chunkFileName), `_${path.basename(chunkFileName)}`)
+        fs.renameSync(chunkFileName, newFileName)
+      }
       await Promise.all(
         bundles.map(async name => {
           const chunk = output[name]
           if (chunk.type === 'chunk') {
             let _code = chunk.code
-            nonEntryChunks.forEach(bcc => {
-              if (bcc !== name) {
-                const reg = new RegExp(bcc, 'g')
-                _code = _code.replace(reg, `${bcc}c`)
+            if (_code.match(bytecodeRE)) {
+              let match: RegExpExecArray | null
+              const s = new MagicString(_code)
+              while ((match = bytecodeRE.exec(_code))) {
+                const [chunkName] = match
+                s.overwrite(match.index, match.index + chunkName.length, chunkName + 'c', {
+                  contentOnly: true
+                })
               }
-            })
+              _code = s.toString()
+            }
             const chunkFileName = path.resolve(outDir, name)
             if (bytecodeChunks.includes(name)) {
               const bytecodeBuffer = await compileToBytecode(_code)
@@ -242,8 +243,7 @@ export function bytecodePlugin(options: BytecodeOptions = {}): Plugin | null {
               fs.writeFileSync(bytecodeFileName, bytecodeBuffer)
               if (chunk.isEntry) {
                 if (!removeBundleJS) {
-                  const newFileName = path.resolve(outDir, `_${name}`)
-                  fs.renameSync(chunkFileName, newFileName)
+                  keepBundle(chunkFileName)
                 }
                 const code = requireBytecodeLoaderStr + `\nrequire("./${normalizePath(name + 'c')}");\n`
                 fs.writeFileSync(chunkFileName, code)
@@ -251,14 +251,27 @@ export function bytecodePlugin(options: BytecodeOptions = {}): Plugin | null {
                 if (removeBundleJS) {
                   fs.unlinkSync(chunkFileName)
                 } else {
-                  const newFileName = path.resolve(outDir, `_${name}`)
-                  fs.renameSync(chunkFileName, newFileName)
+                  keepBundle(chunkFileName)
                 }
               }
               bytecodeFiles.push({ name: name + 'c', size: bytecodeBuffer.length })
             } else {
               if (chunk.isEntry) {
-                _code = _code.replace('"use strict";', requireBytecodeLoaderStr)
+                let hasBytecodeMoudle = false
+                const idsToHandle = new Set([...chunk.imports, ...chunk.dynamicImports])
+                for (const moduleId of idsToHandle) {
+                  if (bytecodeChunks.includes(moduleId)) {
+                    hasBytecodeMoudle = true
+                    break
+                  }
+                  const moduleInfo = this.getModuleInfo(moduleId)
+                  if (moduleInfo && !moduleInfo.isExternal) {
+                    const { importers, dynamicImporters } = moduleInfo
+                    for (const importerId of importers) idsToHandle.add(importerId)
+                    for (const importerId of dynamicImporters) idsToHandle.add(importerId)
+                  }
+                }
+                _code = hasBytecodeMoudle ? _code.replace('"use strict";', requireBytecodeLoaderStr) : _code
               }
               fs.writeFileSync(chunkFileName, _code)
             }
