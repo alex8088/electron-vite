@@ -27,16 +27,16 @@
 
 ## Features
 
-- ⚡️ Inherit all the benefits of Vite and use the same way as [Vite](https://vitejs.dev).
-- 📦The main process, renderers and preload scripts are all built with Vite.
-- 🛠The main process, renderers and preload scripts Vite configuration combined into one file.
-- 💡Pre-configured for Electron, don't worry about configuration.
-- 🚀HMR for renderer processes.
-- 🔥The main process and preload scripts support hot reloading.
-- 🔌Easy to debug.
-- 🔒Compile to v8 bytecode to protect source code.
-- 🏷️Support for TypeScript decorators.
-- 🔋Out-of-the-box support for TypeScript, Vue, React, Svelte, SolidJS and more.
+- ⚡️  [Vite](https://vitejs.dev) powered and use the same way.
+- 🛠 Centralized Configuration.
+- 💡 Pre-configured for Electron, don't worry about configuration.
+- 🚀 Fast HMR for renderers.
+- 🔥 Hot reloading for main process and preload scripts.
+- 🔌 Easy to debug.
+- 🔒 Compile to v8 bytecode to protect source code.
+- 🏷️ Support for TypeScript decorators.
+- 🔩 Easy to use workers and fork process.
+- 📦 Out-of-the-box support for TypeScript, Vue, React, Svelte, SolidJS and more.
 
 ## Usage
 
