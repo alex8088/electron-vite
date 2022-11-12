@@ -1,3 +1,7 @@
+### v1.0.14 (_2022-11-13_)
+
+- fix(bytecodePlugin): replace bytecode module regex
+
 ### v1.0.13 (_2022-11-11_)
 
 - feat: support for node worker
