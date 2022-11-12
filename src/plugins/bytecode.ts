@@ -154,6 +154,7 @@ export function bytecodePlugin(options: BytecodeOptions = {}): Plugin | null {
   const _chunkAlias = Array.isArray(chunkAlias) ? chunkAlias : [chunkAlias]
 
   const bytecodeChunks: string[] = []
+  const nonEntryChunks: string[] = []
 
   const transformAllChunks = _chunkAlias.length === 0
   const isBytecodeChunk = (chunkName: string): boolean => {
@@ -190,6 +191,9 @@ export function bytecodePlugin(options: BytecodeOptions = {}): Plugin | null {
       }
       if (chunk.type === 'chunk' && isBytecodeChunk(chunk.name)) {
         bytecodeChunks.push(chunk.fileName)
+        if (!chunk.isEntry) {
+          nonEntryChunks.push(chunk.fileName)
+        }
         if (transformArrowFunctions) {
           return {
             code: _transform(code)
@@ -215,7 +219,8 @@ export function bytecodePlugin(options: BytecodeOptions = {}): Plugin | null {
       const bundles = Object.keys(output)
       const outDir = options.dir!
       bytecodeFiles = []
-      const bytecodeRE = new RegExp(bytecodeChunks.map(chunk => `(${chunk})`).join('|'), 'g')
+      const pattern = nonEntryChunks.length ? nonEntryChunks.map(chunk => `(${chunk})`).join('|') : null
+      const bytecodeRE = pattern ? new RegExp(`require\\(\\S*(?=(${pattern})\\S*\\))`, 'g') : null
       const keepBundle = (chunkFileName: string): void => {
         const newFileName = path.resolve(path.dirname(chunkFileName), `_${path.basename(chunkFileName)}`)
         fs.renameSync(chunkFileName, newFileName)
@@ -225,12 +230,13 @@ export function bytecodePlugin(options: BytecodeOptions = {}): Plugin | null {
           const chunk = output[name]
           if (chunk.type === 'chunk') {
             let _code = chunk.code
-            if (_code.match(bytecodeRE)) {
+            if (bytecodeRE && _code.match(bytecodeRE)) {
               let match: RegExpExecArray | null
               const s = new MagicString(_code)
               while ((match = bytecodeRE.exec(_code))) {
-                const [chunkName] = match
-                s.overwrite(match.index, match.index + chunkName.length, chunkName + 'c', {
+                const [prefix, chunkName] = match
+                const len = prefix.length + chunkName.length
+                s.overwrite(match.index, match.index + len, prefix + chunkName + 'c', {
                   contentOnly: true
                 })
               }
