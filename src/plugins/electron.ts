@@ -251,8 +251,7 @@ export function electronRendererVitePlugin(options?: ElectronPluginOptions): Plu
             target: chromeTarget,
             modulePreload: { polyfill: false },
             rollupOptions: {
-              input: findInput(root),
-              external: [...builtinModules.flatMap(m => [m, `node:${m}`])]
+              input: findInput(root)
             },
             reportCompressedSize: false,
             minify: false,
