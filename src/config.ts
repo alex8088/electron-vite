@@ -69,12 +69,14 @@ export type InlineConfig = Omit<ViteConfig, 'base'> & {
   ignoreConfigWarning?: boolean
 }
 
-export type UserConfigFn = () => UserConfigSchema | Promise<UserConfigSchema>
+export type UserConfigFn = (env: ConfigEnv) => UserConfigSchema | Promise<UserConfigSchema>
 export type UserConfigExport = UserConfigSchema | Promise<UserConfigSchema> | UserConfigFn
 
 /**
- * Type helper to make it easier to use `electron.vite.config.ts`
+ * Type helper to make it easier to use `electron.vite.config.*`
  * accepts a direct {@link UserConfig} object, or a function that returns it.
+ * The function receives a object that exposes two properties:
+ * `command` (either `'build'` or `'serve'`), and `mode`.
  */
 export function defineConfig(config: UserConfigExport): UserConfigExport {
   return config
@@ -236,7 +238,7 @@ export async function loadConfigFromFile(
     const bundled = await bundleConfigFile(resolvedPath, isESM)
     const userConfig = await loadConfigFormBundledFile(configRoot, resolvedPath, bundled.code, isESM)
 
-    const config = await (typeof userConfig === 'function' ? userConfig() : userConfig)
+    const config = await (typeof userConfig === 'function' ? userConfig(configEnv) : userConfig)
     if (!isObject(config)) {
       throw new Error(`config must export or return an object`)
     }
