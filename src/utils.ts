@@ -1,4 +1,5 @@
 import { URL, URLSearchParams } from 'node:url'
+import { loadEnv as viteLoadEnv } from 'vite'
 
 export function isObject(value: unknown): value is Record<string, unknown> {
   return Object.prototype.toString.call(value) === '[object Object]'
@@ -23,4 +24,17 @@ export function parseRequest(id: string): Record<string, string> | null {
     return null
   }
   return Object.fromEntries(new URLSearchParams(search))
+}
+
+/**
+ * Load `.env` files within the `envDir`(default: `process.cwd()`).
+ * By default, only env variables prefixed with `MAIN_VITE_`, `PRELOAD_VITE_` and
+ * `RENDERER_VITE_` are loaded, unless `prefixes` is changed.
+ */
+export function loadEnv(
+  mode: string,
+  envDir: string = process.cwd(),
+  prefixes: string | string[] = ['MAIN_VITE_', 'PRELOAD_VITE_', 'RENDERER_VITE_']
+): Record<string, string> {
+  return viteLoadEnv(mode, envDir, prefixes)
 }
