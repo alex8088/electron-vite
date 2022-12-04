@@ -1,3 +1,10 @@
+### v1.0.15 (_2022-12-05_)
+
+- feat: support mode and command conditional config
+- feat: specify env prefixes for vite's loadEnv and export it
+- perf: build compatilibity target for Electron 22
+- perf: do not externalize node builtin modules for the renderer [#61](https://github.com/alex8088/electron-vite/issues/61)
+
 ### v1.0.14 (_2022-11-13_)
 
 - fix(bytecodePlugin): replace bytecode module regex
