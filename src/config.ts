@@ -98,9 +98,7 @@ export async function resolveConfig(
 
   config.mode = mode
 
-  if (mode === 'production') {
-    process.env.NODE_ENV = 'production'
-  }
+  process.env.NODE_ENV = defaultMode
 
   let userConfig: UserConfig | undefined
   let configFileDependencies: string[] = []
