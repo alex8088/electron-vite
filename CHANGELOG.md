@@ -1,3 +1,13 @@
+### v1.0.16 (_2022-12-12_)
+
+- feat: vite 4.x support [#69](https://github.com/alex8088/electron-vite/issues/69)
+- fix: `NODE_ENV` is incorrect in vite 4.x [#70](https://github.com/alex8088/electron-vite/issues/70)
+- fix: invalid output format check
+- fix: output format check
+- chore(deps): update all non-major dependencies
+- chore(deps): update esbuild and magic-string
+- chore(deps): update vite to 4.0.0
+
 ### v1.0.15 (_2022-12-05_)
 
 - feat: support mode and command conditional config
