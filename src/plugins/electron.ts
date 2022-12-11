@@ -108,7 +108,7 @@ export function electronMainVitePlugin(options?: ElectronPluginOptions): Plugin[
             const output = rollupOptions?.output
             if (output) {
               const formats = Array.isArray(output) ? output : [output]
-              if (!formats.some(f => f !== 'cjs')) {
+              if (!formats.some(f => f.format !== 'cjs')) {
                 throw new Error('the electron vite main config output format must be cjs')
               }
             }
@@ -199,7 +199,7 @@ export function electronPreloadVitePlugin(options?: ElectronPluginOptions): Plug
             const output = rollupOptions?.output
             if (output) {
               const formats = Array.isArray(output) ? output : [output]
-              if (!formats.some(f => f !== 'cjs')) {
+              if (!formats.some(f => f.format !== 'cjs')) {
                 throw new Error('the electron vite preload config output format must be cjs')
               }
             }
