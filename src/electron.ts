@@ -110,12 +110,14 @@ export function startElectron(root: string | undefined, logger: Logger): ChildPr
 
   const electronPath = getElectronPath()
 
+  const inspect = !!process.env.VSCODE_INSPECTOR_OPTIONS
+
   const ps = spawn(electronPath, ['.'])
   ps.stdout.on('data', chunk => {
-    chunk.toString().trim() && logger.info(chunk.toString())
+    !inspect && chunk.toString().trim() && logger.info(chunk.toString())
   })
   ps.stderr.on('data', chunk => {
-    chunk.toString().trim() && logger.error(chunk.toString())
+    !inspect && chunk.toString().trim() && logger.error(chunk.toString())
   })
   ps.on('close', process.exit)
 
