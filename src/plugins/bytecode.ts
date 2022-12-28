@@ -296,10 +296,10 @@ export function bytecodePlugin(options: BytecodeOptions = {}): Plugin | null {
           if (len > longest) longest = len
         })
         bytecodeFiles.forEach(file => {
-          const kibs = file.size / 1024
+          const kbs = file.size / 1000
           config.logger.info(
             `${colors.gray(colors.white(colors.dim(outDir)))}${colors.green(file.name.padEnd(longest + 2))} ${
-              kibs > chunkLimit ? colors.yellow(`${kibs.toFixed(2)} KiB`) : colors.dim(`${kibs.toFixed(2)} KiB`)
+              kbs > chunkLimit ? colors.yellow(`${kbs.toFixed(2)} kB`) : colors.dim(`${kbs.toFixed(2)} kB`)
             }`
           )
         })
