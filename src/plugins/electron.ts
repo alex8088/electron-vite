@@ -75,6 +75,11 @@ export function electronMainVitePlugin(options?: ElectronPluginOptions): Plugin[
           defaultConfig.build.rollupOptions.output['format'] = 'cjs'
         }
 
+        defaultConfig.build.rollupOptions.output['assetFileNames'] = path.posix.join(
+          build.assetsDir || defaultConfig.build.assetsDir,
+          '[name]-[hash].[ext]'
+        )
+
         const buildConfig = mergeConfig(defaultConfig.build, build)
         config.build = buildConfig
 
@@ -82,6 +87,10 @@ export function electronMainVitePlugin(options?: ElectronPluginOptions): Plugin[
         config.define = { ...processEnvDefine(), ...config.define }
 
         config.envPrefix = config.envPrefix || 'MAIN_VITE_'
+
+        config.publicDir = config.publicDir || 'resources'
+        // do not copy public dir
+        config.build.copyPublicDir = false
       }
     },
     {
@@ -166,6 +175,11 @@ export function electronPreloadVitePlugin(options?: ElectronPluginOptions): Plug
           defaultConfig.build.rollupOptions.output['format'] = 'cjs'
         }
 
+        defaultConfig.build.rollupOptions.output['assetFileNames'] = path.posix.join(
+          build.assetsDir || defaultConfig.build.assetsDir,
+          '[name]-[hash].[ext]'
+        )
+
         const buildConfig = mergeConfig(defaultConfig.build, build)
         config.build = buildConfig
 
@@ -173,6 +187,10 @@ export function electronPreloadVitePlugin(options?: ElectronPluginOptions): Plug
         config.define = { ...processEnvDefine(), ...config.define }
 
         config.envPrefix = config.envPrefix || 'PRELOAD_VITE_'
+
+        config.publicDir = config.publicDir || 'resources'
+        // do not copy public dir
+        config.build.copyPublicDir = false
       }
     },
     {
