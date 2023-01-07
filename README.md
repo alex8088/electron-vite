@@ -27,7 +27,7 @@
 
 ## Features
 
-- ⚡️  [Vite](https://vitejs.dev) powered and use the same way.
+- ⚡️ [Vite](https://vitejs.dev) powered and use the same way.
 - 🛠 Centralized Configuration.
 - 💡 Pre-configured for Electron, don't worry about configuration.
 - 🚀 Fast HMR for renderers.
