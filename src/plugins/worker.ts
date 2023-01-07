@@ -1,8 +1,7 @@
-import path from 'node:path'
 import type { Plugin } from 'vite'
 import type { SourceMapInput } from 'rollup'
 import MagicString from 'magic-string'
-import { cleanUrl, parseRequest } from '../utils'
+import { cleanUrl, parseRequest, toRelativePath } from '../utils'
 
 const nodeWorkerAssetUrlRE = /__VITE_NODE_WORKER_ASSET__([a-z\d]{8})__/g
 
@@ -47,10 +46,7 @@ export default function workerPlugin(): Plugin {
         while ((match = nodeWorkerAssetUrlRE.exec(code))) {
           const [full, hash] = match
           const filename = this.getFileName(hash)
-          let outputFilepath = path.posix.relative(path.dirname(chunk.fileName), filename)
-          if (!outputFilepath.startsWith('.')) {
-            outputFilepath = './' + outputFilepath
-          }
+          const outputFilepath = toRelativePath(filename, chunk.fileName)
           const replacement = JSON.stringify(outputFilepath)
           s.overwrite(match.index, match.index + full.length, replacement, {
             contentOnly: true
