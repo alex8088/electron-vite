@@ -1,3 +1,12 @@
+### v1.0.17 (_2023-01-08_)
+
+- feat: static asset handling
+- fix: output duplicate log in vscode debugging [#75](https://github.com/alex8088/electron-vite/issues/75)
+- chore(bytecodePlugin): KiB to kB
+- chore(worker): use toRelativePath helper
+- chore(deps): update all non-major dependencies
+- chore(deps): update vite to 4.0.4
+
 ### v1.0.16 (_2022-12-12_)
 
 - feat: vite 4.x support [#69](https://github.com/alex8088/electron-vite/issues/69)
@@ -25,7 +34,7 @@
 - refactor: plugins
 - fix(swcPlugin): unreachable code
 - fix(bytecodePlugin): bytecode loader injection and chunk module parsing errors [#49](https://github.com/alex8088/electron-vite/issues/49)
-- fix: incorrect replace __dirname/__filename in config file
+- fix: incorrect replace `__dirname`/`__filename` in config file
 - fix: output format error under multiple entries
 
 ### v1.0.12 (_2022-11-02_)
