@@ -6,7 +6,7 @@ import MagicString from 'magic-string'
 import { cleanUrl, parseRequest, getHash, toRelativePath } from '../utils'
 
 interface AssetResolved {
-  type: 'asset' | 'native'
+  type: 'asset' | 'native' | 'wasm'
   file: string
   query: Record<string, string> | null
 }
@@ -31,11 +31,32 @@ function resolveAsset(id: string): AssetResolved | null {
     }
   }
 
+  if (file.endsWith('.wasm')) {
+    return {
+      type: 'wasm',
+      file,
+      query
+    }
+  }
+
   return null
 }
 
 const nodeAssetRE = /__VITE_NODE_ASSET__([a-z\d]{8})__/g
 const nodePublicAssetRE = /__VITE_NODE_PUBLIC_ASSET__([a-z\d]{8})__/g
+
+const wasmHelperId = '\0__electron-vite-wasm-helper'
+
+const wasmHelperCode = `
+import { join } from 'path'
+import { readFile } from 'fs/promises'
+
+export default async function loadWasm(file, importObject = {}) {
+  const wasmBuffer = await readFile(join(__dirname, file))
+  const result = await WebAssembly.instantiate(wasmBuffer, importObject)
+  return result.instance
+}
+`
 
 export default function assetPlugin(): Plugin {
   let sourcemap: boolean | 'inline' | 'hidden' = false
@@ -52,7 +73,16 @@ export default function assetPlugin(): Plugin {
       publicDir = normalizePath(config.publicDir)
       outDir = normalizePath(config.build.outDir)
     },
+    resolveId(id): string | void {
+      if (id === wasmHelperId) {
+        return id
+      }
+    },
     async load(id): Promise<string | void> {
+      if (id === wasmHelperId) {
+        return wasmHelperCode
+      }
+
       const assetResolved = resolveAsset(id)
       if (!assetResolved) {
         return
@@ -96,6 +126,12 @@ export default function assetPlugin(): Plugin {
 
       if (assetResolved.type === 'native') {
         return `export default require(${referenceId})`
+      }
+
+      if (assetResolved.type === 'wasm') {
+        return `
+        import loadWasm from ${JSON.stringify(wasmHelperId)}
+        export default importObject => loadWasm(${referenceId}, importObject)`
       }
     },
     renderChunk(code, chunk): { code: string; map: SourceMapInput } | null {

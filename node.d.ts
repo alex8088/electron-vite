@@ -21,3 +21,9 @@ declare module '*.node' {
   const node: any
   export default node
 }
+
+// node wasm
+declare module '*.wasm?loader' {
+  const loadWasm: (options?: WebAssembly.Imports) => Promise<WebAssembly.Instance>
+  export default loadWasm
+}
