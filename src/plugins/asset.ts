@@ -31,7 +31,7 @@ function resolveAsset(id: string): AssetResolved | null {
     }
   }
 
-  if (file.endsWith('.wasm')) {
+  if (id.endsWith('.wasm?loader')) {
     return {
       type: 'wasm',
       file,
