@@ -33,6 +33,7 @@
 - 🚀 Fast HMR for renderers.
 - 🔥 Hot reloading for main process and preload scripts.
 - 🔌 Easy to debug.
+- 🔋 Static asset handling (Node.js addons, WebAssembly, etc).
 - 🔒 Compile to v8 bytecode to protect source code.
 - 🏷️ Support for TypeScript decorators.
 - 🔩 Easy to use workers and fork process.
