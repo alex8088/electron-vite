@@ -1,6 +1,6 @@
 {
   "name": "electron-vite",
-  "version": "1.0.17",
+  "version": "1.0.18",
   "description": "Electron build tooling based on Vite",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",

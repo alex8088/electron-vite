@@ -1,3 +1,8 @@
+### v1.0.18 (_2023-01-16_)
+
+- feat(asset): support for WebAssembly in the main process
+- fix(asset): wasm must be suffixed with `?loader`
+
 ### v1.0.17 (_2023-01-08_)
 
 - feat: static asset handling
