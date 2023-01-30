@@ -2,9 +2,10 @@ import path from 'node:path'
 import fs from 'node:fs'
 import { spawn } from 'node:child_process'
 import colors from 'picocolors'
-import { type Plugin, type ResolvedConfig, normalizePath } from 'vite'
+import { type Plugin, type ResolvedConfig, normalizePath, createFilter } from 'vite'
 import * as babel from '@babel/core'
 import MagicString from 'magic-string'
+import type { SourceMapInput } from 'rollup'
 import { getElectronPath } from '../electron'
 
 // Inspired by https://github.com/bytenode/bytenode
@@ -140,6 +141,7 @@ export interface BytecodeOptions {
   chunkAlias?: string | string[]
   transformArrowFunctions?: boolean
   removeBundleJS?: boolean
+  protectedStrings?: string[]
 }
 
 /**
@@ -150,8 +152,10 @@ export function bytecodePlugin(options: BytecodeOptions = {}): Plugin | null {
     return null
   }
 
-  const { chunkAlias = [], transformArrowFunctions = true, removeBundleJS = true } = options
+  const { chunkAlias = [], transformArrowFunctions = true, removeBundleJS = true, protectedStrings = [] } = options
   const _chunkAlias = Array.isArray(chunkAlias) ? chunkAlias : [chunkAlias]
+
+  const filter = createFilter(/\.(m?[jt]s|[jt]sx)$/)
 
   const bytecodeChunks: string[] = []
   const nonEntryChunks: string[] = []
@@ -183,6 +187,32 @@ export function bytecodePlugin(options: BytecodeOptions = {}): Plugin | null {
       useInRenderer = config.plugins.some(p => p.name === 'vite:electron-renderer-preset-config')
       if (useInRenderer) {
         config.logger.warn(colors.yellow('bytecodePlugin is not support renderers'))
+      }
+    },
+    transform(code, id): void | { code: string; map: SourceMapInput } {
+      if (protectedStrings.length === 0 || !filter(id)) return
+
+      let match: RegExpExecArray | null
+      let s: MagicString | undefined
+
+      protectedStrings.forEach(str => {
+        const re = new RegExp(`\\u0027${str}\\u0027|\\u0022${str}\\u0022|\\u0060${str}\\u0060`, 'g')
+        const charCodes = Array.from(str).map(s => s.charCodeAt(0))
+        const replacement = `String.fromCharCode(${charCodes.toString()})`
+        while ((match = re.exec(code))) {
+          s ||= new MagicString(code)
+          const [full] = match
+          s.overwrite(match.index, match.index + full.length, replacement, {
+            contentOnly: true
+          })
+        }
+      })
+
+      if (s) {
+        return {
+          code: s.toString(),
+          map: config.build.sourcemap ? s.generateMap({ hires: true }) : null
+        }
       }
     },
     renderChunk(code, chunk): { code: string } | null {
