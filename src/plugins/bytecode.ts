@@ -157,6 +157,13 @@ export function bytecodePlugin(options: BytecodeOptions = {}): Plugin | null {
 
   const filter = createFilter(/\.(m?[jt]s|[jt]sx)$/)
 
+  const escapeRegExpString = (str: string): string => {
+    return str
+      .replace(/\\/g, '\\\\\\\\')
+      .replace(/[|{}()[\]^$+*?.]/g, '\\$&')
+      .replace(/-/g, '\\u002d')
+  }
+
   const bytecodeChunks: string[] = []
   const nonEntryChunks: string[] = []
 
@@ -196,7 +203,8 @@ export function bytecodePlugin(options: BytecodeOptions = {}): Plugin | null {
       let s: MagicString | undefined
 
       protectedStrings.forEach(str => {
-        const re = new RegExp(`\\u0027${str}\\u0027|\\u0022${str}\\u0022|\\u0060${str}\\u0060`, 'g')
+        const escapedStr = escapeRegExpString(str)
+        const re = new RegExp(`\\u0027${escapedStr}\\u0027|\\u0022${escapedStr}\\u0022`, 'g')
         const charCodes = Array.from(str).map(s => s.charCodeAt(0))
         const replacement = `String.fromCharCode(${charCodes.toString()})`
         while ((match = re.exec(code))) {
