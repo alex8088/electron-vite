@@ -1,3 +1,8 @@
+### v1.0.19 (_2023-02-06_)
+
+- feat(bytecodePlugin): protect strings [#91](https://github.com/alex8088/electron-vite/issues/91)
+- fix(bytecodePlugin): escape protected strings (thanks to [@jeremyben](https://github.com/jeremyben))
+
 ### v1.0.18 (_2023-01-16_)
 
 - feat(asset): support for WebAssembly in the main process
