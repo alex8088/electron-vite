@@ -91,7 +91,7 @@ export async function createServer(inlineConfig: InlineConfig = {}): Promise<voi
 
     ps = startElectron(inlineConfig.root, logger)
 
-    logger.info(colors.green(`\nstart electron app...`))
+    logger.info(colors.green(`\nstart electron app...\n`))
   }
 }
 

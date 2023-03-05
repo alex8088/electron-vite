@@ -13,5 +13,5 @@ export async function preview(inlineConfig: InlineConfig = {}, options: { skipBu
 
   startElectron(inlineConfig.root, logger)
 
-  logger.info(colors.green(`\nstart electron app...`))
+  logger.info(colors.green(`\nstart electron app...\n`))
 }
