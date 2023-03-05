@@ -24,7 +24,7 @@ specifiers:
   simple-git-hooks: ^2.8.1
   tslib: ^2.5.0
   typescript: ^4.8.4
-  vite: ^4.0.4
+  vite: ^4.1.4
 
 dependencies:
   '@babel/core': 7.21.0
@@ -52,7 +52,7 @@ devDependencies:
   simple-git-hooks: 2.8.1
   tslib: 2.5.0
   typescript: 4.8.4
-  vite: 4.0.4_@types+node@16.18.3
+  vite: 4.1.4_@types+node@16.18.3
 
 packages:
 
@@ -2163,8 +2163,8 @@ packages:
       fsevents: 2.3.2
     dev: true
 
-  /rollup/3.7.2:
-    resolution: {integrity: sha512-orqIX5zkHyHKVsIBl8J5a2tnVikOAMte0DgOLViyW6McYuj45FG+cQPrXILhaifBSmy0D0hKbHg2RbgzFJcwTg==}
+  /rollup/3.18.0:
+    resolution: {integrity: sha512-J8C6VfEBjkvYPESMQYxKHxNOh4A5a3FlP+0BETGo34HEcE4eTlgCrO2+eWzlu2a/sHs2QUkZco+wscH7jhhgWg==}
     engines: {node: '>=14.18.0', npm: '>=8.0.0'}
     hasBin: true
     optionalDependencies:
@@ -2422,8 +2422,8 @@ packages:
     engines: {node: '>= 0.10'}
     dev: true
 
-  /vite/4.0.4_@types+node@16.18.3:
-    resolution: {integrity: sha512-xevPU7M8FU0i/80DMR+YhgrzR5KS2ORy1B4xcX/cXLsvnUWvfHuqMmVU6N0YiJ4JWGRJJsLCgjEzKjG9/GKoSw==}
+  /vite/4.1.4_@types+node@16.18.3:
+    resolution: {integrity: sha512-3knk/HsbSTKEin43zHu7jTwYWv81f8kgAL99G5NWBcA1LKvtvcVAC4JjBH1arBunO9kQka+1oGbrMKOjk4ZrBg==}
     engines: {node: ^14.18.0 || >=16.0.0}
     hasBin: true
     peerDependencies:
@@ -2451,7 +2451,7 @@ packages:
       esbuild: 0.16.17
       postcss: 8.4.21
       resolve: 1.22.1
-      rollup: 3.7.2
+      rollup: 3.18.0
     optionalDependencies:
       fsevents: 2.3.2
     dev: true
