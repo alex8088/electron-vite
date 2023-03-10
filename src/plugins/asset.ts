@@ -71,7 +71,7 @@ export default function assetPlugin(): Plugin {
     configResolved(config): void {
       sourcemap = config.build.sourcemap
       publicDir = normalizePath(config.publicDir)
-      outDir = normalizePath(config.build.outDir)
+      outDir = normalizePath(path.resolve(config.root, config.build.outDir))
     },
     resolveId(id): string | void {
       if (id === wasmHelperId) {
