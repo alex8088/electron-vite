@@ -1,6 +1,7 @@
 import path from 'node:path'
 import fs from 'node:fs'
 import { spawn } from 'node:child_process'
+import { createRequire } from 'node:module'
 import colors from 'picocolors'
 import { type Plugin, type ResolvedConfig, normalizePath, createFilter } from 'vite'
 import * as babel from '@babel/core'
@@ -10,8 +11,10 @@ import { getElectronPath } from '../electron'
 
 // Inspired by https://github.com/bytenode/bytenode
 
+const _require = createRequire(import.meta.url)
+
 function getBytecodeCompilerPath(): string {
-  return path.resolve(process.cwd(), 'node_modules', 'electron-vite', 'bin', 'electron-bytecode.js')
+  return path.join(path.dirname(_require.resolve('electron-vite/package.json')), 'bin', 'electron-bytecode.js')
 }
 
 function compileToBytecode(code: string): Promise<Buffer> {
