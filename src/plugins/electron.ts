@@ -277,6 +277,10 @@ export function electronRendererVitePlugin(options?: ElectronPluginOptions): Plu
           }
         }
 
+        if (config.build?.outDir) {
+          config.build.outDir = path.resolve(root, config.build.outDir)
+        }
+
         const buildConfig = mergeConfig(defaultConfig.build, config.build || {})
         config.build = buildConfig
 
