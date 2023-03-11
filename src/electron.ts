@@ -114,7 +114,12 @@ export function startElectron(root: string | undefined, logger: Logger): ChildPr
 
   const inspect = !!process.env.VSCODE_INSPECTOR_OPTIONS
 
-  const ps = spawn(electronPath, ['.'])
+  const args: string[] = []
+  if (!!process.env.REMOTE_DEBUGGING_PORT && process.env.NODE_ENV_ELECTRON_VITE === 'development') {
+    args.push(`--remote-debugging-port=${process.env.REMOTE_DEBUGGING_PORT}`)
+  }
+
+  const ps = spawn(electronPath, ['.'].concat(args))
   ps.stdout.on('data', chunk => {
     !inspect && chunk.toString().trim() && logger.info(chunk.toString())
   })

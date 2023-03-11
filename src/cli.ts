@@ -59,7 +59,12 @@ cli
   .alias('serve')
   .alias('dev')
   .option('-w, --watch', `[boolean] rebuilds when main process or preload script modules have changed on disk`)
-  .action(async (root: string, options: GlobalCLIOptions) => {
+  .option('--remoteDebuggingPort <port>', `[string] port for remote debugging`)
+  .action(async (root: string, options: { remoteDebuggingPort?: string } & GlobalCLIOptions) => {
+    if (options.remoteDebuggingPort) {
+      process.env.REMOTE_DEBUGGING_PORT = options.remoteDebuggingPort
+    }
+
     const { createServer } = await import('./server')
     const inlineConfig = createInlineConfig(root, options)
 
