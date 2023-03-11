@@ -1,3 +1,16 @@
+### v1.0.20 (_2023-03-12_)
+
+- feat: support for renderer debugging [#130](https://github.com/alex8088/electron-vite/issues/130)
+- fix(asset): asset path is not resolved correctly when outDir is specified [#117](https://github.com/alex8088/electron-vite/issues/117)
+- fix: specified renderer outDir is not parsed correctly
+- fix(bytecodePlugin): not work in monorepo [#128](https://github.com/alex8088/electron-vite/issues/128)
+- perf: build compatilibity target for Electron 23
+- perf: print log
+- chore(deps): update all non-major dependencies
+- chore(deps): update vite to 4.1.4
+- chore(deps): update rollup to 3.18
+- chore(deps): update magic-string to 0.30.0
+
 ### v1.0.19 (_2023-02-06_)
 
 - feat(bytecodePlugin): protect strings [#91](https://github.com/alex8088/electron-vite/issues/91)
