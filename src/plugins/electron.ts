@@ -91,6 +91,8 @@ export function electronMainVitePlugin(options?: ElectronPluginOptions): Plugin[
         config.publicDir = config.publicDir || 'resources'
         // do not copy public dir
         config.build.copyPublicDir = false
+        // module preload polyfill does not apply to nodejs (main process)
+        config.build.modulePreload = false
       }
     },
     {
@@ -191,6 +193,8 @@ export function electronPreloadVitePlugin(options?: ElectronPluginOptions): Plug
         config.publicDir = config.publicDir || 'resources'
         // do not copy public dir
         config.build.copyPublicDir = false
+        // module preload polyfill does not apply to nodejs (preload scripts)
+        config.build.modulePreload = false
       }
     },
     {
