@@ -1,3 +1,11 @@
+### v1.0.21 (_2023-03-27_)
+
+- fix(bytecodePlugin): bytecode loader is not referenced correctly in the chunks
+- fix(bytecodePlugin): sub-chunks are not compliled in vite 4
+- perf: always disable build.modulePreload in main and preload config
+- chore(deps): update esbuild to 0.17
+- chore(deps): update vite to 4.2.1
+
 ### v1.0.20 (_2023-03-12_)
 
 - feat: support for renderer debugging [#130](https://github.com/alex8088/electron-vite/issues/130)
