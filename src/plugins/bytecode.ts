@@ -8,6 +8,7 @@ import * as babel from '@babel/core'
 import MagicString from 'magic-string'
 import type { SourceMapInput } from 'rollup'
 import { getElectronPath } from '../electron'
+import { toRelativePath } from '../utils'
 
 // Inspired by https://github.com/bytenode/bytenode
 
@@ -182,7 +183,8 @@ export function bytecodePlugin(options: BytecodeOptions = {}): Plugin | null {
     return re.code || ''
   }
 
-  const requireBytecodeLoaderStr = '"use strict";\nrequire("./bytecode-loader.js");'
+  const useStrict = '"use strict";'
+  const bytecodeModuleLoader = 'bytecode-loader.js'
 
   let config: ResolvedConfig
   let useInRenderer = false
@@ -249,7 +251,7 @@ export function bytecodePlugin(options: BytecodeOptions = {}): Plugin | null {
           type: 'asset',
           source: bytecodeModuleLoaderCode.join('\n') + '\n',
           name: 'Bytecode Loader File',
-          fileName: 'bytecode-loader.js'
+          fileName: bytecodeModuleLoader
         })
       }
     },
@@ -265,6 +267,9 @@ export function bytecodePlugin(options: BytecodeOptions = {}): Plugin | null {
       const keepBundle = (chunkFileName: string): void => {
         const newFileName = path.resolve(path.dirname(chunkFileName), `_${path.basename(chunkFileName)}`)
         fs.renameSync(chunkFileName, newFileName)
+      }
+      const getBytecodeLoaderBlock = (chunkFileName: string): string => {
+        return `require("${toRelativePath(bytecodeModuleLoader, chunkFileName)}");`
       }
       await Promise.all(
         bundles.map(async name => {
@@ -292,7 +297,9 @@ export function bytecodePlugin(options: BytecodeOptions = {}): Plugin | null {
                 if (!removeBundleJS) {
                   keepBundle(chunkFileName)
                 }
-                const code = requireBytecodeLoaderStr + `\nrequire("./${normalizePath(name + 'c')}");\n`
+                const bytecodeLoaderBlock = getBytecodeLoaderBlock(chunk.fileName)
+                const bytecodeModuleBlock = `require("./${path.basename(name) + 'c'}");`
+                const code = `${useStrict}\n${bytecodeLoaderBlock}\n${bytecodeModuleBlock}\n`
                 fs.writeFileSync(chunkFileName, code)
               } else {
                 if (removeBundleJS) {
@@ -318,7 +325,8 @@ export function bytecodePlugin(options: BytecodeOptions = {}): Plugin | null {
                     for (const importerId of dynamicImporters) idsToHandle.add(importerId)
                   }
                 }
-                _code = hasBytecodeMoudle ? _code.replace('"use strict";', requireBytecodeLoaderStr) : _code
+                const bytecodeLoaderBlock = getBytecodeLoaderBlock(chunk.fileName)
+                _code = hasBytecodeMoudle ? _code.replace(useStrict, `${useStrict}\n${bytecodeLoaderBlock}`) : _code
               }
               fs.writeFileSync(chunkFileName, _code)
             }
