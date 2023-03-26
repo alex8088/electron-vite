@@ -6,7 +6,7 @@ import colors from 'picocolors'
 import { type Plugin, type ResolvedConfig, normalizePath, createFilter } from 'vite'
 import * as babel from '@babel/core'
 import MagicString from 'magic-string'
-import type { SourceMapInput } from 'rollup'
+import type { SourceMapInput, OutputChunk } from 'rollup'
 import { getElectronPath } from '../electron'
 import { toRelativePath } from '../utils'
 
@@ -168,9 +168,6 @@ export function bytecodePlugin(options: BytecodeOptions = {}): Plugin | null {
       .replace(/-/g, '\\u002d')
   }
 
-  const bytecodeChunks: string[] = []
-  const nonEntryChunks: string[] = []
-
   const transformAllChunks = _chunkAlias.length === 0
   const isBytecodeChunk = (chunkName: string): boolean => {
     return transformAllChunks || _chunkAlias.some(alias => alias === chunkName)
@@ -188,6 +185,7 @@ export function bytecodePlugin(options: BytecodeOptions = {}): Plugin | null {
 
   let config: ResolvedConfig
   let useInRenderer = false
+  let bytecodeRequired = false
   let bytecodeFiles: { name: string; size: number }[] = []
 
   return {
@@ -233,10 +231,7 @@ export function bytecodePlugin(options: BytecodeOptions = {}): Plugin | null {
         return null
       }
       if (chunk.type === 'chunk' && isBytecodeChunk(chunk.name)) {
-        bytecodeChunks.push(chunk.fileName)
-        if (!chunk.isEntry) {
-          nonEntryChunks.push(chunk.fileName)
-        }
+        bytecodeRequired = true
         if (transformArrowFunctions) {
           return {
             code: _transform(code)
@@ -246,7 +241,7 @@ export function bytecodePlugin(options: BytecodeOptions = {}): Plugin | null {
       return null
     },
     generateBundle(): void {
-      if (!useInRenderer && bytecodeChunks.length) {
+      if (!useInRenderer && bytecodeRequired) {
         this.emitFile({
           type: 'asset',
           source: bytecodeModuleLoaderCode.join('\n') + '\n',
@@ -256,21 +251,33 @@ export function bytecodePlugin(options: BytecodeOptions = {}): Plugin | null {
       }
     },
     async writeBundle(options, output): Promise<void> {
-      if (useInRenderer || bytecodeChunks.length === 0) {
+      if (useInRenderer || !bytecodeRequired) {
         return
       }
-      const bundles = Object.keys(output)
+
       const outDir = options.dir!
+
       bytecodeFiles = []
-      const pattern = nonEntryChunks.length ? nonEntryChunks.map(chunk => `(${chunk})`).join('|') : null
+
+      const bundles = Object.keys(output)
+      const chunks = Object.values(output).filter(
+        chunk => chunk.type === 'chunk' && isBytecodeChunk(chunk.name) && chunk.fileName !== bytecodeModuleLoader
+      ) as OutputChunk[]
+      const bytecodeChunks = chunks.map(chunk => chunk.fileName)
+      const nonEntryChunks = chunks.filter(chunk => !chunk.isEntry).map(chunk => path.basename(chunk.fileName))
+
+      const pattern = nonEntryChunks.map(chunk => `(${chunk})`).join('|')
       const bytecodeRE = pattern ? new RegExp(`require\\(\\S*(?=(${pattern})\\S*\\))`, 'g') : null
+
       const keepBundle = (chunkFileName: string): void => {
         const newFileName = path.resolve(path.dirname(chunkFileName), `_${path.basename(chunkFileName)}`)
         fs.renameSync(chunkFileName, newFileName)
       }
+
       const getBytecodeLoaderBlock = (chunkFileName: string): string => {
         return `require("${toRelativePath(bytecodeModuleLoader, chunkFileName)}");`
       }
+
       await Promise.all(
         bundles.map(async name => {
           const chunk = output[name]
@@ -291,8 +298,7 @@ export function bytecodePlugin(options: BytecodeOptions = {}): Plugin | null {
             const chunkFileName = path.resolve(outDir, name)
             if (bytecodeChunks.includes(name)) {
               const bytecodeBuffer = await compileToBytecode(_code)
-              const bytecodeFileName = path.resolve(outDir, name + 'c')
-              fs.writeFileSync(bytecodeFileName, bytecodeBuffer)
+              fs.writeFileSync(path.resolve(outDir, name + 'c'), bytecodeBuffer)
               if (chunk.isEntry) {
                 if (!removeBundleJS) {
                   keepBundle(chunkFileName)
