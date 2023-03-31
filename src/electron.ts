@@ -11,15 +11,15 @@ const ensureElectronEntryFile = (root = process.cwd()): void => {
   if (fs.existsSync(pkg)) {
     const main = require(pkg).main
     if (!main) {
-      throw new Error('not found an entry point to electorn app, please add main field for your package.json')
+      throw new Error('No entry point found for electron app, please add a "main" field to package.json')
     } else {
       const entryPath = path.resolve(root, main)
       if (!fs.existsSync(entryPath)) {
-        throw new Error(`not found the electorn app entry file: ${entryPath}`)
+        throw new Error(`No electron app entry file found: ${entryPath}`)
       }
     }
   } else {
-    throw new Error('no package.json')
+    throw new Error('Not found: package.json')
   }
 }
 
