@@ -1,3 +1,10 @@
+### v1.0.22 (_2023-04-23_)
+
+- feat(cli): add --rendererOnly flag to dev command
+- perf: build compatilibity target for Electron 24
+- chore: remove process env define
+- chore: typo error messages
+
 ### v1.0.21 (_2023-03-27_)
 
 - fix(bytecodePlugin): bytecode loader is not referenced correctly in the chunks
