@@ -12,7 +12,10 @@ import { type InlineConfig, resolveConfig } from './config'
 import { resolveHostname } from './utils'
 import { startElectron } from './electron'
 
-export async function createServer(inlineConfig: InlineConfig = {}): Promise<void> {
+export async function createServer(
+  inlineConfig: InlineConfig = {},
+  options: { rendererOnly?: boolean }
+): Promise<void> {
   process.env.NODE_ENV_ELECTRON_VITE = 'development'
   const config = await resolveConfig(inlineConfig, 'serve', 'development')
   if (config.config) {
@@ -22,7 +25,7 @@ export async function createServer(inlineConfig: InlineConfig = {}): Promise<voi
     let ps: ChildProcessWithoutNullStreams | undefined
 
     const mainViteConfig = config.config?.main
-    if (mainViteConfig) {
+    if (mainViteConfig && !options.rendererOnly) {
       const watchHook = (): void => {
         logger.info(colors.green(`\nrebuild the electron main process successfully`))
 
@@ -43,7 +46,7 @@ export async function createServer(inlineConfig: InlineConfig = {}): Promise<voi
     }
 
     const preloadViteConfig = config.config?.preload
-    if (preloadViteConfig) {
+    if (preloadViteConfig && !options.rendererOnly) {
       logger.info(colors.gray(`\n-----\n`))
 
       const watchHook = (): void => {
@@ -59,6 +62,14 @@ export async function createServer(inlineConfig: InlineConfig = {}): Promise<voi
       await doBuild(preloadViteConfig, watchHook)
 
       logger.info(colors.green(`\nbuild the electron preload files successfully`))
+    }
+
+    if (options.rendererOnly) {
+      logger.warn(
+        `\n${colors.yellow(colors.bold('warn'))}:${colors.yellow(
+          ' you have skipped the main process and preload scripts building'
+        )}`
+      )
     }
 
     const rendererViteConfig = config.config?.renderer
@@ -83,7 +94,7 @@ export async function createServer(inlineConfig: InlineConfig = {}): Promise<voi
       const slogger = server.config.logger
 
       slogger.info(colors.green(`dev server running for the electron renderer process at:\n`), {
-        clear: !slogger.hasWarned
+        clear: !slogger.hasWarned && !options.rendererOnly
       })
 
       server.printUrls()

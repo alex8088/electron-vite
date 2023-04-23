@@ -60,7 +60,8 @@ cli
   .alias('dev')
   .option('-w, --watch', `[boolean] rebuilds when main process or preload script modules have changed on disk`)
   .option('--remoteDebuggingPort <port>', `[string] port for remote debugging`)
-  .action(async (root: string, options: { remoteDebuggingPort?: string } & GlobalCLIOptions) => {
+  .option('--rendererOnly', `[boolean] only dev server for the renderer`)
+  .action(async (root: string, options: { remoteDebuggingPort?: string; rendererOnly: boolean } & GlobalCLIOptions) => {
     if (options.remoteDebuggingPort) {
       process.env.REMOTE_DEBUGGING_PORT = options.remoteDebuggingPort
     }
@@ -69,7 +70,7 @@ cli
     const inlineConfig = createInlineConfig(root, options)
 
     try {
-      await createServer(inlineConfig)
+      await createServer(inlineConfig, { rendererOnly: options.rendererOnly })
     } catch (e) {
       const error = e as Error
       createLogger(options.logLevel).error(
