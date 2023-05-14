@@ -29,6 +29,14 @@ function findInput(root: string, scope = 'renderer'): string {
   return ''
 }
 
+function processEnvDefine(): Record<string, string> {
+  return {
+    'process.env': `process.env`,
+    'global.process.env': `global.process.env`,
+    'globalThis.process.env': `globalThis.process.env`
+  }
+}
+
 export function electronMainVitePlugin(options?: ElectronPluginOptions): Plugin[] {
   return [
     {
@@ -74,6 +82,9 @@ export function electronMainVitePlugin(options?: ElectronPluginOptions): Plugin[
 
         const buildConfig = mergeConfig(defaultConfig.build, build)
         config.build = buildConfig
+
+        config.define = config.define || {}
+        config.define = { ...processEnvDefine(), ...config.define }
 
         config.envPrefix = config.envPrefix || 'MAIN_VITE_'
 
@@ -173,6 +184,9 @@ export function electronPreloadVitePlugin(options?: ElectronPluginOptions): Plug
 
         const buildConfig = mergeConfig(defaultConfig.build, build)
         config.build = buildConfig
+
+        config.define = config.define || {}
+        config.define = { ...processEnvDefine(), ...config.define }
 
         config.envPrefix = config.envPrefix || 'PRELOAD_VITE_'
 
