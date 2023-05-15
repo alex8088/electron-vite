@@ -28,15 +28,13 @@
 ## Features
 
 - ⚡️ [Vite](https://vitejs.dev) powered and use the same way.
-- 🛠 Centralized Configuration.
-- 💡 Pre-configured for Electron, don't worry about configuration.
-- 🚀 Fast HMR for renderers.
+- 🛠 Pre-configured for Electron, don't worry about configuration.
+- 💡 Optimize asset handling (Node.js addons, WebAssembly, Worker Thread, etc).
+- 🚀 Fast HMR for renderer processes.
 - 🔥 Hot reloading for main process and preload scripts.
-- 🔌 Easy to debug.
-- 🔋 Static asset handling (Node.js addons, WebAssembly, etc).
+- 🔌 Easy to debug in IDEs like VSCode or WebStorm.
 - 🔒 Compile to v8 bytecode to protect source code.
 - 🏷️ Support for TypeScript decorators.
-- 🔩 Easy to use workers and fork process.
 - 📦 Out-of-the-box support for TypeScript, Vue, React, Svelte, SolidJS and more.
 
 ## Usage
@@ -61,7 +59,7 @@ In a project where `electron-vite` is installed, you can use `electron-vite` bin
 }
 ```
 
-### Configuring
+### Configuration
 
 When running `electron-vite` from the command line, electron-vite will automatically try to resolve a config file named `electron.vite.config.js` inside project root. The most basic config file looks like this:
 
@@ -80,96 +78,23 @@ export default {
 }
 ```
 
-### Use HMR in Renderer
-
-In order to use the renderer process HMR, you need to use the `environment variables` to determine whether the window browser loads a local html file or a local URL.
-
-```js
-function createWindow() {
-  // Create the browser window
-  const mainWindow = new BrowserWindow({
-    width: 800,
-    height: 600,
-    webPreferences: {
-      preload: path.join(__dirname, '../preload/index.js')
-    }
-  })
-
-  // Load the remote URL for development or the local html file for production
-  if (!app.isPackaged && process.env['ELECTRON_RENDERER_URL']) {
-    mainWindow.loadURL(process.env['ELECTRON_RENDERER_URL'])
-  } else {
-    mainWindow.loadFile(path.join(__dirname, '../renderer/index.html'))
-  }
-}
-```
-
-### Hot Reloading
-
-Hot reloading refers to quickly rebuilding and restarting the Electron app when the main process or preload scripts module changes. In fact, it's not really hot reloading, but similar. It also brings a good development experience to developers.
-
-There are two ways to enable it:
-
-1. Use CLI option `-w` or `--watch`, e.g. `electron-vite dev --watch`. This is the preferred way, it's more flexible.
-
-2. Use configuration option `build.watch` and set to `{}`. In addition, more watcher options can be configured, see [WatcherOptions](https://rollupjs.org/guide/en/#watch-options).
-
-### Debugging in VSCode
-
-Add a file `.vscode/launch.json` with the following configuration:
-
-```json
-{
-  "version": "0.2.0",
-  "configurations": [
-    {
-      "name": "Debug Main Process",
-      "type": "node",
-      "request": "launch",
-      "cwd": "${workspaceRoot}",
-      "runtimeExecutable": "${workspaceRoot}/node_modules/.bin/electron-vite",
-      "windows": {
-        "runtimeExecutable": "${workspaceRoot}/node_modules/.bin/electron-vite.cmd"
-      },
-      "runtimeArgs": ["--sourcemap"]
-    }
-  ]
-}
-```
-
-Then, set some breakpoints in `main.ts` (source code), and start debugging in the `VSCode Debug View`.
-
-### Source Code Protection
-
-Use the plugin `bytecodePlugin` to enable it:
-
-```js
-import { defineConfig, bytecodePlugin } from 'electron-vite'
-
-export default defineConfig({
-  main: {
-    plugins: [bytecodePlugin()]
-  },
-  preload: {
-    plugins: [bytecodePlugin()]
-  },
-  renderer: {
-    // ...
-  }
-})
-```
-
-`bytecodePlugin` only works in production and supports the main process and preload scripts.
-
-Also, you can learn more by playing with the [example](https://github.com/alex8088/electron-vite-bytecode-example).
-
 ### Getting Started
 
 Clone the [electron-vite-boilerplate](https://github.com/alex8088/electron-vite-boilerplate) or use the [create-electron](https://github.com/alex8088/quick-start/tree/master/packages/create-electron) tool to scaffold your project.
 
 ```bash
-npm init @quick-start/electron
+npm create @quick-start/electron
 ```
+
+Currently supported template presets include:
+
+|                                                 JavaScript                                                 |                                                    TypeScript                                                    |
+| :--------------------------------------------------------------------------------------------------------: | :--------------------------------------------------------------------------------------------------------------: |
+| [vanilla](https://github.com/alex8088/quick-start/tree/master/packages/create-electron/playground/vanilla) | [vanilla-ts](https://github.com/alex8088/quick-start/tree/master/packages/create-electron/playground/vanilla-ts) |
+|     [vue](https://github.com/alex8088/quick-start/tree/master/packages/create-electron/playground/vue)     |     [vue-ts](https://github.com/alex8088/quick-start/tree/master/packages/create-electron/playground/vue-ts)     |
+|   [react](https://github.com/alex8088/quick-start/tree/master/packages/create-electron/playground/react)   |   [react-ts](https://github.com/alex8088/quick-start/tree/master/packages/create-electron/playground/react-ts)   |
+|  [svelte](https://github.com/alex8088/quick-start/tree/master/packages/create-electron/playground/svelte)  |  [svelte-ts](https://github.com/alex8088/quick-start/tree/master/packages/create-electron/playground/svelte-ts)  |
+|   [solid](https://github.com/alex8088/quick-start/tree/master/packages/create-electron/playground/solid)   |   [solid-ts](https://github.com/alex8088/quick-start/tree/master/packages/create-electron/playground/solid-ts)   |
 
 ## Contribution
 
