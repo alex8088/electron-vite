@@ -306,8 +306,8 @@ export function electronRendererVitePlugin(options?: ElectronPluginOptions): Plu
           throw new Error('build target required for the electron vite renderer config')
         } else {
           const targets = Array.isArray(build.target) ? build.target : [build.target]
-          if (targets.some(t => !t.startsWith('chrome'))) {
-            throw new Error('the electron vite renderer config build target must be chrome')
+          if (targets.some(t => !t.startsWith('chrome') && !/^es((202\d{1})|next)$/.test(t))) {
+            throw new Error('the electron vite renderer config build target must be chrome? or es?')
           }
         }
 
