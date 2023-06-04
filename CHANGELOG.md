@@ -1,3 +1,10 @@
+### v1.0.23 (_2023-06-04_)
+
+- feat: supports ES build target for renderer [#174](https://github.com/alex8088/electron-vite/issues/174)
+- revert: chore: remove process env define [#159](https://github.com/alex8088/electron-vite/issues/174)
+- perf: build compatilibity target for Electron 25
+- chore(deps): update all non-major dependencies
+
 ### v1.0.22 (_2023-04-23_)
 
 - feat(cli): add --rendererOnly flag to dev command
