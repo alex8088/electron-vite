@@ -9,17 +9,17 @@
 
 <p align="center">
 <img src="https://img.shields.io/npm/v/electron-vite?color=6988e6&label=version">
-<img src="https://img.shields.io/github/license/alex8088/wx-vue-next?color=blue" alt="license" />
+<img src="https://img.shields.io/github/license/alex8088/electron-vite?color=blue" alt="license" />
 </p>
 
 <p align="center">
-<a href="https://evite.netlify.app/">Documentation</a> |
-<a href="https://evite.netlify.app/guide/">Getting Started</a> |
+<a href="https://electron-vite.org">Documentation</a> |
+<a href="https://electron-vite.org/guide">Getting Started</a> |
 <a href="https://github.com/alex8088/quick-start/tree/master/packages/create-electron">create-electron</a>
 </p>
 
 <p align="center">
-<a href="https://cn-evite.netlify.app/">中文文档</a>
+<a href="https://cn.electron-vite.org">中文文档</a>
 </p>
 
 <br />
