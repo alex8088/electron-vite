@@ -275,7 +275,7 @@ export function bytecodePlugin(options: BytecodeOptions = {}): Plugin | null {
       }
 
       const getBytecodeLoaderBlock = (chunkFileName: string): string => {
-        return `require("${toRelativePath(bytecodeModuleLoader, chunkFileName)}");`
+        return `require("${toRelativePath(bytecodeModuleLoader, normalizePath(chunkFileName))}");`
       }
 
       await Promise.all(
