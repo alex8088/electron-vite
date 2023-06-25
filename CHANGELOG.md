@@ -1,3 +1,8 @@
+### v1.0.24 (_2023-06-25_)
+
+- fix(bytecodePlugin): bytecode loader relative path is incorrect
+- perf: ignore `browser` field and additional `node` condition for main config
+
 ### v1.0.23 (_2023-06-04_)
 
 - feat: supports ES build target for renderer [#174](https://github.com/alex8088/electron-vite/issues/174)
