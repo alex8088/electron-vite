@@ -7,7 +7,7 @@ specifiers:
   '@rollup/plugin-node-resolve': ^15.1.0
   '@rollup/plugin-typescript': ^9.0.2
   '@swc/core': ^1.3.68
-  '@types/node': 16.18.3
+  '@types/node': ^18.16.19
   '@typescript-eslint/eslint-plugin': ^5.61.0
   '@typescript-eslint/parser': ^5.61.0
   cac: ^6.7.14
@@ -35,11 +35,11 @@ dependencies:
   picocolors: 1.0.0
 
 devDependencies:
-  '@microsoft/api-extractor': 7.36.1_@types+node@16.18.3
+  '@microsoft/api-extractor': 7.36.1_@types+node@18.16.19
   '@rollup/plugin-node-resolve': 15.1.0_rollup@3.18.0
   '@rollup/plugin-typescript': 9.0.2_dqzv47upg2sjyhpt56roihti2a
   '@swc/core': 1.3.68
-  '@types/node': 16.18.3
+  '@types/node': 18.16.19
   '@typescript-eslint/eslint-plugin': 5.61.0_5mkd3upyxvtrqpsvlauzmoggde
   '@typescript-eslint/parser': 5.61.0_ep45deogbgvlsoxfwheivm3tpi
   eslint: 8.44.0
@@ -52,7 +52,7 @@ devDependencies:
   simple-git-hooks: 2.8.1
   tslib: 2.6.0
   typescript: 4.8.4
-  vite: 4.2.1_@types+node@16.18.3
+  vite: 4.2.1_@types+node@18.16.19
 
 packages:
 
@@ -546,24 +546,24 @@ packages:
       '@jridgewell/sourcemap-codec': 1.4.14
     dev: false
 
-  /@microsoft/api-extractor-model/7.27.4_@types+node@16.18.3:
+  /@microsoft/api-extractor-model/7.27.4_@types+node@18.16.19:
     resolution: {integrity: sha512-HjqQFmuGPOS20rtnu+9Jj0QrqZyR59E+piUWXPMZTTn4jaZI+4UmsHSf3Id8vyueAhOBH2cgwBuRTE5R+MfSMw==}
     dependencies:
       '@microsoft/tsdoc': 0.14.2
       '@microsoft/tsdoc-config': 0.16.2
-      '@rushstack/node-core-library': 3.59.5_@types+node@16.18.3
+      '@rushstack/node-core-library': 3.59.5_@types+node@18.16.19
     transitivePeerDependencies:
       - '@types/node'
     dev: true
 
-  /@microsoft/api-extractor/7.36.1_@types+node@16.18.3:
+  /@microsoft/api-extractor/7.36.1_@types+node@18.16.19:
     resolution: {integrity: sha512-2SPp1jq6wDY5IOsRLUv/4FxngslctBZJlztAJ3uWpCAwqKQG7ESdL3DhEza+StbYLtBQmu1Pk6q1Vkhl7qD/bg==}
     hasBin: true
     dependencies:
-      '@microsoft/api-extractor-model': 7.27.4_@types+node@16.18.3
+      '@microsoft/api-extractor-model': 7.27.4_@types+node@18.16.19
       '@microsoft/tsdoc': 0.14.2
       '@microsoft/tsdoc-config': 0.16.2
-      '@rushstack/node-core-library': 3.59.5_@types+node@16.18.3
+      '@rushstack/node-core-library': 3.59.5_@types+node@18.16.19
       '@rushstack/rig-package': 0.4.0
       '@rushstack/ts-command-line': 4.15.1
       colors: 1.2.5
@@ -668,7 +668,7 @@ packages:
       rollup: 3.18.0
     dev: true
 
-  /@rushstack/node-core-library/3.59.5_@types+node@16.18.3:
+  /@rushstack/node-core-library/3.59.5_@types+node@18.16.19:
     resolution: {integrity: sha512-1IpV7LufrI1EoVO8hYsb3t6L8L+yp40Sa0OaOV2CIu1zx4e6ZeVNaVIEXFgMXBKdGXkAh21MnCaIzlDNpG6ZQw==}
     peerDependencies:
       '@types/node': '*'
@@ -676,7 +676,7 @@ packages:
       '@types/node':
         optional: true
     dependencies:
-      '@types/node': 16.18.3
+      '@types/node': 18.16.19
       colors: 1.2.5
       fs-extra: 7.0.1
       import-lazy: 4.0.0
@@ -826,8 +826,8 @@ packages:
     resolution: {integrity: sha512-Hr5Jfhc9eYOQNPYO5WLDq/n4jqijdHNlDXjuAQkkt+mWdQR+XJToOHrsD4cPaMXpn6KO7y2+wM8AZEs8VpBLVA==}
     dev: true
 
-  /@types/node/16.18.3:
-    resolution: {integrity: sha512-jh6m0QUhIRcZpNv7Z/rpN+ZWXOicUUQbSoWks7Htkbb9IjFQj4kzcX/xFCkjstCj5flMsN8FiSvt+q+Tcs4Llg==}
+  /@types/node/18.16.19:
+    resolution: {integrity: sha512-IXl7o+R9iti9eBW4Wg2hx1xQDig183jj7YLn8F7udNceyfkbn1ZxmzZXuak20gR40D7pIkIY1kYGx5VIGbaHKA==}
     dev: true
 
   /@types/resolve/1.20.2:
@@ -2434,7 +2434,7 @@ packages:
     engines: {node: '>= 0.10'}
     dev: true
 
-  /vite/4.2.1_@types+node@16.18.3:
+  /vite/4.2.1_@types+node@18.16.19:
     resolution: {integrity: sha512-7MKhqdy0ISo4wnvwtqZkjke6XN4taqQ2TBaTccLIpOKv7Vp2h4Y+NpmWCnGDeSvvn45KxvWgGyb0MkHvY1vgbg==}
     engines: {node: ^14.18.0 || >=16.0.0}
     hasBin: true
@@ -2459,7 +2459,7 @@ packages:
       terser:
         optional: true
     dependencies:
-      '@types/node': 16.18.3
+      '@types/node': 18.16.19
       esbuild: 0.17.19
       postcss: 8.4.21
       resolve: 1.22.1

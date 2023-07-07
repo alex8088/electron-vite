@@ -64,7 +64,7 @@
     "@rollup/plugin-node-resolve": "^15.1.0",
     "@rollup/plugin-typescript": "^9.0.2",
     "@swc/core": "^1.3.68",
-    "@types/node": "16.18.3",
+    "@types/node": "^18.16.19",
     "@typescript-eslint/eslint-plugin": "^5.61.0",
     "@typescript-eslint/parser": "^5.61.0",
     "eslint": "^8.44.0",
