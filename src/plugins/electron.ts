@@ -158,11 +158,6 @@ export function electronPreloadVitePlugin(options?: ElectronPluginOptions): Plug
         const nodeTarget = getElectronNodeTarget()
 
         const defaultConfig = {
-          resolve: {
-            browserField: false,
-            mainFields: ['module', 'jsnext:main', 'jsnext'],
-            conditions: ['node']
-          },
           build: {
             outDir: path.resolve(root, 'out', 'preload'),
             target: nodeTarget,
@@ -196,8 +191,6 @@ export function electronPreloadVitePlugin(options?: ElectronPluginOptions): Plug
 
         const buildConfig = mergeConfig(defaultConfig.build, build)
         config.build = buildConfig
-
-        config.resolve = mergeConfig(defaultConfig.resolve, config.resolve || {})
 
         config.define = config.define || {}
         config.define = { ...processEnvDefine(), ...config.define }
