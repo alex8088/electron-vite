@@ -73,7 +73,7 @@
     "fs-extra": "^11.1.1",
     "lint-staged": "^13.2.3",
     "prettier": "^2.8.8",
-    "rollup": "^3.18.0",
+    "rollup": "^3.26.2",
     "simple-git-hooks": "^2.8.1",
     "tslib": "^2.6.0",
     "typescript": "5.0.4",
