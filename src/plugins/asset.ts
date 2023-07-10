@@ -68,6 +68,10 @@ export default function assetPlugin(): Plugin {
     name: 'vite:node-asset',
     apply: 'build',
     enforce: 'pre',
+    buildStart(): void {
+      publicAssetPathCache.clear()
+      assetCache.clear()
+    },
     configResolved(config): void {
       sourcemap = config.build.sourcemap
       publicDir = normalizePath(config.publicDir)
