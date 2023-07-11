@@ -1,3 +1,15 @@
+### v1.0.25 (_2023-07-11_)
+
+- fix: remove node resolve condition for preload [#204](https://github.com/alex8088/electron-vite/issues/204)
+- fix(asset): asset handling error when hot reloading
+- chore(deps): update all non-major dependencies
+- chore(deps): update fs-extra to v11
+- chore(deps): update @types/node to v18
+- chore(deps): update typescript to 5.0.4
+- chore(deps): update vite to 4.4.2
+- chore(deps): update esbuild to v0.18
+- chore(deps): update rollup to 3.26.2
+
 ### v1.0.24 (_2023-06-25_)
 
 - fix(bytecodePlugin): bytecode loader relative path is incorrect
