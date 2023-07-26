@@ -1,6 +1,5 @@
 name: "\U0001F41E Bug Report"
 description: Report an issue with electron-vite
-labels: ['bug', 'triage']
 body:
   - type: markdown
     attributes:
@@ -45,7 +44,7 @@ body:
           required: true
         - label: Read the [Contributing Guidelines](https://github.com/alex8088/electron-vite/blob/master/CONTRIBUTING.md).
           required: true
-        - label: Read the [docs](https://evite.netlify.app).
+        - label: Read the [docs](https://electron-vite.org).
           required: true
         - label: Check that there isn't [already an issue](https://github.com/alex8088/electron-vite/issues) that reports the same bug to avoid creating a duplicate.
           required: true
