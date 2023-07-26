@@ -26,6 +26,13 @@ interface GlobalCLIOptions {
   outDir?: string
 }
 
+interface DevCLIOptions {
+  inspect?: boolean | string
+  inspectBrk?: boolean | string
+  remoteDebuggingPort?: string
+  rendererOnly?: boolean
+}
+
 function createInlineConfig(root: string, options: GlobalCLIOptions): InlineConfig {
   return {
     root,
@@ -59,11 +66,21 @@ cli
   .alias('serve')
   .alias('dev')
   .option('-w, --watch', `[boolean] rebuilds when main process or preload script modules have changed on disk`)
+  .option('--inspect [port]', `[boolean | number] enable V8 inspector on the specified port`)
+  .option('--inspectBrk [port]', `[boolean | number] enable V8 inspector on the specified port`)
   .option('--remoteDebuggingPort <port>', `[string] port for remote debugging`)
   .option('--rendererOnly', `[boolean] only dev server for the renderer`)
-  .action(async (root: string, options: { remoteDebuggingPort?: string; rendererOnly: boolean } & GlobalCLIOptions) => {
+  .action(async (root: string, options: DevCLIOptions & GlobalCLIOptions) => {
     if (options.remoteDebuggingPort) {
       process.env.REMOTE_DEBUGGING_PORT = options.remoteDebuggingPort
+    }
+
+    if (options.inspect) {
+      process.env.V8_INSPECTOR_PORT = typeof options.inspect === 'number' ? `${options.inspect}` : '5858'
+    }
+
+    if (options.inspectBrk) {
+      process.env.V8_INSPECTOR_BRK_PORT = typeof options.inspectBrk === 'number' ? `${options.inspectBrk}` : '5858'
     }
 
     const { createServer } = await import('./server')
