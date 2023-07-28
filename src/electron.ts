@@ -1,8 +1,7 @@
 import path from 'node:path'
 import fs from 'node:fs'
 import { createRequire } from 'node:module'
-import { type ChildProcessWithoutNullStreams, spawn } from 'node:child_process'
-import { type Logger } from 'vite'
+import { type ChildProcess, spawn } from 'node:child_process'
 
 const _require = createRequire(import.meta.url)
 
@@ -111,12 +110,10 @@ export function getElectronChromeTarget(): string {
   return ''
 }
 
-export function startElectron(root: string | undefined, logger: Logger): ChildProcessWithoutNullStreams {
+export function startElectron(root: string | undefined): ChildProcess {
   ensureElectronEntryFile(root)
 
   const electronPath = getElectronPath()
-
-  const inspect = !!process.env.VSCODE_INSPECTOR_OPTIONS
 
   const isDev = process.env.NODE_ENV_ELECTRON_VITE === 'development'
 
@@ -134,13 +131,7 @@ export function startElectron(root: string | undefined, logger: Logger): ChildPr
     args.push(`--inspect-brk=${process.env.V8_INSPECTOR_BRK_PORT}`)
   }
 
-  const ps = spawn(electronPath, ['.'].concat(args))
-  ps.stdout.on('data', chunk => {
-    !inspect && chunk.toString().trim() && logger.info(chunk.toString())
-  })
-  ps.stderr.on('data', chunk => {
-    !inspect && chunk.toString().trim() && logger.error(chunk.toString())
-  })
+  const ps = spawn(electronPath, ['.'].concat(args), { stdio: 'inherit' })
   ps.on('close', process.exit)
 
   return ps

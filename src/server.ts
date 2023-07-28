@@ -1,4 +1,4 @@
-import type { ChildProcessWithoutNullStreams } from 'node:child_process'
+import type { ChildProcess } from 'node:child_process'
 import {
   type UserConfig as ViteConfig,
   type ViteDevServer,
@@ -22,7 +22,7 @@ export async function createServer(
     const logger = createLogger(inlineConfig.logLevel)
 
     let server: ViteDevServer | undefined
-    let ps: ChildProcessWithoutNullStreams | undefined
+    let ps: ChildProcess | undefined
 
     const mainViteConfig = config.config?.main
     if (mainViteConfig && !options.rendererOnly) {
@@ -34,7 +34,7 @@ export async function createServer(
 
           ps.removeAllListeners()
           ps.kill()
-          ps = startElectron(inlineConfig.root, logger)
+          ps = startElectron(inlineConfig.root)
 
           logger.info(colors.green(`\nrestart electron app...`))
         }
@@ -100,7 +100,7 @@ export async function createServer(
       server.printUrls()
     }
 
-    ps = startElectron(inlineConfig.root, logger)
+    ps = startElectron(inlineConfig.root)
 
     logger.info(colors.green(`\nstart electron app...\n`))
   }
