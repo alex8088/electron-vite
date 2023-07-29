@@ -15,6 +15,7 @@
   "engines": {
     "node": "^14.18.0 || >=16.0.0"
   },
+  "packageManager": "pnpm@8.6.10",
   "author": "Alex Wei<https://github.com/alex8088>",
   "license": "MIT",
   "repository": {
@@ -32,6 +33,7 @@
     "plugin"
   ],
   "scripts": {
+    "preinstall": "npx only-allow pnpm",
     "format": "prettier --write .",
     "lint": "eslint --ext .ts src/**",
     "typecheck": "tsc --noEmit",
