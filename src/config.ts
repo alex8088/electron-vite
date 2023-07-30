@@ -26,19 +26,19 @@ export interface UserConfig {
   /**
    * Vite config options for electron main process
    *
-   * https://cn.vitejs.dev/config/
+   * https://vitejs.dev/config/
    */
   main?: ViteConfig & { configFile?: string | false }
   /**
    * Vite config options for electron renderer process
    *
-   * https://cn.vitejs.dev/config/
+   * https://vitejs.dev/config/
    */
   renderer?: ViteConfig & { configFile?: string | false }
   /**
    * Vite config options for electron preload files
    *
-   * https://cn.vitejs.dev/config/
+   * https://vitejs.dev/config/
    */
   preload?: ViteConfig & { configFile?: string | false }
 }
@@ -47,19 +47,19 @@ export interface UserConfigSchema {
   /**
    * Vite config options for electron main process
    *
-   * https://cn.vitejs.dev/config/
+   * https://vitejs.dev/config/
    */
   main?: UserViteConfigExport
   /**
    * Vite config options for electron renderer process
    *
-   * https://cn.vitejs.dev/config/
+   * https://vitejs.dev/config/
    */
   renderer?: UserViteConfigExport
   /**
    * Vite config options for electron preload files
    *
-   * https://cn.vitejs.dev/config/
+   * https://vitejs.dev/config/
    */
   preload?: UserViteConfigExport
 }
