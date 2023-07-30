@@ -27,3 +27,13 @@ declare module '*.wasm?loader' {
   const loadWasm: (options?: WebAssembly.Imports) => Promise<WebAssembly.Instance>
   export default loadWasm
 }
+
+// build-in process env
+declare namespace NodeJS {
+  interface ProcessEnv {
+    /**
+     * Vite's dev server address for Electron renderers.
+     */
+    readonly ELECTRON_RENDERER_URL?: string
+  }
+}
