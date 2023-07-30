@@ -1,3 +1,14 @@
+### v1.0.26 (_2023-07-30_)
+
+- feat(cli): add CLI `--inspect[-brk]` to support debugging without IDEs ([#231](https://github.com/alex8088/electron-vite/issues/231))
+- feat(types): add process.env.ELECTRON_RENDERER_URL type
+- feat(types): add Vite importMeta types
+- perf: spawn Electron process using parent's stdios ([#236](https://github.com/alex8088/electron-vite/issues/236))
+- chore: update user config interface jsdoc
+- chore(deps): update pnpm to v8
+- chore(deps): update prettier to v3
+- chore(deps): update @typescript-eslint/\* to v6
+
 ### v1.0.25 (_2023-07-11_)
 
 - fix: remove node resolve condition for preload [#204](https://github.com/alex8088/electron-vite/issues/204)
