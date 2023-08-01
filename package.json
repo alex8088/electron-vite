@@ -33,7 +33,6 @@
     "plugin"
   ],
   "scripts": {
-    "preinstall": "npx only-allow pnpm",
     "format": "prettier --write .",
     "lint": "eslint --ext .ts src/**",
     "typecheck": "tsc --noEmit",
