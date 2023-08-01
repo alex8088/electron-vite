@@ -1,3 +1,7 @@
+### v1.0.27 (_2023-08-01_)
+
+- chore: remove preinstall script
+
 ### v1.0.26 (_2023-07-30_)
 
 - feat(cli): add CLI `--inspect[-brk]` to support debugging without IDEs ([#231](https://github.com/alex8088/electron-vite/issues/231))
