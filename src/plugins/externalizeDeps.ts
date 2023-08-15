@@ -33,7 +33,7 @@ export function externalizeDepsPlugin(options: ExternalOptions = {}): Plugin | n
       const defaultConfig = {
         build: {
           rollupOptions: {
-            external: [...new Set(deps)]
+            external: [...new Set(deps.map(d => new RegExp(`^${d}\/?.*`)))]
           }
         }
       }
