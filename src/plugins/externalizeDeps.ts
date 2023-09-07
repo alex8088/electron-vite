@@ -19,12 +19,14 @@ export function externalizeDepsPlugin(options: ExternalOptions = {}): Plugin | n
   let deps = Object.keys(pkg.dependencies || {})
 
   if (include.length) {
-    deps = deps.concat(include)
+    deps = deps.concat(include.filter(dep => dep.trim() !== ''))
   }
 
   if (exclude.length) {
     deps = deps.filter(dep => !exclude.includes(dep))
   }
+
+  deps = [...new Set(deps)]
 
   return {
     name: 'vite:externalize-deps',
@@ -33,7 +35,7 @@ export function externalizeDepsPlugin(options: ExternalOptions = {}): Plugin | n
       const defaultConfig = {
         build: {
           rollupOptions: {
-            external: [...new Set(deps.map(d => new RegExp(`^${d}\/?.*`)))]
+            external: deps.length > 0 ? [...deps, new RegExp(`^(${deps.join('|')})/.+`)] : []
           }
         }
       }
