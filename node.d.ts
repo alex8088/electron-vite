@@ -15,6 +15,11 @@ declare module '*?asset&asarUnpack' {
   export default src
 }
 
+declare module '*.json?commonjs-external&asset' {
+  const src: string
+  export default src
+}
+
 // native node module
 declare module '*.node' {
   /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
