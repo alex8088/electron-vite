@@ -58,6 +58,7 @@ export function getElectronNodeTarget(): string {
   const electronVer = getElectronMajorVer()
 
   const nodeVer = {
+    '26': '18.16',
     '25': '18.15',
     '24': '18.14',
     '23': '18.12',
@@ -86,6 +87,7 @@ export function getElectronChromeTarget(): string {
   const electronVer = getElectronMajorVer()
 
   const chromeVer = {
+    '26': '116',
     '25': '114',
     '24': '112',
     '23': '110',
