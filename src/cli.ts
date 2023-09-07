@@ -24,6 +24,7 @@ interface GlobalCLIOptions {
   w?: boolean
   watch?: boolean
   outDir?: string
+  entry?: string
 }
 
 interface DevCLIOptions {
@@ -59,6 +60,7 @@ cli
   .option('--ignoreConfigWarning', `[boolean] ignore config warning`)
   .option('--sourcemap', `[boolean] output source maps for debug (default: false)`)
   .option('--outDir <dir>', `[string] output directory (default: out)`)
+  .option('--entry <file>', `[string] specify electron entry file`)
 
 // dev
 cli
@@ -83,6 +85,10 @@ cli
       process.env.V8_INSPECTOR_BRK_PORT = typeof options.inspectBrk === 'number' ? `${options.inspectBrk}` : '5858'
     }
 
+    if (options.entry) {
+      process.env.ELECTRON_ENTRY = options.entry
+    }
+
     const { createServer } = await import('./server')
     const inlineConfig = createInlineConfig(root, options)
 
@@ -103,6 +109,10 @@ cli.command('build [root]', 'build for production').action(async (root: string, 
   const { build } = await import('./build')
   const inlineConfig = createInlineConfig(root, options)
 
+  if (options.entry) {
+    process.env.ELECTRON_ENTRY = options.entry
+  }
+
   try {
     await build(inlineConfig)
   } catch (e) {
@@ -119,6 +129,10 @@ cli
   .action(async (root: string, options: { skipBuild?: boolean } & GlobalCLIOptions) => {
     const { preview } = await import('./preview')
     const inlineConfig = createInlineConfig(root, options)
+
+    if (options.entry) {
+      process.env.ELECTRON_ENTRY = options.entry
+    }
 
     try {
       await preview(inlineConfig, { skipBuild: options.skipBuild })

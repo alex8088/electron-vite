@@ -6,6 +6,7 @@ import { type ChildProcess, spawn } from 'node:child_process'
 const _require = createRequire(import.meta.url)
 
 const ensureElectronEntryFile = (root = process.cwd()): void => {
+  if (process.env.ELECTRON_ENTRY) return
   const pkg = path.join(root, 'package.json')
   if (fs.existsSync(pkg)) {
     const main = require(pkg).main
@@ -133,7 +134,9 @@ export function startElectron(root: string | undefined): ChildProcess {
     args.push(`--inspect-brk=${process.env.V8_INSPECTOR_BRK_PORT}`)
   }
 
-  const ps = spawn(electronPath, ['.'].concat(args), { stdio: 'inherit' })
+  const entry = process.env.ELECTRON_ENTRY || '.'
+
+  const ps = spawn(electronPath, [entry].concat(args), { stdio: 'inherit' })
   ps.on('close', process.exit)
 
   return ps
