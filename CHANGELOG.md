@@ -1,3 +1,10 @@
+### v1.0.28 (_2023-09-18_)
+
+- feat(cli): supports specifying electron entry file (#270)
+- fix(externalizeDepsPlugin): supports subpath
+- perf: build compatilibity target for Electron 26
+- chore(types): add .json?commonjs-external&asset typing
+
 ### v1.0.27 (_2023-08-01_)
 
 - chore: remove preinstall script
