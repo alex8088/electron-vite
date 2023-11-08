@@ -136,6 +136,10 @@ export function startElectron(root: string | undefined): ChildProcess {
     args.push(`--inspect-brk=${process.env.V8_INSPECTOR_BRK_PORT}`)
   }
 
+  if (process.env.NO_SANDBOX === '1') {
+    args.push('--no-sandbox')
+  }
+
   const entry = process.env.ELECTRON_ENTRY || '.'
 
   const ps = spawn(electronPath, [entry].concat(args), { stdio: 'inherit' })

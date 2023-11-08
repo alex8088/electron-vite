@@ -31,7 +31,13 @@ interface DevCLIOptions {
   inspect?: boolean | string
   inspectBrk?: boolean | string
   remoteDebuggingPort?: string
+  noSandbox?: boolean
   rendererOnly?: boolean
+}
+
+interface PreviewCLIOptions {
+  noSandbox?: boolean
+  skipBuild?: boolean
 }
 
 function createInlineConfig(root: string, options: GlobalCLIOptions): InlineConfig {
@@ -71,6 +77,7 @@ cli
   .option('--inspect [port]', `[boolean | number] enable V8 inspector on the specified port`)
   .option('--inspectBrk [port]', `[boolean | number] enable V8 inspector on the specified port`)
   .option('--remoteDebuggingPort <port>', `[string] port for remote debugging`)
+  .option('--noSandbox', `[boolean] forces renderer process to run un-sandboxed`)
   .option('--rendererOnly', `[boolean] only dev server for the renderer`)
   .action(async (root: string, options: DevCLIOptions & GlobalCLIOptions) => {
     if (options.remoteDebuggingPort) {
@@ -83,6 +90,10 @@ cli
 
     if (options.inspectBrk) {
       process.env.V8_INSPECTOR_BRK_PORT = typeof options.inspectBrk === 'number' ? `${options.inspectBrk}` : '5858'
+    }
+
+    if (options.noSandbox) {
+      process.env.NO_SANDBOX = '1'
     }
 
     if (options.entry) {
@@ -125,10 +136,15 @@ cli.command('build [root]', 'build for production').action(async (root: string, 
 // preview
 cli
   .command('preview [root]', 'start electron app to preview production build')
+  .option('--noSandbox', `[boolean] forces renderer process to run un-sandboxed`)
   .option('--skipBuild', `[boolean] skip build`)
-  .action(async (root: string, options: { skipBuild?: boolean } & GlobalCLIOptions) => {
+  .action(async (root: string, options: PreviewCLIOptions & GlobalCLIOptions) => {
     const { preview } = await import('./preview')
     const inlineConfig = createInlineConfig(root, options)
+
+    if (options.noSandbox) {
+      process.env.NO_SANDBOX = '1'
+    }
 
     if (options.entry) {
       process.env.ELECTRON_ENTRY = options.entry
