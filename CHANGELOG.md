@@ -1,6 +1,11 @@
+### v1.0.29 (_2023-11-17_)
+
+- feat(cli): support --noSandbox option for dev and preview command
+- perf: build compatilibity target for Electron 27
+
 ### v1.0.28 (_2023-09-18_)
 
-- feat(cli): supports specifying electron entry file (#270)
+- feat(cli): supports specifying electron entry file ([#270](https://github.com/alex8088/electron-vite/issues/270))
 - fix(externalizeDepsPlugin): supports subpath
 - perf: build compatilibity target for Electron 26
 - chore(types): add .json?commonjs-external&asset typing
