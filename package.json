@@ -83,6 +83,7 @@
   "dependencies": {
     "@babel/core": "^7.22.8",
     "@babel/plugin-transform-arrow-functions": "^7.22.5",
+    "@babel/plugin-transform-classes": "^7.22.15",
     "cac": "^6.7.14",
     "esbuild": "^0.18.11",
     "magic-string": "^0.30.1",

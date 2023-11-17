@@ -175,7 +175,7 @@ export function bytecodePlugin(options: BytecodeOptions = {}): Plugin | null {
 
   const _transform = (code: string): string => {
     const re = babel.transform(code, {
-      plugins: ['@babel/plugin-transform-arrow-functions']
+      plugins: ['@babel/plugin-transform-classes', '@babel/plugin-transform-arrow-functions']
     })
     return re.code || ''
   }
