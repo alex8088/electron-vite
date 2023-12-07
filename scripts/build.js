@@ -4,7 +4,7 @@ const fs = require('fs-extra')
 const rollup = require('rollup')
 const typescript = require('@rollup/plugin-typescript')
 const { nodeResolve } = require('@rollup/plugin-node-resolve')
-const { Extractor, ExtractorConfig } = require('@microsoft/api-extractor')
+const { dts } = require('rollup-plugin-dts')
 
 ;(async () => {
   const dist = path.resolve(__dirname, '../dist')
@@ -45,21 +45,15 @@ const { Extractor, ExtractorConfig } = require('@microsoft/api-extractor')
   console.log(colors.bold(colors.yellow(`Rolling up type definitions...`)))
 
   if (pkg.types) {
-    const extractorConfig = ExtractorConfig.loadFileAndPrepare(path.resolve(__dirname, '../api-extractor.json'))
-    const extractorResult = Extractor.invoke(extractorConfig, {
-      localBuild: true,
-      showVerboseMessages: true
+    const bundle = await rollup.rollup({
+      input: path.resolve(__dirname, '../dist/types/index.d.ts'),
+      external,
+      plugins: [dts()]
     })
-
-    if (extractorResult.succeeded) {
-      console.log(colors.green('API Extractor completed successfully'))
-    } else {
-      console.error(
-        `API Extractor completed with ${extractorResult.errorCount} errors` +
-          ` and ${extractorResult.warningCount} warnings`
-      )
-      process.exitCode = 1
-    }
+    await bundle.write({
+      file: pkg.types,
+      format: 'es'
+    })
   }
 
   await fs.remove(path.resolve(dist, 'types'))
