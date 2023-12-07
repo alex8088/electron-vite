@@ -77,7 +77,7 @@
     "rollup-plugin-dts": "^6.1.0",
     "simple-git-hooks": "^2.9.0",
     "tslib": "^2.6.2",
-    "typescript": "5.0.4",
+    "typescript": "^5.3.3",
     "vite": "^5.0.6"
   },
   "dependencies": {
