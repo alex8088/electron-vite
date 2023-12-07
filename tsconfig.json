@@ -14,10 +14,7 @@
     "noUnusedLocals": true,
     "noUnusedParameters": true,
     "noImplicitAny": false,
-    "noImplicitReturns": true,
-    "declaration": true,
-    "declarationDir": "dist/types",
-    "outDir": "dist"
+    "noImplicitReturns": true
   },
-  "include": ["src"]
+  "include": ["src", "rollup.config.ts"]
 }
