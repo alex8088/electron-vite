@@ -63,7 +63,7 @@
   "devDependencies": {
     "@microsoft/api-extractor": "^7.38.5",
     "@rollup/plugin-node-resolve": "^15.2.3",
-    "@rollup/plugin-typescript": "^9.0.2",
+    "@rollup/plugin-typescript": "^11.1.5",
     "@swc/core": "^1.3.100",
     "@types/node": "^18.19.3",
     "@typescript-eslint/eslint-plugin": "^6.13.2",

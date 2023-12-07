@@ -26,7 +26,8 @@ const { Extractor, ExtractorConfig } = require('@microsoft/api-extractor')
     external,
     plugins: [
       typescript({
-        tsconfig: path.resolve(__dirname, '../tsconfig.json')
+        tsconfig: path.resolve(__dirname, '../tsconfig.json'),
+        compilerOptions: { rootDir: 'src' }
       }),
       nodeResolve()
     ],
