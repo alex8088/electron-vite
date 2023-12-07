@@ -84,7 +84,7 @@
     "@babel/core": "^7.23.5",
     "@babel/plugin-transform-arrow-functions": "^7.23.3",
     "cac": "^6.7.14",
-    "esbuild": "^0.18.11",
+    "esbuild": "^0.19.8",
     "magic-string": "^0.30.5",
     "picocolors": "^1.0.0"
   }
