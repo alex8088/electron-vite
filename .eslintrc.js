@@ -18,6 +18,7 @@ module.exports = {
     'plugin:prettier/recommended'
   ],
   rules: {
+    'prettier/prettier': 'warn',
     'no-empty': ['warn', { allowEmptyCatch: true }],
     '@typescript-eslint/ban-ts-comment': ['error', { 'ts-ignore': 'allow-with-description' }],
     '@typescript-eslint/explicit-function-return-type': 'error',
