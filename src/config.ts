@@ -316,7 +316,7 @@ async function bundleConfigFile(fileName: string, isESM: boolean): Promise<{ cod
     absWorkingDir: process.cwd(),
     entryPoints: [fileName],
     write: false,
-    target: ['node14.18', 'node16'],
+    target: ['node18'],
     platform: 'node',
     bundle: true,
     format: isESM ? 'esm' : 'cjs',

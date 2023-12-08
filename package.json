@@ -13,7 +13,7 @@
     "node.d.ts"
   ],
   "engines": {
-    "node": "^14.18.0 || >=16.0.0"
+    "node": "^18.0.0 || >=20.0.0"
   },
   "packageManager": "pnpm@8.6.10",
   "author": "Alex Wei<https://github.com/alex8088>",
