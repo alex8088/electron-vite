@@ -30,12 +30,20 @@ function clean(when: 'buildStart' | 'buildEnd', target: string): Plugin {
 export default defineConfig([
   {
     input: ['src/index.ts', 'src/cli.ts'],
-    output: {
-      dir: 'dist',
-      entryFileNames: '[name].js',
-      chunkFileNames: 'chunks/lib-[hash].js',
-      format: 'cjs'
-    },
+    output: [
+      {
+        dir: 'dist',
+        entryFileNames: '[name].cjs',
+        chunkFileNames: 'chunks/lib-[hash].cjs',
+        format: 'cjs'
+      },
+      {
+        dir: 'dist',
+        entryFileNames: '[name].mjs',
+        chunkFileNames: 'chunks/lib-[hash].mjs',
+        format: 'es'
+      }
+    ],
     external,
     plugins: [
       clean('buildStart', 'dist'),

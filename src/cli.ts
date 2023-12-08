@@ -1,7 +1,10 @@
+import { createRequire } from 'node:module'
 import { cac } from 'cac'
 import colors from 'picocolors'
 import { LogLevel, createLogger } from 'vite'
 import { InlineConfig } from './config'
+
+const _require = createRequire(import.meta.url)
 
 const cli = cac('electron-vite')
 
@@ -160,6 +163,6 @@ cli
   })
 
 cli.help()
-cli.version(require('../package.json').version)
+cli.version(_require('../package.json').version)
 
 cli.parse()

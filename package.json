@@ -2,8 +2,20 @@
   "name": "electron-vite",
   "version": "1.0.29",
   "description": "Electron build tooling based on Vite",
-  "main": "dist/index.js",
+  "type": "module",
+  "main": "dist/index.cjs",
+  "module": "dist/index.mjs",
   "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.cjs"
+    },
+    "./node": {
+      "types": "./node.d.ts"
+    }
+  },
   "bin": {
     "electron-vite": "bin/electron-vite.js"
   },

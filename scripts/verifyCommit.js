@@ -1,7 +1,7 @@
 // Invoked on the commit-msg git hook by simple-git-hooks.
 
-const colors = require('picocolors')
-const fs = require('fs')
+import colors from 'picocolors'
+import fs from 'node:fs'
 
 const msgPath = process.argv[2]
 const msg = fs.readFileSync(msgPath, 'utf-8').trim()

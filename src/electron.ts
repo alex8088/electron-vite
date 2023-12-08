@@ -9,7 +9,7 @@ const ensureElectronEntryFile = (root = process.cwd()): void => {
   if (process.env.ELECTRON_ENTRY) return
   const pkg = path.join(root, 'package.json')
   if (fs.existsSync(pkg)) {
-    const main = require(pkg).main
+    const main = _require(pkg).main
     if (!main) {
       throw new Error('No entry point found for electron app, please add a "main" field to package.json')
     } else {
