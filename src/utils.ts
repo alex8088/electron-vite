@@ -1,6 +1,8 @@
 import { URL, URLSearchParams } from 'node:url'
 import path from 'node:path'
+import fs from 'node:fs'
 import { createHash } from 'node:crypto'
+import { createRequire } from 'node:module'
 import { loadEnv as viteLoadEnv } from 'vite'
 
 export function isObject(value: unknown): value is Record<string, unknown> {
@@ -48,4 +50,26 @@ export function loadEnv(
   prefixes: string | string[] = ['MAIN_VITE_', 'PRELOAD_VITE_', 'RENDERER_VITE_']
 ): Record<string, string> {
   return viteLoadEnv(mode, envDir, prefixes)
+}
+
+interface PackageData {
+  main?: string
+  type?: 'module' | 'commonjs'
+}
+
+let packageCached: PackageData | null = null
+
+export function loadPackageData(root = process.cwd()): PackageData | null {
+  if (packageCached) return packageCached
+  const pkg = path.join(root, 'package.json')
+  if (fs.existsSync(pkg)) {
+    const _require = createRequire(import.meta.url)
+    const data = _require(pkg)
+    packageCached = {
+      main: data.main,
+      type: data.type
+    }
+    return packageCached
+  }
+  return null
 }

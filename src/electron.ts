@@ -2,18 +2,18 @@ import path from 'node:path'
 import fs from 'node:fs'
 import { createRequire } from 'node:module'
 import { type ChildProcess, spawn } from 'node:child_process'
+import { loadPackageData } from './utils'
 
 const _require = createRequire(import.meta.url)
 
 const ensureElectronEntryFile = (root = process.cwd()): void => {
   if (process.env.ELECTRON_ENTRY) return
-  const pkg = path.join(root, 'package.json')
-  if (fs.existsSync(pkg)) {
-    const main = _require(pkg).main
-    if (!main) {
+  const pkg = loadPackageData()
+  if (pkg) {
+    if (!pkg.main) {
       throw new Error('No entry point found for electron app, please add a "main" field to package.json')
     } else {
-      const entryPath = path.resolve(root, main)
+      const entryPath = path.resolve(root, pkg.main)
       if (!fs.existsSync(entryPath)) {
         throw new Error(`No electron app entry file found: ${entryPath}`)
       }
