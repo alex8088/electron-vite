@@ -3,7 +3,7 @@ import type { SourceMapInput } from 'rollup'
 import MagicString from 'magic-string'
 import { cleanUrl, parseRequest, toRelativePath } from '../utils'
 
-const nodeWorkerAssetUrlRE = /__VITE_NODE_WORKER_ASSET__([a-z\d]{8})__/g
+const nodeWorkerAssetUrlRE = /__VITE_NODE_WORKER_ASSET__([\w$]+)__/g
 
 /**
  * Resolve `?nodeWorker` import and automatically generate `Worker` wrapper.

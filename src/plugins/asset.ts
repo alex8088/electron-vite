@@ -42,7 +42,7 @@ function resolveAsset(id: string): AssetResolved | null {
   return null
 }
 
-const nodeAssetRE = /__VITE_NODE_ASSET__([a-z\d]{8})__/g
+const nodeAssetRE = /__VITE_NODE_ASSET__([\w$]+)__/g
 const nodePublicAssetRE = /__VITE_NODE_PUBLIC_ASSET__([a-z\d]{8})__/g
 
 const wasmHelperId = '\0__electron-vite-wasm-helper'
