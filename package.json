@@ -14,7 +14,8 @@
     },
     "./node": {
       "types": "./node.d.ts"
-    }
+    },
+    "./package.json": "./package.json"
   },
   "bin": {
     "electron-vite": "bin/electron-vite.js"
