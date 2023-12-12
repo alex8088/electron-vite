@@ -18,6 +18,7 @@ import { build } from 'esbuild'
 import { electronMainVitePlugin, electronPreloadVitePlugin, electronRendererVitePlugin } from './plugins/electron'
 import assetPlugin from './plugins/asset'
 import workerPlugin from './plugins/worker'
+import esmShimPlugin from './plugins/esm'
 import { isObject, dynamicImport } from './utils'
 
 export { defineConfig as defineViteConfig } from 'vite'
@@ -131,7 +132,12 @@ export async function resolveConfig(
           resetOutDir(mainViteConfig, outDir, 'main')
         }
 
-        mergePlugins(mainViteConfig, [...electronMainVitePlugin({ root }), assetPlugin(), workerPlugin()])
+        mergePlugins(mainViteConfig, [
+          ...electronMainVitePlugin({ root }),
+          assetPlugin(),
+          workerPlugin(),
+          esmShimPlugin()
+        ])
 
         loadResult.config.main = mainViteConfig
         loadResult.config.main.configFile = false
@@ -143,7 +149,7 @@ export async function resolveConfig(
         if (outDir) {
           resetOutDir(preloadViteConfig, outDir, 'preload')
         }
-        mergePlugins(preloadViteConfig, [...electronPreloadVitePlugin({ root }), assetPlugin()])
+        mergePlugins(preloadViteConfig, [...electronPreloadVitePlugin({ root }), assetPlugin(), esmShimPlugin()])
 
         loadResult.config.preload = preloadViteConfig
         loadResult.config.preload.configFile = false

@@ -2,8 +2,10 @@ import path from 'node:path'
 import fs from 'node:fs'
 import { builtinModules } from 'node:module'
 import colors from 'picocolors'
-import { type Plugin, mergeConfig, normalizePath } from 'vite'
-import { getElectronNodeTarget, getElectronChromeTarget } from '../electron'
+import { type Plugin, type LibraryOptions, mergeConfig, normalizePath } from 'vite'
+import type { OutputOptions } from 'rollup'
+import { getElectronNodeTarget, getElectronChromeTarget, supportESM } from '../electron'
+import { loadPackageData } from '../utils'
 
 export interface ElectronPluginOptions {
   root?: string
@@ -37,6 +39,17 @@ function processEnvDefine(): Record<string, string> {
   }
 }
 
+function resolveBuildOutputs(
+  outputs: OutputOptions | OutputOptions[] | undefined,
+  libOptions: LibraryOptions | false
+): OutputOptions | OutputOptions[] | undefined {
+  if (libOptions && !Array.isArray(outputs)) {
+    const libFormats = libOptions.formats || []
+    return libFormats.map(format => ({ ...outputs, format }))
+  }
+  return outputs
+}
+
 export function electronMainVitePlugin(options?: ElectronPluginOptions): Plugin[] {
   return [
     {
@@ -47,6 +60,10 @@ export function electronMainVitePlugin(options?: ElectronPluginOptions): Plugin[
         const root = options?.root || process.cwd()
 
         const nodeTarget = getElectronNodeTarget()
+
+        const pkg = loadPackageData() || { type: 'commonjs' }
+
+        const format = pkg.type && pkg.type === 'module' && supportESM() ? 'es' : 'cjs'
 
         const defaultConfig = {
           resolve: {
@@ -60,9 +77,7 @@ export function electronMainVitePlugin(options?: ElectronPluginOptions): Plugin[
             assetsDir: 'chunks',
             rollupOptions: {
               external: ['electron', ...builtinModules.flatMap(m => [m, `node:${m}`])],
-              output: {
-                entryFileNames: '[name].js'
-              }
+              output: {}
             },
             reportCompressedSize: false,
             minify: false
@@ -72,12 +87,21 @@ export function electronMainVitePlugin(options?: ElectronPluginOptions): Plugin[
         const build = config.build || {}
         const rollupOptions = build.rollupOptions || {}
         if (!rollupOptions.input) {
+          const libOptions = build.lib
+          const outputOptions = rollupOptions.output
           defaultConfig.build['lib'] = {
             entry: findLibEntry(root, 'main'),
-            formats: ['cjs']
+            formats:
+              libOptions && libOptions.formats && libOptions.formats.length > 0
+                ? []
+                : [
+                    outputOptions && !Array.isArray(outputOptions) && outputOptions.format
+                      ? outputOptions.format
+                      : format
+                  ]
           }
         } else {
-          defaultConfig.build.rollupOptions.output['format'] = 'cjs'
+          defaultConfig.build.rollupOptions.output['format'] = format
         }
 
         defaultConfig.build.rollupOptions.output['assetFileNames'] = path.posix.join(
@@ -100,6 +124,8 @@ export function electronMainVitePlugin(options?: ElectronPluginOptions): Plugin[
         config.build.copyPublicDir = false
         // module preload polyfill does not apply to nodejs (main process)
         config.build.modulePreload = false
+        // enable ssr build
+        config.build.ssr = true
       }
     },
     {
@@ -109,36 +135,44 @@ export function electronMainVitePlugin(options?: ElectronPluginOptions): Plugin[
       configResolved(config): void {
         const build = config.build
         if (!build.target) {
-          throw new Error('build target required for the electron vite main config')
+          throw new Error('build.target option is required in the electron vite main config.')
         } else {
           const targets = Array.isArray(build.target) ? build.target : [build.target]
           if (targets.some(t => !t.startsWith('node'))) {
-            throw new Error('the electron vite main config build target must be node')
+            throw new Error('The electron vite main config build.target option must be "node?".')
           }
         }
 
-        const lib = build.lib
-        if (!lib) {
-          const rollupOptions = build.rollupOptions
-          if (!rollupOptions?.input) {
-            throw new Error('build lib field required for the electron vite main config')
+        const libOptions = build.lib
+        const rollupOptions = build.rollupOptions
+
+        if (!(libOptions && libOptions.entry) && !rollupOptions?.input) {
+          throw new Error(
+            'An entry point is required in the electron vite main config, ' +
+              'which can be specified using "build.lib.entry" or "build.rollupOptions.input".'
+          )
+        }
+
+        const resolvedOutputs = resolveBuildOutputs(rollupOptions.output, libOptions)
+
+        if (resolvedOutputs) {
+          const outputs = Array.isArray(resolvedOutputs) ? resolvedOutputs : [resolvedOutputs]
+          if (outputs.length > 1) {
+            throw new Error('The electron vite main config does not support multiple outputs.')
           } else {
-            const output = rollupOptions?.output
-            if (output) {
-              const formats = Array.isArray(output) ? output : [output]
-              if (formats.some(f => f.format !== 'cjs')) {
-                throw new Error('the electron vite main config output format must be cjs')
+            const outpout = outputs[0]
+            if (['es', 'cjs'].includes(outpout.format || '')) {
+              if (outpout.format === 'es' && !supportESM()) {
+                throw new Error(
+                  'The electron vite main config output format does not support "es", ' +
+                    'you can upgrade electron to the latest version or switch to "cjs" format.'
+                )
               }
+            } else {
+              throw new Error(
+                `The electron vite main config output format must be "cjs"${supportESM() ? ' or "es"' : ''}.`
+              )
             }
-          }
-        } else {
-          if (!lib.entry) {
-            throw new Error('build entry field required for the electron vite main config')
-          }
-          if (!lib.formats) {
-            throw new Error('build format field required for the electron vite main config')
-          } else if (!lib.formats.includes('cjs')) {
-            throw new Error('the electron vite main config build lib format must be cjs')
           }
         }
       }
@@ -157,6 +191,10 @@ export function electronPreloadVitePlugin(options?: ElectronPluginOptions): Plug
 
         const nodeTarget = getElectronNodeTarget()
 
+        const pkg = loadPackageData() || { type: 'commonjs' }
+
+        const format = pkg.type && pkg.type === 'module' && supportESM() ? 'es' : 'cjs'
+
         const defaultConfig = {
           build: {
             outDir: path.resolve(root, 'out', 'preload'),
@@ -164,9 +202,7 @@ export function electronPreloadVitePlugin(options?: ElectronPluginOptions): Plug
             assetsDir: 'chunks',
             rollupOptions: {
               external: ['electron', ...builtinModules.flatMap(m => [m, `node:${m}`])],
-              output: {
-                entryFileNames: '[name].js'
-              }
+              output: {}
             },
             reportCompressedSize: false,
             minify: false
@@ -176,12 +212,21 @@ export function electronPreloadVitePlugin(options?: ElectronPluginOptions): Plug
         const build = config.build || {}
         const rollupOptions = build.rollupOptions || {}
         if (!rollupOptions.input) {
+          const libOptions = build.lib
+          const outputOptions = rollupOptions.output
           defaultConfig.build['lib'] = {
             entry: findLibEntry(root, 'preload'),
-            formats: ['cjs']
+            formats:
+              libOptions && libOptions.formats && libOptions.formats.length > 0
+                ? []
+                : [
+                    outputOptions && !Array.isArray(outputOptions) && outputOptions.format
+                      ? outputOptions.format
+                      : format
+                  ]
           }
         } else {
-          defaultConfig.build.rollupOptions.output['format'] = 'cjs'
+          defaultConfig.build.rollupOptions.output['format'] = format
         }
 
         defaultConfig.build.rollupOptions.output['assetFileNames'] = path.posix.join(
@@ -191,6 +236,26 @@ export function electronPreloadVitePlugin(options?: ElectronPluginOptions): Plug
 
         const buildConfig = mergeConfig(defaultConfig.build, build)
         config.build = buildConfig
+
+        const resolvedOutputs = resolveBuildOutputs(config.build.rollupOptions!.output, config.build.lib || false)
+
+        if (resolvedOutputs) {
+          const outputs = Array.isArray(resolvedOutputs) ? resolvedOutputs : [resolvedOutputs]
+
+          if (outputs.find(({ format }) => format === 'es')) {
+            if (Array.isArray(config.build.rollupOptions!.output)) {
+              config.build.rollupOptions!.output.forEach(output => {
+                if (output.format === 'es') {
+                  output['entryFileNames'] = '[name].mjs'
+                  output['chunkFileNames'] = '[name]-[hash].mjs'
+                }
+              })
+            } else {
+              config.build.rollupOptions!.output!['entryFileNames'] = '[name].mjs'
+              config.build.rollupOptions!.output!['chunkFileNames'] = '[name]-[hash].mjs'
+            }
+          }
+        }
 
         config.define = config.define || {}
         config.define = { ...processEnvDefine(), ...config.define }
@@ -202,6 +267,8 @@ export function electronPreloadVitePlugin(options?: ElectronPluginOptions): Plug
         config.build.copyPublicDir = false
         // module preload polyfill does not apply to nodejs (preload scripts)
         config.build.modulePreload = false
+        // enable ssr build
+        config.build.ssr = true
       }
     },
     {
@@ -211,36 +278,44 @@ export function electronPreloadVitePlugin(options?: ElectronPluginOptions): Plug
       configResolved(config): void {
         const build = config.build
         if (!build.target) {
-          throw new Error('build target required for the electron vite preload config')
+          throw new Error('build.target option is required in the electron vite preload config.')
         } else {
           const targets = Array.isArray(build.target) ? build.target : [build.target]
           if (targets.some(t => !t.startsWith('node'))) {
-            throw new Error('the electron vite preload config build target must be node')
+            throw new Error('The electron vite preload config build.target must be "node?".')
           }
         }
 
-        const lib = build.lib
-        if (!lib) {
-          const rollupOptions = build.rollupOptions
-          if (!rollupOptions?.input) {
-            throw new Error('build lib field required for the electron vite preload config')
+        const libOptions = build.lib
+        const rollupOptions = build.rollupOptions
+
+        if (!(libOptions && libOptions.entry) && !rollupOptions?.input) {
+          throw new Error(
+            'An entry point is required in the electron vite preload config, ' +
+              'which can be specified using "build.lib.entry" or "build.rollupOptions.input".'
+          )
+        }
+
+        const resolvedOutputs = resolveBuildOutputs(rollupOptions.output, libOptions)
+
+        if (resolvedOutputs) {
+          const outputs = Array.isArray(resolvedOutputs) ? resolvedOutputs : [resolvedOutputs]
+          if (outputs.length > 1) {
+            throw new Error('The electron vite preload config does not support multiple outputs.')
           } else {
-            const output = rollupOptions?.output
-            if (output) {
-              const formats = Array.isArray(output) ? output : [output]
-              if (formats.some(f => f.format !== 'cjs')) {
-                throw new Error('the electron vite preload config output format must be cjs')
+            const outpout = outputs[0]
+            if (['es', 'cjs'].includes(outpout.format || '')) {
+              if (outpout.format === 'es' && !supportESM()) {
+                throw new Error(
+                  'The electron vite preload config output format does not support "es", ' +
+                    'you can upgrade electron to the latest version or switch to "cjs" format.'
+                )
               }
+            } else {
+              throw new Error(
+                `The electron vite preload config output format must be "cjs"${supportESM() ? ' or "es"' : ''}.`
+              )
             }
-          }
-        } else {
-          if (!lib.entry) {
-            throw new Error('build entry field required for the electron vite preload config')
-          }
-          if (!lib.formats) {
-            throw new Error('build format field required for the electron vite preload config')
-          } else if (!lib.formats.includes('cjs')) {
-            throw new Error('the electron vite preload config lib format must be cjs')
           }
         }
       }
@@ -305,23 +380,23 @@ export function electronRendererVitePlugin(options?: ElectronPluginOptions): Plu
       enforce: 'post',
       configResolved(config): void {
         if (config.base !== './' && config.base !== '/') {
-          config.logger.warn(colors.yellow('should not set base field for the electron vite renderer config'))
+          config.logger.warn(colors.yellow('(!) Should not set "base" option for the electron vite renderer config.'))
         }
 
         const build = config.build
         if (!build.target) {
-          throw new Error('build target required for the electron vite renderer config')
+          throw new Error('build.target option is required in the electron vite renderer config.')
         } else {
           const targets = Array.isArray(build.target) ? build.target : [build.target]
           if (targets.some(t => !t.startsWith('chrome') && !/^es((202\d{1})|next)$/.test(t))) {
-            throw new Error('the electron vite renderer config build target must be chrome? or es?')
+            throw new Error('The electron vite renderer config build.target must be "chrome?" or "es?".')
           }
         }
 
         const rollupOptions = build.rollupOptions
         if (!rollupOptions.input) {
-          config.logger.warn(colors.yellow(`index.html file is not found in ${colors.dim('/src/renderer')} directory`))
-          throw new Error('build rollupOptions input field required for the electron vite renderer config')
+          config.logger.warn(colors.yellow(`index.html file is not found in ${colors.dim('/src/renderer')} directory.`))
+          throw new Error('build.rollupOptions.input option is required in the electron vite renderer config.')
         }
       }
     }

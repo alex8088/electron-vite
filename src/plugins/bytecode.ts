@@ -15,7 +15,7 @@ import { toRelativePath } from '../utils'
 const _require = createRequire(import.meta.url)
 
 function getBytecodeCompilerPath(): string {
-  return path.join(path.dirname(_require.resolve('electron-vite/package.json')), 'bin', 'electron-bytecode.js')
+  return path.join(path.dirname(_require.resolve('electron-vite/package.json')), 'bin', 'electron-bytecode.cjs')
 }
 
 function compileToBytecode(code: string): Promise<Buffer> {
@@ -98,7 +98,7 @@ const bytecodeModuleLoaderCode = [
   `  ret |= buffer[0];`,
   `  return ret;`,
   `};`,
-  `Module._extensions[".jsc"] = function (module, filename) {`,
+  `Module._extensions[".jsc"] = Module._extensions[".cjsc"] = function (module, filename) {`,
   `  const bytecodeBuffer = fs.readFileSync(filename);`,
   `  if (!Buffer.isBuffer(bytecodeBuffer)) {`,
   `    throw new Error("BytecodeBuffer must be a buffer object.");`,
@@ -181,7 +181,7 @@ export function bytecodePlugin(options: BytecodeOptions = {}): Plugin | null {
   }
 
   const useStrict = '"use strict";'
-  const bytecodeModuleLoader = 'bytecode-loader.js'
+  const bytecodeModuleLoader = 'bytecode-loader.cjs'
 
   let config: ResolvedConfig
   let useInRenderer = false
@@ -196,7 +196,7 @@ export function bytecodePlugin(options: BytecodeOptions = {}): Plugin | null {
       config = resolvedConfig
       useInRenderer = config.plugins.some(p => p.name === 'vite:electron-renderer-preset-config')
       if (useInRenderer) {
-        config.logger.warn(colors.yellow('bytecodePlugin is not support renderers'))
+        config.logger.warn(colors.yellow('bytecodePlugin does not support renderer.'))
       }
     },
     transform(code, id): void | { code: string; map: SourceMapInput } {
@@ -226,7 +226,16 @@ export function bytecodePlugin(options: BytecodeOptions = {}): Plugin | null {
         }
       }
     },
-    renderChunk(code, chunk): { code: string } | null {
+    renderChunk(code, chunk, options): { code: string } | null {
+      if (options.format === 'es') {
+        config.logger.warn(
+          colors.yellow(
+            'bytecodePlugin does not support ES module, please remove "type": "module" ' +
+              'in package.json or set the "build.rollupOptions.output.format" option to "cjs".'
+          )
+        )
+        return null
+      }
       if (useInRenderer) {
         return null
       }
@@ -240,8 +249,8 @@ export function bytecodePlugin(options: BytecodeOptions = {}): Plugin | null {
       }
       return null
     },
-    generateBundle(): void {
-      if (!useInRenderer && bytecodeRequired) {
+    generateBundle(options): void {
+      if (options.format !== 'es' && !useInRenderer && bytecodeRequired) {
         this.emitFile({
           type: 'asset',
           source: bytecodeModuleLoaderCode.join('\n') + '\n',
@@ -251,7 +260,7 @@ export function bytecodePlugin(options: BytecodeOptions = {}): Plugin | null {
       }
     },
     async writeBundle(options, output): Promise<void> {
-      if (useInRenderer || !bytecodeRequired) {
+      if (options.format === 'es' || useInRenderer || !bytecodeRequired) {
         return
       }
 

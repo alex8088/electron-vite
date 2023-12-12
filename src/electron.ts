@@ -36,6 +36,11 @@ const getElectronMajorVer = (): string => {
   return majorVer
 }
 
+export function supportESM(): boolean {
+  const majorVer = getElectronMajorVer()
+  return parseInt(majorVer) >= 28
+}
+
 export function getElectronPath(): string {
   let electronExecPath = process.env.ELECTRON_EXEC_PATH || ''
   if (!electronExecPath) {
