@@ -19,7 +19,7 @@ import { electronMainVitePlugin, electronPreloadVitePlugin, electronRendererVite
 import assetPlugin from './plugins/asset'
 import workerPlugin from './plugins/worker'
 import esmShimPlugin from './plugins/esm'
-import { isObject, dynamicImport } from './utils'
+import { isObject } from './utils'
 
 export { defineConfig as defineViteConfig } from 'vite'
 
@@ -392,7 +392,7 @@ async function loadConfigFormBundledFile(
 
     const fileUrl = pathToFileURL(fileNameTmp)
     try {
-      return (await dynamicImport(fileUrl)).default
+      return (await import(fileUrl.href)).default
     } finally {
       try {
         fs.unlinkSync(fileNameTmp)
