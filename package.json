@@ -38,7 +38,7 @@
   "bugs": {
     "url": "https://github.com/alex8088/electron-vite/issues"
   },
-  "homepage": "https://github.com/alex8088/electron-vite#readme",
+  "homepage": "https://electron-vite.org",
   "keywords": [
     "electron",
     "vite",
