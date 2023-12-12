@@ -56,7 +56,7 @@ export default function esmShimPlugin(): Plugin {
         s.appendRight(indexToAppend, CJSShim)
         return {
           code: s.toString(),
-          map: sourcemap ? s.generateMap({ hires: true }) : null
+          map: sourcemap ? s.generateMap({ hires: 'boundary' }) : null
         }
       }
 

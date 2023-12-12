@@ -222,7 +222,7 @@ export function bytecodePlugin(options: BytecodeOptions = {}): Plugin | null {
       if (s) {
         return {
           code: s.toString(),
-          map: config.build.sourcemap ? s.generateMap({ hires: true }) : null
+          map: config.build.sourcemap ? s.generateMap({ hires: 'boundary' }) : null
         }
       }
     },

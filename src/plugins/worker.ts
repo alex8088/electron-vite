@@ -55,7 +55,7 @@ export default function workerPlugin(): Plugin {
 
         return {
           code: s.toString(),
-          map: sourcemap ? s.generateMap({ hires: true }) : null
+          map: sourcemap ? s.generateMap({ hires: 'boundary' }) : null
         }
       }
 

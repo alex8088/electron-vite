@@ -173,7 +173,7 @@ export default function assetPlugin(): Plugin {
       if (s) {
         return {
           code: s.toString(),
-          map: sourcemap ? s.generateMap({ hires: true }) : null
+          map: sourcemap ? s.generateMap({ hires: 'boundary' }) : null
         }
       } else {
         return null
