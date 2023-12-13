@@ -1,3 +1,33 @@
+### v2.0.0-beta.0 (_2023-12-13_)
+
+- feat: bump minimum node version to 18
+- feat: migrate to ESM
+- feat: support vite 5
+- feat: add package.json to export map
+- feat: support ESM in Electron
+- fix: emit assets when ssr is enabled
+- perf: improve package.json resolve
+- perf: use magic-string hires boundary for sourcemaps
+- perf: build compatilibity target for Electron 28
+- pref: resolve import meta url in CommonJS format
+- perf(worker): ESM syntax
+- perf: package version
+- refactor: build
+- refactor: file hashes use url-safe base64 encoded hashes in vite 5 (rollup 4)
+- refactor: remove Electron 11, 12 build compatilibity target
+- refactor: use dynamic import directly
+- build: use rollup-plugin-dts
+- chore(deps): update all non-major dependencies
+- chore(deps): update lint-staged to v15
+- chore(deps): update eslint-config-prettier to v9
+- chore(deps): update @rollup/plugin-typescript to v11
+- chore(deps): update rollup to v4
+- chore(deps): update vite to v5
+- chore(deps): update esbuild to v0.19
+- chore(deps): update typescript to 5.3.3
+- chore: improve prettier config
+- chore: update homepage
+
 ### v1.0.29 (_2023-11-17_)
 
 - feat(cli): support --noSandbox option for dev and preview command
