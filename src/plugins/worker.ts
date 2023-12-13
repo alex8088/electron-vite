@@ -35,7 +35,7 @@ export default function workerPlugin(): Plugin {
         const assetRefId = `__VITE_NODE_WORKER_ASSET__${hash}__`
         return `
         import { Worker } from 'node:worker_threads';
-        export default function (options) { return new Worker(require.resolve(${assetRefId}), options); }`
+        export default function (options) { return new Worker(new URL(${assetRefId}, import.meta.url), options); }`
       }
     },
     renderChunk(code, chunk): { code: string; map: SourceMapInput } | null {
