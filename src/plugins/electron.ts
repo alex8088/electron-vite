@@ -126,6 +126,7 @@ export function electronMainVitePlugin(options?: ElectronPluginOptions): Plugin[
         config.build.modulePreload = false
         // enable ssr build
         config.build.ssr = true
+        config.build.ssrEmitAssets = true
       }
     },
     {
@@ -269,6 +270,7 @@ export function electronPreloadVitePlugin(options?: ElectronPluginOptions): Plug
         config.build.modulePreload = false
         // enable ssr build
         config.build.ssr = true
+        config.build.ssrEmitAssets = true
       }
     },
     {
