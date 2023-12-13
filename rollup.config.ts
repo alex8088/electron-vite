@@ -3,6 +3,7 @@ import fs from 'node:fs/promises'
 import { type Plugin, defineConfig } from 'rollup'
 import ts from '@rollup/plugin-typescript'
 import resolve from '@rollup/plugin-node-resolve'
+import json from '@rollup/plugin-json'
 import dts from 'rollup-plugin-dts'
 
 const require = createRequire(import.meta.url)
@@ -47,6 +48,7 @@ export default defineConfig([
     external,
     plugins: [
       clean('buildStart', 'dist'),
+      json(),
       ts({ compilerOptions: { rootDir: 'src', declaration: true, declarationDir: 'dist/types' } }),
       resolve()
     ],
