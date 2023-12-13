@@ -18,6 +18,7 @@ import { build } from 'esbuild'
 import { electronMainVitePlugin, electronPreloadVitePlugin, electronRendererVitePlugin } from './plugins/electron'
 import assetPlugin from './plugins/asset'
 import workerPlugin from './plugins/worker'
+import importMetaUrlPlugin from './plugins/importMetaUrl'
 import esmShimPlugin from './plugins/esm'
 import { isObject } from './utils'
 
@@ -136,6 +137,7 @@ export async function resolveConfig(
           ...electronMainVitePlugin({ root }),
           assetPlugin(),
           workerPlugin(),
+          importMetaUrlPlugin(),
           esmShimPlugin()
         ])
 
@@ -149,7 +151,12 @@ export async function resolveConfig(
         if (outDir) {
           resetOutDir(preloadViteConfig, outDir, 'preload')
         }
-        mergePlugins(preloadViteConfig, [...electronPreloadVitePlugin({ root }), assetPlugin(), esmShimPlugin()])
+        mergePlugins(preloadViteConfig, [
+          ...electronPreloadVitePlugin({ root }),
+          assetPlugin(),
+          importMetaUrlPlugin(),
+          esmShimPlugin()
+        ])
 
         loadResult.config.preload = preloadViteConfig
         loadResult.config.preload.configFile = false
