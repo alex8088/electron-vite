@@ -1,3 +1,9 @@
+### v2.0.0-beta.1 (_2023-12-14_)
+
+- feat: env variables prefixed with VITE\_ will be shared in main process and renderer
+- fix: externalizeDepPlugin not work
+- perf: dev error message
+
 ### v2.0.0-beta.0 (_2023-12-13_)
 
 - feat: bump minimum node version to 18
