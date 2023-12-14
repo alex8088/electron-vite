@@ -127,6 +127,7 @@ export function electronMainVitePlugin(options?: ElectronPluginOptions): Plugin[
         // enable ssr build
         config.build.ssr = true
         config.build.ssrEmitAssets = true
+        config.ssr = { ...config.ssr, ...{ noExternal: true } }
       }
     },
     {
@@ -271,6 +272,7 @@ export function electronPreloadVitePlugin(options?: ElectronPluginOptions): Plug
         // enable ssr build
         config.build.ssr = true
         config.build.ssrEmitAssets = true
+        config.ssr = { ...config.ssr, ...{ noExternal: true } }
       }
     },
     {
