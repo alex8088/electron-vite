@@ -117,7 +117,7 @@ export function electronMainVitePlugin(options?: ElectronPluginOptions): Plugin[
         config.define = config.define || {}
         config.define = { ...processEnvDefine(), ...config.define }
 
-        config.envPrefix = config.envPrefix || 'MAIN_VITE_'
+        config.envPrefix = config.envPrefix || ['MAIN_VITE_', 'VITE_']
 
         config.publicDir = config.publicDir || 'resources'
         // do not copy public dir
@@ -262,7 +262,7 @@ export function electronPreloadVitePlugin(options?: ElectronPluginOptions): Plug
         config.define = config.define || {}
         config.define = { ...processEnvDefine(), ...config.define }
 
-        config.envPrefix = config.envPrefix || 'PRELOAD_VITE_'
+        config.envPrefix = config.envPrefix || ['PRELOAD_VITE_', 'VITE_']
 
         config.publicDir = config.publicDir || 'resources'
         // do not copy public dir
@@ -376,7 +376,7 @@ export function electronRendererVitePlugin(options?: ElectronPluginOptions): Plu
 
         config.envDir = config.envDir || path.resolve(root)
 
-        config.envPrefix = config.envPrefix || 'RENDERER_VITE_'
+        config.envPrefix = config.envPrefix || ['RENDERER_VITE_', 'VITE_']
       }
     },
     {
