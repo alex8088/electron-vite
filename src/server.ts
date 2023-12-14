@@ -24,6 +24,10 @@ export async function createServer(
     let server: ViteDevServer | undefined
     let ps: ChildProcess | undefined
 
+    const errorHook = (e): void => {
+      logger.error(`${colors.bgRed(colors.white(' ERROR '))} ${colors.red(e.message)}`)
+    }
+
     const mainViteConfig = config.config?.main
     if (mainViteConfig && !options.rendererOnly) {
       const watchHook = (): void => {
@@ -40,7 +44,7 @@ export async function createServer(
         }
       }
 
-      await doBuild(mainViteConfig, watchHook)
+      await doBuild(mainViteConfig, watchHook, errorHook)
 
       logger.info(colors.green(`\nbuild the electron main process successfully`))
     }
@@ -59,7 +63,7 @@ export async function createServer(
         }
       }
 
-      await doBuild(preloadViteConfig, watchHook)
+      await doBuild(preloadViteConfig, watchHook, errorHook)
 
       logger.info(colors.green(`\nbuild the electron preload files successfully`))
     }
@@ -108,7 +112,7 @@ export async function createServer(
 
 type UserConfig = ViteConfig & { configFile?: string | false }
 
-async function doBuild(config: UserConfig, watchHook: () => void): Promise<void> {
+async function doBuild(config: UserConfig, watchHook: () => void, errorHook: (e: Error) => void): Promise<void> {
   return new Promise(resolve => {
     if (config.build?.watch) {
       let firstBundle = true
@@ -131,10 +135,12 @@ async function doBuild(config: UserConfig, watchHook: () => void): Promise<void>
       })
     }
 
-    viteBuild(config).then(() => {
-      if (!config.build?.watch) {
-        resolve()
-      }
-    })
+    viteBuild(config)
+      .then(() => {
+        if (!config.build?.watch) {
+          resolve()
+        }
+      })
+      .catch(e => errorHook(e))
   })
 }
