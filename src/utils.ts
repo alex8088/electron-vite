@@ -38,14 +38,14 @@ export function toRelativePath(filename: string, importer: string): string {
 }
 
 /**
- * Load `.env` files within the `envDir`(default: `process.cwd()`).
- * By default, only env variables prefixed with `MAIN_VITE_`, `PRELOAD_VITE_` and
+ * Load `.env` files within the `envDir` (default: `process.cwd()`) .
+ * By default, only env variables prefixed with `VITE_`, `MAIN_VITE_`, `PRELOAD_VITE_` and
  * `RENDERER_VITE_` are loaded, unless `prefixes` is changed.
  */
 export function loadEnv(
   mode: string,
   envDir: string = process.cwd(),
-  prefixes: string | string[] = ['MAIN_VITE_', 'PRELOAD_VITE_', 'RENDERER_VITE_']
+  prefixes: string | string[] = ['VITE_', 'MAIN_VITE_', 'PRELOAD_VITE_', 'RENDERER_VITE_']
 ): Record<string, string> {
   return viteLoadEnv(mode, envDir, prefixes)
 }
