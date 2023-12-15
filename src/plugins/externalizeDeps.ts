@@ -1,6 +1,5 @@
-import path from 'node:path'
-import { createRequire } from 'node:module'
 import { type Plugin, mergeConfig } from 'vite'
+import { loadPackageData } from '../utils'
 
 export interface ExternalOptions {
   exclude?: string[]
@@ -13,9 +12,7 @@ export interface ExternalOptions {
 export function externalizeDepsPlugin(options: ExternalOptions = {}): Plugin | null {
   const { exclude = [], include = [] } = options
 
-  const packagePath = path.resolve(process.cwd(), 'package.json')
-  const require = createRequire(import.meta.url)
-  const pkg = require(packagePath)
+  const pkg = loadPackageData() || {}
   let deps = Object.keys(pkg.dependencies || {})
 
   if (include.length) {

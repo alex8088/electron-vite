@@ -53,6 +53,7 @@ export function loadEnv(
 interface PackageData {
   main?: string
   type?: 'module' | 'commonjs'
+  dependencies?: Record<string, string>
 }
 
 let packageCached: PackageData | null = null
@@ -65,7 +66,8 @@ export function loadPackageData(root = process.cwd()): PackageData | null {
     const data = _require(pkg)
     packageCached = {
       main: data.main,
-      type: data.type
+      type: data.type,
+      dependencies: data.dependencies
     }
     return packageCached
   }
