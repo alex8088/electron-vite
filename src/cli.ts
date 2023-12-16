@@ -97,6 +97,10 @@ cli
       process.env.NO_SANDBOX = '1'
     }
 
+    if (options['--']) {
+      process.env.ELECTRON_CLI_ARGS = JSON.stringify(options['--']);
+    }
+
     if (options.entry) {
       process.env.ELECTRON_ENTRY = options.entry
     }
@@ -149,6 +153,10 @@ cli
 
     if (options.entry) {
       process.env.ELECTRON_ENTRY = options.entry
+    }
+
+    if (options['--']) {
+      process.env.ELECTRON_CLI_ARGS = JSON.stringify(options['--']);
     }
 
     try {
