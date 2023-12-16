@@ -98,7 +98,7 @@ cli
     }
 
     if (options['--']) {
-      process.env.ELECTRON_CLI_ARGS = JSON.stringify(options['--']);
+      process.env.ELECTRON_CLI_ARGS = JSON.stringify(options['--'])
     }
 
     if (options.entry) {
@@ -156,7 +156,7 @@ cli
     }
 
     if (options['--']) {
-      process.env.ELECTRON_CLI_ARGS = JSON.stringify(options['--']);
+      process.env.ELECTRON_CLI_ARGS = JSON.stringify(options['--'])
     }
 
     try {
