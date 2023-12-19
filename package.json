@@ -1,6 +1,6 @@
 {
   "name": "electron-vite",
-  "version": "2.0.0-beta.1",
+  "version": "2.0.0-beta.2",
   "description": "Electron build tooling based on Vite",
   "type": "module",
   "main": "dist/index.cjs",

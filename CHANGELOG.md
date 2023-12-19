@@ -1,3 +1,9 @@
+### v2.0.0-beta.2 (_2023-12-19_)
+
+- feat: support for passing arguments to electron in dev and preview commands ([#339](https://github.com/alex8088/electron-vite/pull/339))
+- perf(externalizeDepsPlugin): use cached package data to improve performance
+- perf: loadEnv api also needs to load shared env variables prefixed with VITE\_
+
 ### v2.0.0-beta.1 (_2023-12-14_)
 
 - feat: env variables prefixed with VITE\_ will be shared in main process and renderer
