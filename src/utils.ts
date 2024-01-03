@@ -73,3 +73,14 @@ export function loadPackageData(root = process.cwd()): PackageData | null {
   }
   return null
 }
+
+export function isFilePathESM(filePath: string): boolean {
+  if (/\.m[jt]s$/.test(filePath) || filePath.endsWith('.ts')) {
+    return true
+  } else if (/\.c[jt]s$/.test(filePath)) {
+    return false
+  } else {
+    const pkg = loadPackageData()
+    return pkg?.type === 'module'
+  }
+}

@@ -20,7 +20,7 @@ import assetPlugin from './plugins/asset'
 import workerPlugin from './plugins/worker'
 import importMetaUrlPlugin from './plugins/importMetaUrl'
 import esmShimPlugin from './plugins/esm'
-import { isObject } from './utils'
+import { isObject, isFilePathESM } from './utils'
 
 export { defineConfig as defineViteConfig } from 'vite'
 
@@ -240,11 +240,7 @@ export async function loadConfigFromFile(
     }
   }
 
-  // electron does not support adding type: "module" to package.json
-  let isESM = false
-  if (/\.m[jt]s$/.test(resolvedPath) || resolvedPath.endsWith('.ts')) {
-    isESM = true
-  }
+  const isESM = isFilePathESM(resolvedPath)
 
   try {
     const bundled = await bundleConfigFile(resolvedPath, isESM)
