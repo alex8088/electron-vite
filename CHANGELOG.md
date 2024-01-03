@@ -1,3 +1,7 @@
+### v2.0.0-beta.3 (_2024-01-04_)
+
+- feat: config file supports "type": "module" in package.json
+
 ### v2.0.0-beta.2 (_2023-12-19_)
 
 - feat: support for passing arguments to electron in dev and preview commands ([#339](https://github.com/alex8088/electron-vite/pull/339))
