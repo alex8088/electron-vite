@@ -76,7 +76,7 @@ export function electronMainVitePlugin(options?: ElectronPluginOptions): Plugin[
             target: nodeTarget,
             assetsDir: 'chunks',
             rollupOptions: {
-              external: ['electron', ...builtinModules.flatMap(m => [m, `node:${m}`])],
+              external: ['electron', /^electron\/.+/, ...builtinModules.flatMap(m => [m, `node:${m}`])],
               output: {}
             },
             reportCompressedSize: false,
@@ -203,7 +203,7 @@ export function electronPreloadVitePlugin(options?: ElectronPluginOptions): Plug
             target: nodeTarget,
             assetsDir: 'chunks',
             rollupOptions: {
-              external: ['electron', ...builtinModules.flatMap(m => [m, `node:${m}`])],
+              external: ['electron', /^electron\/.+/, ...builtinModules.flatMap(m => [m, `node:${m}`])],
               output: {}
             },
             reportCompressedSize: false,
