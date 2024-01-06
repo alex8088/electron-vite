@@ -1,3 +1,7 @@
+### v2.0.0-beta.4 (_2024-01-06_)
+
+- fix: electron's export subpaths also need to be externalized ([#372](https://github.com/alex8088/electron-vite/issues/372))
+
 ### v2.0.0-beta.3 (_2024-01-04_)
 
 - feat: config file supports "type": "module" in package.json
