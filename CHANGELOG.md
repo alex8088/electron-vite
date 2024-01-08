@@ -1,37 +1,25 @@
-### v2.0.0-beta.4 (_2024-01-06_)
-
-- fix: electron's export subpaths also need to be externalized ([#372](https://github.com/alex8088/electron-vite/issues/372))
-
-### v2.0.0-beta.3 (_2024-01-04_)
-
-- feat: config file supports "type": "module" in package.json
-
-### v2.0.0-beta.2 (_2023-12-19_)
-
-- feat: support for passing arguments to electron in dev and preview commands ([#339](https://github.com/alex8088/electron-vite/pull/339))
-- perf(externalizeDepsPlugin): use cached package data to improve performance
-- perf: loadEnv api also needs to load shared env variables prefixed with VITE\_
-
-### v2.0.0-beta.1 (_2023-12-14_)
-
-- feat: env variables prefixed with VITE\_ will be shared in main process and renderer
-- fix: externalizeDepPlugin not work
-- perf: dev error message
-
-### v2.0.0-beta.0 (_2023-12-13_)
+### v2.0.0  (_2024-01-09_)
 
 - feat: bump minimum node version to 18
 - feat: migrate to ESM
 - feat: support vite 5
 - feat: add package.json to export map
 - feat: support ESM in Electron
+- feat: env variables prefixed with VITE\_ will be shared in main process and renderer
+- feat: support for passing arguments to electron in dev and preview commands ([#339](https://github.com/alex8088/electron-vite/pull/339))
+- feat: config file supports "type": "module" in package.json
 - fix: emit assets when ssr is enabled
+- fix: externalizeDepPlugin not work
+- fix: electron's export subpaths also need to be externalized ([#372](https://github.com/alex8088/electron-vite/issues/372))
 - perf: improve package.json resolve
 - perf: use magic-string hires boundary for sourcemaps
 - perf: build compatilibity target for Electron 28
 - pref: resolve import meta url in CommonJS format
 - perf(worker): ESM syntax
 - perf: package version
+- perf: dev error message
+- perf(externalizeDepsPlugin): use cached package data to improve performance
+- perf: loadEnv api also needs to load shared env variables prefixed with VITE\_
 - refactor: build
 - refactor: file hashes use url-safe base64 encoded hashes in vite 5 (rollup 4)
 - refactor: remove Electron 11, 12 build compatilibity target
@@ -47,6 +35,26 @@
 - chore(deps): update typescript to 5.3.3
 - chore: improve prettier config
 - chore: update homepage
+
+### v2.0.0-beta.4 (_2024-01-06_)
+
+See [v2.0.0-beta.4 changelog](https://github.com/alex8088/electron-vite/blob/v2.0.0-beta.4/CHANGELOG.md)
+
+### v2.0.0-beta.3 (_2024-01-04_)
+
+See [v2.0.0-beta.3 changelog](https://github.com/alex8088/electron-vite/blob/v2.0.0-beta.3/CHANGELOG.md)
+
+### v2.0.0-beta.2 (_2023-12-19_)
+
+See [v2.0.0-beta.2 changelog](https://github.com/alex8088/electron-vite/blob/v2.0.0-beta.2/CHANGELOG.md)
+
+### v2.0.0-beta.1 (_2023-12-14_)
+
+See [v2.0.0-beta.1 changelog](https://github.com/alex8088/electron-vite/blob/v2.0.0-beta.1/CHANGELOG.md)
+
+### v2.0.0-beta.0 (_2023-12-13_)
+
+See [v2.0.0-beta.0 changelog](https://github.com/alex8088/electron-vite/blob/v2.0.0-beta.0/CHANGELOG.md)
 
 ### v1.0.29 (_2023-11-17_)
 
