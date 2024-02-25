@@ -20,8 +20,7 @@ const __dirname = __cjs_path__.dirname(__filename);
 const require = __cjs_mod__.createRequire(import.meta.url);
 `
 
-const ESMStaticImportRe =
-  /(?<=\s|^|;)import\s*([\s"']*(?<imports>[\p{L}\p{M}\w\t\n\r $*,/{}@.]+)from\s*)?["']\s*(?<specifier>(?<="\s*)[^"]*[^\s"](?=\s*")|(?<='\s*)[^']*[^\s'](?=\s*'))\s*["'][\s;]*/gmu
+const ESMStaticImportRe = /import\s+.+?\s+from\s+['"].+?['"];(?![\s\S]*import\s+.+?\s+from\s+['"].+?['"];)/gmu
 
 interface StaticImport {
   end: number
