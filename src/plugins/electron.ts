@@ -11,7 +11,7 @@ export interface ElectronPluginOptions {
   root?: string
 }
 
-function findLibEntry(root: string, scope: string): string {
+function findLibEntry(root: string, scope: string): string | undefined {
   for (const name of ['index', scope]) {
     for (const ext of ['js', 'ts', 'mjs', 'cjs']) {
       const entryFile = path.resolve(root, 'src', scope, `${name}.${ext}`)
@@ -20,7 +20,7 @@ function findLibEntry(root: string, scope: string): string {
       }
     }
   }
-  return ''
+  return undefined
 }
 
 function findInput(root: string, scope = 'renderer'): string {
