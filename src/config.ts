@@ -20,6 +20,7 @@ import assetPlugin from './plugins/asset'
 import workerPlugin from './plugins/worker'
 import importMetaUrlPlugin from './plugins/importMetaUrl'
 import esmShimPlugin from './plugins/esm'
+import modulePathPlugin from './plugins/modulePath'
 import { isObject, isFilePathESM } from './utils'
 
 export { defineConfig as defineViteConfig } from 'vite'
@@ -137,6 +138,7 @@ export async function resolveConfig(
           ...electronMainVitePlugin({ root }),
           assetPlugin(),
           workerPlugin(),
+          modulePathPlugin(),
           importMetaUrlPlugin(),
           esmShimPlugin()
         ])

@@ -4,6 +4,12 @@ declare module '*?nodeWorker' {
   export default function (options: WorkerOptions): Worker
 }
 
+// module path
+declare module '*?modulePath' {
+  const src: string
+  export default src
+}
+
 // node asset
 declare module '*?asset' {
   const src: string
