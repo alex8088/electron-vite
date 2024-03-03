@@ -198,9 +198,12 @@ export function bytecodePlugin(options: BytecodeOptions = {}): Plugin | null {
       if (useInRenderer) {
         config.logger.warn(colors.yellow('bytecodePlugin does not support renderer.'))
       }
+      if (resolvedConfig.build.minify && protectedStrings.length > 0) {
+        config.logger.warn(colors.yellow('Strings cannot be protected when minification is enabled.'))
+      }
     },
     transform(code, id): void | { code: string; map: SourceMapInput } {
-      if (protectedStrings.length === 0 || !filter(id)) return
+      if (config.build.minify || protectedStrings.length === 0 || !filter(id)) return
 
       let match: RegExpExecArray | null
       let s: MagicString | undefined
