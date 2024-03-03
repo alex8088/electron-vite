@@ -1,4 +1,12 @@
-### v2.0.0  (_2024-01-09_)
+### v2.1.0 (_2024-03-03_)
+
+- feat: feat: easy way to fork processes and use workers
+- fix: config via build.lib fails when default entry point not found ([#393](https://github.com/alex8088/electron-vite/issues/393))
+- perf: build compatilibity target for Electron 29
+- perf: allow integrating more complex render solutions ([#412](https://github.com/alex8088/electron-vite/pull/412))
+- perf(bytecodePlugin): warn that strings cannot be protected when minification is enabled ([#417](https://github.com/alex8088/electron-vite/issues/417))
+
+### v2.0.0 (_2024-01-09_)
 
 - feat: bump minimum node version to 18
 - feat: migrate to ESM
