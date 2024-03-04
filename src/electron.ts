@@ -1,5 +1,6 @@
 import path from 'node:path'
 import fs from 'node:fs'
+import os from 'node:os'
 import { createRequire } from 'node:module'
 import { type ChildProcess, spawn } from 'node:child_process'
 import { loadPackageData } from './utils'
@@ -128,6 +129,10 @@ export function startElectron(root: string | undefined): ChildProcess {
   const isDev = process.env.NODE_ENV_ELECTRON_VITE === 'development'
 
   const args: string[] = process.env.ELECTRON_CLI_ARGS ? JSON.parse(process.env.ELECTRON_CLI_ARGS) : []
+
+  if (os.userInfo().uid == 0 && isDev) {
+    args.push(`--no-sandbox`);
+  }
 
   if (!!process.env.REMOTE_DEBUGGING_PORT && isDev) {
     args.push(`--remote-debugging-port=${process.env.REMOTE_DEBUGGING_PORT}`)
