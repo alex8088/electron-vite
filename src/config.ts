@@ -17,7 +17,7 @@ import { build } from 'esbuild'
 
 import { electronMainVitePlugin, electronPreloadVitePlugin, electronRendererVitePlugin } from './plugins/electron'
 import assetPlugin from './plugins/asset'
-import workerPlugin from './plugins/worker'
+import { workerPlugin } from './plugins/worker'
 import importMetaUrlPlugin from './plugins/importMetaUrl'
 import esmShimPlugin from './plugins/esm'
 import modulePathPlugin from './plugins/modulePath'
