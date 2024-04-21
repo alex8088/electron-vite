@@ -67,6 +67,9 @@ devDependencies:
   rollup-plugin-dts:
     specifier: ^6.1.0
     version: 6.1.0(rollup@4.6.1)(typescript@5.3.3)
+  rollup-plugin-rm:
+    specifier: ^1.0.2
+    version: 1.0.2(rollup@4.6.1)
   simple-git-hooks:
     specifier: ^2.9.0
     version: 2.9.0
@@ -2214,6 +2217,14 @@ packages:
       typescript: 5.3.3
     optionalDependencies:
       '@babel/code-frame': 7.23.5
+    dev: true
+
+  /rollup-plugin-rm@1.0.2(rollup@4.6.1):
+    resolution: {integrity: sha512-RSUFFibfkCvIeQrTg7TLs59m6S//qcmDfTNqgQ2Pd9BlABd/q74ymmg5936h0vfnjrFHhale/+f+efgp7deLEg==}
+    peerDependencies:
+      rollup: ^3.0.0||^4.0.0
+    dependencies:
+      rollup: 4.6.1
     dev: true
 
   /rollup@4.6.1:

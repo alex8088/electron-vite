@@ -88,6 +88,7 @@
     "prettier": "^3.1.0",
     "rollup": "^4.6.1",
     "rollup-plugin-dts": "^6.1.0",
+    "rollup-plugin-rm": "^1.0.2",
     "simple-git-hooks": "^2.9.0",
     "tslib": "^2.6.2",
     "typescript": "^5.3.3",
