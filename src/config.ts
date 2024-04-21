@@ -5,7 +5,7 @@ import { createRequire } from 'node:module'
 import colors from 'picocolors'
 import {
   type UserConfig as ViteConfig,
-  type UserConfigExport as UserViteConfigExport,
+  type UserConfigExport as ViteConfigExport,
   type ConfigEnv,
   type Plugin,
   type LogLevel,
@@ -46,25 +46,25 @@ export interface UserConfig {
   preload?: ViteConfig & { configFile?: string | false }
 }
 
-export interface UserConfigSchema {
+export interface ElectronViteConfig {
   /**
    * Vite config options for electron main process
    *
    * https://vitejs.dev/config/
    */
-  main?: UserViteConfigExport
+  main?: ViteConfigExport
   /**
    * Vite config options for electron renderer process
    *
    * https://vitejs.dev/config/
    */
-  renderer?: UserViteConfigExport
+  renderer?: ViteConfigExport
   /**
    * Vite config options for electron preload files
    *
    * https://vitejs.dev/config/
    */
-  preload?: UserViteConfigExport
+  preload?: ViteConfigExport
 }
 
 export type InlineConfig = Omit<ViteConfig, 'base'> & {
@@ -73,16 +73,16 @@ export type InlineConfig = Omit<ViteConfig, 'base'> & {
   ignoreConfigWarning?: boolean
 }
 
-export type UserConfigFn = (env: ConfigEnv) => UserConfigSchema | Promise<UserConfigSchema>
-export type UserConfigExport = UserConfigSchema | Promise<UserConfigSchema> | UserConfigFn
+export type ElectronViteConfigFn = (env: ConfigEnv) => ElectronViteConfig | Promise<ElectronViteConfig>
+export type ElectronViteConfigExport = ElectronViteConfig | Promise<ElectronViteConfig> | ElectronViteConfigFn
 
 /**
  * Type helper to make it easier to use `electron.vite.config.*`
- * accepts a direct {@link UserConfig} object, or a function that returns it.
+ * accepts a direct {@link ElectronViteConfig} object, or a function that returns it.
  * The function receives a object that exposes two properties:
  * `command` (either `'build'` or `'serve'`), and `mode`.
  */
-export function defineConfig(config: UserConfigExport): UserConfigExport {
+export function defineConfig(config: ElectronViteConfigExport): ElectronViteConfigExport {
   return config
 }
 
@@ -390,7 +390,7 @@ async function loadConfigFormBundledFile(
   configFile: string,
   bundledCode: string,
   isESM: boolean
-): Promise<UserConfigExport> {
+): Promise<ElectronViteConfigExport> {
   if (isESM) {
     const fileNameTmp = path.resolve(configRoot, `${CONFIG_FILE_NAME}.${Date.now()}.mjs`)
     fs.writeFileSync(fileNameTmp, bundledCode)
