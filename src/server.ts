@@ -2,7 +2,7 @@ import type { ChildProcess } from 'node:child_process'
 import {
   type UserConfig as ViteConfig,
   type ViteDevServer,
-  createServer as ViteCreateServer,
+  createServer as viteCreateServer,
   build as viteBuild,
   createLogger,
   mergeConfig
@@ -80,7 +80,7 @@ export async function createServer(
     if (rendererViteConfig) {
       logger.info(colors.gray(`\n-----\n`))
 
-      server = await ViteCreateServer(rendererViteConfig)
+      server = await viteCreateServer(rendererViteConfig)
 
       if (!server.httpServer) {
         throw new Error('HTTP server not available')
