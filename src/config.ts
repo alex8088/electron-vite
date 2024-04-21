@@ -73,8 +73,16 @@ export type InlineConfig = Omit<ViteConfig, 'base'> & {
   ignoreConfigWarning?: boolean
 }
 
+export type ElectronViteConfigFnObject = (env: ConfigEnv) => ElectronViteConfig
+export type ElectronViteConfigFnPromise = (env: ConfigEnv) => Promise<ElectronViteConfig>
 export type ElectronViteConfigFn = (env: ConfigEnv) => ElectronViteConfig | Promise<ElectronViteConfig>
-export type ElectronViteConfigExport = ElectronViteConfig | Promise<ElectronViteConfig> | ElectronViteConfigFn
+
+export type ElectronViteConfigExport =
+  | ElectronViteConfig
+  | Promise<ElectronViteConfig>
+  | ElectronViteConfigFnObject
+  | ElectronViteConfigFnPromise
+  | ElectronViteConfigFn
 
 /**
  * Type helper to make it easier to use `electron.vite.config.*`
@@ -82,6 +90,10 @@ export type ElectronViteConfigExport = ElectronViteConfig | Promise<ElectronVite
  * The function receives a object that exposes two properties:
  * `command` (either `'build'` or `'serve'`), and `mode`.
  */
+export function defineConfig(config: ElectronViteConfig): ElectronViteConfig
+export function defineConfig(config: Promise<ElectronViteConfig>): Promise<ElectronViteConfig>
+export function defineConfig(config: ElectronViteConfigFnObject): ElectronViteConfigFnObject
+export function defineConfig(config: ElectronViteConfigExport): ElectronViteConfigExport
 export function defineConfig(config: ElectronViteConfigExport): ElectronViteConfigExport {
   return config
 }
