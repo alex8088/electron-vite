@@ -1,6 +1,15 @@
+### v2.2.0 (_2024-04-21_)
+
+- feat: export mergeConfig from vite ([#471](https://github.com/alex8088/electron-vite/issues/471))
+- fix(types): narrow down the return type of defineConfig
+- perf: build compatilibity target for Electron 30
+- refactor(config): defineConfig types
+- chore: fix camelcase typo
+- chore: use rollup-plugin-rm to clean dist
+
 ### v2.1.0 (_2024-03-03_)
 
-- feat: feat: easy way to fork processes and use workers
+- feat: easy way to fork processes and use workers
 - fix: config via build.lib fails when default entry point not found ([#393](https://github.com/alex8088/electron-vite/issues/393))
 - perf: build compatilibity target for Electron 29
 - perf: allow integrating more complex render solutions ([#412](https://github.com/alex8088/electron-vite/pull/412))
