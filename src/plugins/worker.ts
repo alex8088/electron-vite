@@ -8,7 +8,7 @@ const nodeWorkerAssetUrlRE = /__VITE_NODE_WORKER_ASSET__([\w$]+)__/g
 /**
  * Resolve `?nodeWorker` import and automatically generate `Worker` wrapper.
  */
-export default function workerPlugin(): Plugin {
+export function workerPlugin(): Plugin {
   let sourcemap: boolean | 'inline' | 'hidden' = false
   return {
     name: 'vite:node-worker',
