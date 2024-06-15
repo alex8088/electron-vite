@@ -87,6 +87,12 @@ export default function assetPlugin(): Plugin {
         return wasmHelperCode
       }
 
+      if (id.startsWith('\0')) {
+        // Rollup convention, this id should be handled by the
+        // plugin that marked it with \0
+        return
+      }
+
       const assetResolved = resolveAsset(id)
       if (!assetResolved) {
         return
