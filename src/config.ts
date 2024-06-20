@@ -141,6 +141,7 @@ export async function resolveConfig(
 
       if (loadResult.config.main) {
         const mainViteConfig: ViteConfig = mergeConfig(loadResult.config.main, deepClone(config))
+        mainViteConfig.mode = inlineConfig.mode || loadResult.config.main.mode || defaultMode
 
         if (outDir) {
           resetOutDir(mainViteConfig, outDir, 'main')
@@ -161,6 +162,7 @@ export async function resolveConfig(
 
       if (loadResult.config.preload) {
         const preloadViteConfig: ViteConfig = mergeConfig(loadResult.config.preload, deepClone(config))
+        preloadViteConfig.mode = inlineConfig.mode || loadResult.config.preload.mode || defaultMode
 
         if (outDir) {
           resetOutDir(preloadViteConfig, outDir, 'preload')
@@ -178,6 +180,7 @@ export async function resolveConfig(
 
       if (loadResult.config.renderer) {
         const rendererViteConfig: ViteConfig = mergeConfig(loadResult.config.renderer, deepClone(config))
+        rendererViteConfig.mode = inlineConfig.mode || loadResult.config.renderer.mode || defaultMode
 
         if (outDir) {
           resetOutDir(rendererViteConfig, outDir, 'renderer')
