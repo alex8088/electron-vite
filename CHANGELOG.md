@@ -1,3 +1,15 @@
+### v2.3.0 (_2024-06-23_)
+
+- feat: resolve import.meta.\[dirname|filename\] to support CommonJS format
+- fix: don't handle module ID that begin with \0 ([#530](https://github.com/alex8088/electron-vite/pull/530))
+- fix: not using the mode from the config file ([#539](https://github.com/alex8088/electron-vite/pull/539))
+- fix: default mode should not overrite user config mode
+- perf: build compatilibity target for Electron 31
+- perf: improve cjs shim
+- chore(deps): update all non-major dependencies
+- chore(deps): update @typescript-eslint/* to v7
+- chore(deps): update esbuild to v0.21
+
 ### v2.2.0 (_2024-04-21_)
 
 - feat: export mergeConfig from vite ([#471](https://github.com/alex8088/electron-vite/issues/471))
