@@ -417,6 +417,7 @@ async function loadConfigFormBundledFile(
     } finally {
       try {
         fs.unlinkSync(fileNameTmp)
+        // eslint-disable-next-line no-empty
       } catch {}
     }
   } else {
