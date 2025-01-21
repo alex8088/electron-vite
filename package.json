@@ -99,7 +99,7 @@
     "@babel/core": "^7.26.0",
     "@babel/plugin-transform-arrow-functions": "^7.25.9",
     "cac": "^6.7.14",
-    "esbuild": "^0.21.5",
+    "esbuild": "^0.24.2",
     "magic-string": "^0.30.17",
     "picocolors": "^1.1.1"
   }
