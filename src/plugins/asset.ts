@@ -115,7 +115,7 @@ export default function assetPlugin(): Plugin {
           const hash = this.emitFile({
             type: 'asset',
             name: path.basename(file),
-            source
+            source: source as unknown as Uint8Array
           })
           referenceId = `__VITE_NODE_ASSET__${hash}__`
           assetCache.set(file, referenceId)

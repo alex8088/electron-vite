@@ -310,7 +310,7 @@ export function bytecodePlugin(options: BytecodeOptions = {}): Plugin | null {
             const chunkFileName = path.resolve(outDir, name)
             if (bytecodeChunks.includes(name)) {
               const bytecodeBuffer = await compileToBytecode(_code)
-              fs.writeFileSync(path.resolve(outDir, name + 'c'), bytecodeBuffer)
+              fs.writeFileSync(path.resolve(outDir, name + 'c'), bytecodeBuffer as unknown as Uint8Array)
               if (chunk.isEntry) {
                 if (!removeBundleJS) {
                   keepBundle(chunkFileName)
