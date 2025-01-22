@@ -198,6 +198,12 @@ export function electronPreloadVitePlugin(options?: ElectronPluginOptions): Plug
         const format = pkg.type && pkg.type === 'module' && supportESM() ? 'es' : 'cjs'
 
         const defaultConfig = {
+          ssr: {
+            resolve: {
+              conditions: ['module', 'browser', 'development|production'],
+              mainFields: ['browser', 'module', 'jsnext:main', 'jsnext']
+            }
+          },
           build: {
             outDir: path.resolve(root, 'out', 'preload'),
             target: nodeTarget,
@@ -272,7 +278,8 @@ export function electronPreloadVitePlugin(options?: ElectronPluginOptions): Plug
         // enable ssr build
         config.build.ssr = true
         config.build.ssrEmitAssets = true
-        config.ssr = { ...config.ssr, ...{ noExternal: true } }
+        config.ssr = mergeConfig(defaultConfig.ssr, config.ssr || {})
+        config.ssr.noExternal = true
       }
     },
     {
