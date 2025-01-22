@@ -1,3 +1,17 @@
+### v3.0.0-beta.0 (_2025-01-22_)
+
+- feat: resolve conditions for preload
+- perf: build compatilibity target for Electron 32
+- perf: build compatilibity target for Electron 33 ([#651](https://github.com/alex8088/electron-vite/pull/651))
+- perf: build compatilibity target for Electron 34
+- chore: move to eslint flat config
+- chore(deps): update all non-major dependencies
+- chore(deps): update @rollup/plugin-node-resolve to v16
+- chore(deps): update @rollup/plugin-typescript to v12
+- chore(deps): update esbuild to v0.24
+- chore(deps): update vite to v6
+- chore(deps): update @type/node to v22
+
 ### v2.3.0 (_2024-06-23_)
 
 - feat: resolve import.meta.\[dirname|filename\] to support CommonJS format
@@ -7,7 +21,7 @@
 - perf: build compatilibity target for Electron 31
 - perf: improve cjs shim
 - chore(deps): update all non-major dependencies
-- chore(deps): update @typescript-eslint/* to v7
+- chore(deps): update @typescript-eslint/\* to v7
 - chore(deps): update esbuild to v0.21
 
 ### v2.2.0 (_2024-04-21_)
