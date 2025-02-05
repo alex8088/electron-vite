@@ -161,13 +161,6 @@ export function bytecodePlugin(options: BytecodeOptions = {}): Plugin | null {
 
   const filter = createFilter(/\.(m?[jt]s|[jt]sx)$/)
 
-  const escapeRegExpString = (str: string): string => {
-    return str
-      .replace(/\\/g, '\\\\\\\\')
-      .replace(/[|{}()[\]^$+*?.]/g, '\\$&')
-      .replace(/-/g, '\\u002d')
-  }
-
   const transformAllChunks = _chunkAlias.length === 0
   const isBytecodeChunk = (chunkName: string): boolean => {
     return transformAllChunks || _chunkAlias.some(alias => alias === chunkName)
@@ -208,19 +201,64 @@ export function bytecodePlugin(options: BytecodeOptions = {}): Plugin | null {
       let match: RegExpExecArray | null
       let s: MagicString | undefined
 
+      function obfuscateString(input: string): string {
+        const key = Array.from({ length: 4 }, () => Math.floor(Math.random() * 256))
+        const hexArray = Array.from(input).map(
+          (c, i) => (c.charCodeAt(0) + key[i % key.length]) ^ key[(i + 1) % key.length]
+        )
+        return `(function(a,b){
+          return String.fromCharCode(...a.map((x,i) => (x ^ b[(i + 1) % b.length]) - b[i % b.length]));
+        })([${hexArray.join(',')}],[${key.join(',')}])`
+      }
+
+      function parseStringLiteral(literal: string): string {
+        try {
+          return new Function('return ' + literal)()
+        } catch {
+          return literal.slice(1, -1)
+        }
+      }
+
       protectedStrings.forEach(str => {
-        const escapedStr = escapeRegExpString(str)
+        const escapedStr = str.replace(/[-/\\^$*+?.()|[\]{}]/g, '\\$&')
         const re = new RegExp(`\\u0027${escapedStr}\\u0027|\\u0022${escapedStr}\\u0022`, 'g')
-        const charCodes = Array.from(str).map(s => s.charCodeAt(0))
-        const replacement = `String.fromCharCode(${charCodes.toString()})`
+        const replacement = obfuscateString(str)
+
         while ((match = re.exec(code))) {
-          s ||= new MagicString(code)
+          s = s || new MagicString(code)
           const [full] = match
           s.overwrite(match.index, match.index + full.length, replacement, {
             contentOnly: true
           })
         }
       })
+
+      const concatRegex = /((["'](?:(?=(\\?))\3.)*?["'])(?:\s*\+\s*(["'](?:(?=(\\?))\5.)*?["']))+)/g
+      while ((match = concatRegex.exec(code))) {
+        let evaluated: string
+        try {
+          evaluated = new Function('return ' + match[0])()
+        } catch {
+          continue
+        }
+        if (protectedStrings.includes(evaluated)) {
+          s = s || new MagicString(code)
+          s.overwrite(match.index, match.index + match[0].length, obfuscateString(evaluated), {
+            contentOnly: true
+          })
+        }
+      }
+
+      const stringLiteralRegex = /(["'])(?:(?=(\\?))\2.)*?\1/g
+      while ((match = stringLiteralRegex.exec(code))) {
+        const literalValue = parseStringLiteral(match[0])
+        if (protectedStrings.includes(literalValue)) {
+          s = s || new MagicString(code)
+          s.overwrite(match.index, match.index + match[0].length, obfuscateString(literalValue), {
+            contentOnly: true
+          })
+        }
+      }
 
       if (s) {
         return {
