@@ -1,4 +1,4 @@
-### v3.0.0-beta.0 (_2025-01-22_)
+### v3.0.0 (_2025-02-16_)
 
 - feat: resolve conditions for preload
 - perf: build compatilibity target for Electron 32
@@ -11,6 +11,10 @@
 - chore(deps): update esbuild to v0.24
 - chore(deps): update vite to v6
 - chore(deps): update @type/node to v22
+
+### v3.0.0-beta.0 (_2025-01-22_)
+
+See [v3.0.0-beta.0 changelog](https://github.com/alex8088/electron-vite/blob/v3.0.0-beta.0/CHANGELOG.md)
 
 ### v2.3.0 (_2024-06-23_)
 
