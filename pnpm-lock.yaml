@@ -53,8 +53,8 @@ devDependencies:
     specifier: ^5.2.3
     version: 5.2.3(eslint-config-prettier@10.1.1)(eslint@9.22.0)(prettier@3.5.3)
   globals:
-    specifier: ^15.14.0
-    version: 15.14.0
+    specifier: ^16.0.0
+    version: 16.0.0
   lint-staged:
     specifier: ^15.4.3
     version: 15.4.3
@@ -1913,8 +1913,8 @@ packages:
     engines: {node: '>=18'}
     dev: true
 
-  /globals@15.14.0:
-    resolution: {integrity: sha512-OkToC372DtlQeje9/zHIo5CT8lRP/FUgEOKBEhU4e0abL7J7CD24fD9ohiLN5hagG/kWCYj4K5oaxxtj2Z0Dig==}
+  /globals@16.0.0:
+    resolution: {integrity: sha512-iInW14XItCXET01CQFqudPOWP2jYMl7T+QRQT+UNcR/iQncN/F0UNpgd76iFkBPgNQb4+X3LV9tLJYzwh+Gl3A==}
     engines: {node: '>=18'}
     dev: true
 
