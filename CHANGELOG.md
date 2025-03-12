@@ -1,3 +1,10 @@
+### v3.1.0-beta.0 (_2025-03-12_)
+
+- perf: build compatilibity target for Electron 35 ([#729](https://github.com/alex8088/electron-vite/pull/729))
+- chore(deps): update all non-major dependencies
+- chore(deps): update globals to v16
+- chore(deps): update esbuild to v0.25
+
 ### v3.0.0 (_2025-02-16_)
 
 - feat: resolve conditions for preload
