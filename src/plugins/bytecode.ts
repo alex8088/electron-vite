@@ -344,7 +344,9 @@ export function bytecodePlugin(options: BytecodeOptions = {}): Plugin | null {
                   }
                 }
                 const bytecodeLoaderBlock = getBytecodeLoaderBlock(chunk.fileName)
-                _code = hasBytecodeMoudle ? _code.replace(useStrict, `${useStrict}\n${bytecodeLoaderBlock}`) : _code
+                _code = hasBytecodeMoudle
+                  ? _code.replace(/("use strict";)|('use strict';)/, `${useStrict}\n${bytecodeLoaderBlock}`)
+                  : _code
               }
               fs.writeFileSync(chunkFileName, _code)
             }
