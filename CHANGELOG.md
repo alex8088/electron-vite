@@ -1,9 +1,14 @@
-### v3.1.0-beta.0 (_2025-03-12_)
+### v3.1.0 (_2025-03-25_)
 
+- fix(bytecodePlugin): optimize 'use strict' directive replacement ([#681](https://github.com/alex8088/electron-vite/issues/681))
 - perf: build compatilibity target for Electron 35 ([#729](https://github.com/alex8088/electron-vite/pull/729))
 - chore(deps): update all non-major dependencies
 - chore(deps): update globals to v16
 - chore(deps): update esbuild to v0.25
+
+### v3.1.0-beta.0 (_2025-03-12_)
+
+See [v3.1.0-beta.0 changelog](https://github.com/alex8088/electron-vite/blob/v3.1.0-beta.0/CHANGELOG.md)
 
 ### v3.0.0 (_2025-02-16_)
 
