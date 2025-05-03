@@ -104,6 +104,7 @@ export function getElectronChromeTarget(): string {
   const electronVer = getElectronMajorVer()
 
   const chromeVer = {
+    '36': '136',
     '35': '134',
     '34': '132',
     '33': '130',
