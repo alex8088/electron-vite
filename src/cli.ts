@@ -131,6 +131,7 @@ cli.command('build [root]', 'build for production').action(async (root: string, 
 
   try {
     await build(inlineConfig)
+    process.exit(0)
   } catch (e) {
     const error = e as Error
     createLogger(options.logLevel).error(colors.red(`error during build:\n${error.stack}`), { error })
