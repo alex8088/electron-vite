@@ -22,6 +22,11 @@ export default tseslint.config(
         ...globals.node
       }
     },
+    settings: {
+      node: {
+        version: '^20.19.0 || >=22.12.0'
+      }
+    },
     rules: {
       'prettier/prettier': 'warn',
       '@typescript-eslint/ban-ts-comment': ['error', { 'ts-ignore': 'allow-with-description' }],
