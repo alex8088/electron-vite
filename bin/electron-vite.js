@@ -24,7 +24,7 @@ if (debugIndex > 0) {
 }
 
 function run() {
-  import('../dist/cli.mjs')
+  import('../dist/cli.js')
 }
 
 run()
