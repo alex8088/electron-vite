@@ -1,3 +1,14 @@
+### v4.0.0-beta.0 (_2025-06-28_)
+
+- refactor!: bump required node version to 20.19+, 22.12+
+- fix(deps)!: update Vite to v7 and remove cjs build
+- fix: use `import type` for type-only imports
+- perf: build compatibility target for Electron 36 ([#766](https://github.com/alex8088/electron-vite/pull/766))
+- perf: build compatibility target for Electron 37
+- chore(deps): update pnpm to v10
+- chore(deps): update all non-major dependencies
+- chore(deps): update lint-staged to v16
+
 ### v3.1.0 (_2025-03-25_)
 
 - fix(bytecodePlugin): optimize 'use strict' directive replacement ([#681](https://github.com/alex8088/electron-vite/issues/681))
