@@ -32,6 +32,7 @@ interface DevCLIOptions {
   inspect?: boolean | string
   inspectBrk?: boolean | string
   remoteDebuggingPort?: string
+  noElectronStart?: boolean
   noSandbox?: boolean
   rendererOnly?: boolean
 }
@@ -78,6 +79,7 @@ cli
   .option('--inspect [port]', `[boolean | number] enable V8 inspector on the specified port`)
   .option('--inspectBrk [port]', `[boolean | number] enable V8 inspector on the specified port`)
   .option('--remoteDebuggingPort <port>', `[string] port for remote debugging`)
+  .option('--noElectronStart', `[boolean] run dev servers without starting the Electron app`)
   .option('--noSandbox', `[boolean] forces renderer process to run un-sandboxed`)
   .option('--rendererOnly', `[boolean] only dev server for the renderer`)
   .action(async (root: string, options: DevCLIOptions & GlobalCLIOptions) => {
@@ -109,7 +111,7 @@ cli
     const inlineConfig = createInlineConfig(root, options)
 
     try {
-      await createServer(inlineConfig, { rendererOnly: options.rendererOnly })
+      await createServer(inlineConfig, { rendererOnly: options.rendererOnly, noElectronStart: options.noElectronStart })
     } catch (e) {
       const error = e as Error
       createLogger(options.logLevel).error(
