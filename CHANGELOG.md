@@ -1,4 +1,4 @@
-### v4.0.0-beta.0 (_2025-06-28_)
+### v4.0.0 (_2025-07-06_)
 
 - refactor!: bump required node version to 20.19+, 22.12+
 - fix(deps)!: update Vite to v7 and remove cjs build
@@ -8,6 +8,10 @@
 - chore(deps): update pnpm to v10
 - chore(deps): update all non-major dependencies
 - chore(deps): update lint-staged to v16
+
+### v4.0.0-beta.0 (_2025-06-28_)
+
+See [v4.0.0-beta.0 changelog](https://github.com/alex8088/electron-vite/blob/v4.0.0-beta.0/CHANGELOG.md)
 
 ### v3.1.0 (_2025-03-25_)
 
