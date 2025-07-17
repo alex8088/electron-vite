@@ -1,5 +1,5 @@
 import { build as viteBuild } from 'vite'
-import { InlineConfig, resolveConfig } from './config'
+import { type InlineConfig, resolveConfig } from './config'
 
 /**
  * Bundles the electron app for production.

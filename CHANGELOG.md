@@ -1,3 +1,48 @@
+### v4.0.0 (_2025-07-06_)
+
+- refactor!: bump required node version to 20.19+, 22.12+
+- fix(deps)!: update Vite to v7 and remove cjs build
+- fix: use `import type` for type-only imports
+- perf: build compatibility target for Electron 36 ([#766](https://github.com/alex8088/electron-vite/pull/766))
+- perf: build compatibility target for Electron 37
+- chore(deps): update pnpm to v10
+- chore(deps): update all non-major dependencies
+- chore(deps): update lint-staged to v16
+
+### v4.0.0-beta.0 (_2025-06-28_)
+
+See [v4.0.0-beta.0 changelog](https://github.com/alex8088/electron-vite/blob/v4.0.0-beta.0/CHANGELOG.md)
+
+### v3.1.0 (_2025-03-25_)
+
+- fix(bytecodePlugin): optimize 'use strict' directive replacement ([#681](https://github.com/alex8088/electron-vite/issues/681))
+- perf: build compatilibity target for Electron 35 ([#729](https://github.com/alex8088/electron-vite/pull/729))
+- chore(deps): update all non-major dependencies
+- chore(deps): update globals to v16
+- chore(deps): update esbuild to v0.25
+
+### v3.1.0-beta.0 (_2025-03-12_)
+
+See [v3.1.0-beta.0 changelog](https://github.com/alex8088/electron-vite/blob/v3.1.0-beta.0/CHANGELOG.md)
+
+### v3.0.0 (_2025-02-16_)
+
+- feat: resolve conditions for preload
+- perf: build compatilibity target for Electron 32
+- perf: build compatilibity target for Electron 33 ([#651](https://github.com/alex8088/electron-vite/pull/651))
+- perf: build compatilibity target for Electron 34
+- chore: move to eslint flat config
+- chore(deps): update all non-major dependencies
+- chore(deps): update @rollup/plugin-node-resolve to v16
+- chore(deps): update @rollup/plugin-typescript to v12
+- chore(deps): update esbuild to v0.24
+- chore(deps): update vite to v6
+- chore(deps): update @type/node to v22
+
+### v3.0.0-beta.0 (_2025-01-22_)
+
+See [v3.0.0-beta.0 changelog](https://github.com/alex8088/electron-vite/blob/v3.0.0-beta.0/CHANGELOG.md)
+
 ### v2.3.0 (_2024-06-23_)
 
 - feat: resolve import.meta.\[dirname|filename\] to support CommonJS format
@@ -7,7 +52,7 @@
 - perf: build compatilibity target for Electron 31
 - perf: improve cjs shim
 - chore(deps): update all non-major dependencies
-- chore(deps): update @typescript-eslint/* to v7
+- chore(deps): update @typescript-eslint/\* to v7
 - chore(deps): update esbuild to v0.21
 
 ### v2.2.0 (_2024-04-21_)

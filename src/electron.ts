@@ -69,6 +69,12 @@ export function getElectronNodeTarget(): string {
   const electronVer = getElectronMajorVer()
 
   const nodeVer = {
+    '37': '22.16',
+    '36': '22.14',
+    '35': '22.14',
+    '34': '20.18',
+    '33': '20.18',
+    '32': '20.16',
     '31': '20.14',
     '30': '20.11',
     '29': '20.9',
@@ -82,12 +88,7 @@ export function getElectronNodeTarget(): string {
     '21': '16.16',
     '20': '16.15',
     '19': '16.14',
-    '18': '16.13',
-    '17': '16.13',
-    '16': '16.9',
-    '15': '16.5',
-    '14': '14.17',
-    '13': '14.17'
+    '18': '16.13'
   }
   if (electronVer && parseInt(electronVer) > 10) {
     let target = nodeVer[electronVer]
@@ -101,6 +102,12 @@ export function getElectronChromeTarget(): string {
   const electronVer = getElectronMajorVer()
 
   const chromeVer = {
+    '37': '138',
+    '36': '136',
+    '35': '134',
+    '34': '132',
+    '33': '130',
+    '32': '128',
     '31': '126',
     '30': '124',
     '29': '122',
@@ -114,12 +121,7 @@ export function getElectronChromeTarget(): string {
     '21': '106',
     '20': '104',
     '19': '102',
-    '18': '100',
-    '17': '98',
-    '16': '96',
-    '15': '94',
-    '14': '93',
-    '13': '91'
+    '18': '100'
   }
   if (electronVer && parseInt(electronVer) > 10) {
     let target = chromeVer[electronVer]

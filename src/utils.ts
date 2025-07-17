@@ -29,7 +29,10 @@ export function parseRequest(id: string): Record<string, string> | null {
 }
 
 export function getHash(text: Buffer | string): string {
-  return createHash('sha256').update(text).digest('hex').substring(0, 8)
+  return createHash('sha256')
+    .update(text as unknown as Uint8Array)
+    .digest('hex')
+    .substring(0, 8)
 }
 
 export function toRelativePath(filename: string, importer: string): string {

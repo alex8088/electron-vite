@@ -17,14 +17,8 @@ export default defineConfig([
     output: [
       {
         dir: 'dist',
-        entryFileNames: '[name].cjs',
-        chunkFileNames: 'chunks/lib-[hash].cjs',
-        format: 'cjs'
-      },
-      {
-        dir: 'dist',
-        entryFileNames: '[name].mjs',
-        chunkFileNames: 'chunks/lib-[hash].mjs',
+        entryFileNames: '[name].js',
+        chunkFileNames: 'chunks/lib-[hash].js',
         format: 'es'
       }
     ],
