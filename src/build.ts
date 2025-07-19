@@ -1,5 +1,5 @@
 import { build as viteBuild } from 'vite'
-import { type InlineConfig, resolveConfig } from './config'
+import { type InlineConfig, resolveConfig, type InlineUserConfig } from './config'
 
 /**
  * Bundles the electron app for production.
@@ -10,24 +10,26 @@ export async function build(inlineConfig: InlineConfig = {}): Promise<void> {
   if (config.config) {
     const mainViteConfig = config.config?.main
     if (mainViteConfig) {
-      if (mainViteConfig.build?.watch) {
-        mainViteConfig.build.watch = null
-      }
-      await viteBuild(mainViteConfig)
+      await _build(mainViteConfig)
     }
     const preloadViteConfig = config.config?.preload
     if (preloadViteConfig) {
-      if (preloadViteConfig.build?.watch) {
-        preloadViteConfig.build.watch = null
+      if (Array.isArray(preloadViteConfig)) {
+        await Promise.all(preloadViteConfig.map(_build))
+      } else {
+        await _build(preloadViteConfig)
       }
-      await viteBuild(preloadViteConfig)
     }
     const rendererViteConfig = config.config?.renderer
     if (rendererViteConfig) {
-      if (rendererViteConfig.build?.watch) {
-        rendererViteConfig.build.watch = null
-      }
-      await viteBuild(rendererViteConfig)
+      _build(rendererViteConfig)
     }
   }
+}
+
+async function _build(config: InlineUserConfig): Promise<void> {
+  if (config.build?.watch) {
+    config.build.watch = null
+  }
+  await viteBuild(config)
 }
