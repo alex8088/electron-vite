@@ -163,16 +163,40 @@ export async function resolveConfig(
 
       if (loadResult.config.preload) {
         if (Array.isArray(loadResult.config.preload)) {
-          loadResult.config.preload = loadResult.config.preload.map(normalizePreloadViteConfig)
+          const shouldNotEmptyOutDir = loadResult.config.preload.length > 1 ? true : undefined
+          loadResult.config.preload = loadResult.config.preload.map(config =>
+            normalizePreloadViteConfig(config, shouldNotEmptyOutDir)
+          )
         } else {
           loadResult.config.preload = normalizePreloadViteConfig(loadResult.config.preload)
         }
 
-        function normalizePreloadViteConfig(preloadConfig: InlineUserConfig): InlineUserConfig {
+        function normalizePreloadViteConfig(
+          preloadConfig: InlineUserConfig,
+          shouldNotEmptyOutDir?: boolean
+        ): InlineUserConfig {
           const preloadViteConfig: InlineUserConfig = mergeConfig(preloadConfig, deepClone(config))
 
           preloadViteConfig.mode = inlineConfig.mode || preloadViteConfig.mode || defaultMode
           preloadViteConfig.configFile = false
+
+          if (shouldNotEmptyOutDir) {
+            preloadViteConfig.build ||= {}
+
+            if (preloadViteConfig.build.emptyOutDir === true) {
+              throw new Error(
+                "The electron vite preload config `build.emptyOutDir` should be set to `false` when multiple preload scripts are used to prevent overwriting each other's output files."
+              )
+            } else if (preloadViteConfig.build.emptyOutDir === undefined) {
+              createLogger(config.logLevel).info(
+                colors.gray(
+                  "The electron vite preload config `build.emptyOutDir` will be set to `false` when multiple preload scripts are used to prevent overwriting each other's output files."
+                )
+              )
+            }
+
+            preloadViteConfig.build.emptyOutDir = false
+          }
 
           if (outDir) {
             resetOutDir(preloadViteConfig, outDir, 'preload')
