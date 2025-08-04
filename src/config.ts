@@ -187,12 +187,6 @@ export async function resolveConfig(
               throw new Error(
                 "The electron vite preload config `build.emptyOutDir` should be set to `false` when multiple preload scripts are used to prevent overwriting each other's output files."
               )
-            } else if (preloadViteConfig.build.emptyOutDir === undefined) {
-              createLogger(config.logLevel).info(
-                colors.gray(
-                  "The electron vite preload config `build.emptyOutDir` will be set to `false` when multiple preload scripts are used to prevent overwriting each other's output files."
-                )
-              )
             }
 
             preloadViteConfig.build.emptyOutDir = false
