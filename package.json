@@ -1,6 +1,6 @@
 {
   "name": "electron-vite",
-  "version": "4.0.0",
+  "version": "4.0.1",
   "description": "Electron build tooling based on Vite",
   "type": "module",
   "main": "./dist/index.js",

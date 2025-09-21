@@ -1,3 +1,7 @@
+### v4.0.1 (_2025-09-21_)
+
+- perf: build compatibility target for Electron 38
+
 ### v4.0.0 (_2025-07-06_)
 
 - refactor!: bump required node version to 20.19+, 22.12+
