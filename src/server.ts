@@ -37,10 +37,12 @@ export async function createServer(
           logger.info(colors.cyan(`\n  waiting for electron to exit...`))
 
           ps.removeAllListeners()
+          ps.on('exit', () => {
+            logger.info(colors.green(`\napp has been shut down...`))
+            ps = startElectron(inlineConfig.root)
+            logger.info(colors.green(`\nrestart electron app...`))
+          })
           ps.kill()
-          ps = startElectron(inlineConfig.root)
-
-          logger.info(colors.green(`\nrestart electron app...`))
         }
       }
 
