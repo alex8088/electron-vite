@@ -14,7 +14,7 @@ import { startElectron } from './electron'
 
 export async function createServer(
   inlineConfig: InlineConfig = {},
-  options: { rendererOnly?: boolean }
+  options: { rendererOnly?: boolean } = {}
 ): Promise<void> {
   process.env.NODE_ENV_ELECTRON_VITE = 'development'
   const config = await resolveConfig(inlineConfig, 'serve', 'development')
