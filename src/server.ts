@@ -14,7 +14,7 @@ import { startElectron } from './electron'
 
 export async function createServer(
   inlineConfig: InlineConfig = {},
-  options: { rendererOnly?: boolean }
+  options: { rendererOnly?: boolean; noElectronStart?: boolean }
 ): Promise<void> {
   process.env.NODE_ENV_ELECTRON_VITE = 'development'
   const config = await resolveConfig(inlineConfig, 'serve', 'development')
@@ -104,9 +104,11 @@ export async function createServer(
       server.printUrls()
     }
 
-    ps = startElectron(inlineConfig.root)
+    if(!options.noElectronStart) {
+      ps = startElectron(inlineConfig.root)
 
-    logger.info(colors.green(`\nstart electron app...\n`))
+      logger.info(colors.green(`\nstart electron app...\n`))
+    }
   }
 }
 
