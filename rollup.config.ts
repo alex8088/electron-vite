@@ -9,7 +9,7 @@ import rm from 'rollup-plugin-rm'
 const require = createRequire(import.meta.url)
 const pkg = require('./package.json')
 
-const external = ['esbuild', ...Object.keys(pkg.dependencies || {}), ...Object.keys(pkg.peerDependencies || {})]
+const external = [...Object.keys(pkg.dependencies || {}), ...Object.keys(pkg.peerDependencies || {})]
 
 export default defineConfig([
   {
