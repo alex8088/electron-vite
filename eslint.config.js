@@ -29,6 +29,7 @@ export default tseslint.config(
     },
     rules: {
       'prettier/prettier': 'warn',
+      'no-empty': ['warn', { allowEmptyCatch: true }],
       '@typescript-eslint/ban-ts-comment': ['error', { 'ts-ignore': 'allow-with-description' }],
       '@typescript-eslint/explicit-function-return-type': [
         'error',
@@ -52,6 +53,10 @@ export default tseslint.config(
           allowTaggedTemplates: true,
           allowTernary: true
         }
+      ],
+      '@typescript-eslint/consistent-type-imports': [
+        'error',
+        { prefer: 'type-imports', disallowTypeAnnotations: false }
       ]
     }
   },
