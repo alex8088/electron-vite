@@ -1,12 +1,11 @@
 import path from 'node:path'
-import fs from 'node:fs'
 import { spawn } from 'node:child_process'
 import { createRequire } from 'node:module'
 import colors from 'picocolors'
-import { type Plugin, type ResolvedConfig, normalizePath, createFilter } from 'vite'
+import { type Plugin, type Logger, type LibraryOptions, normalizePath } from 'vite'
 import * as babel from '@babel/core'
 import MagicString from 'magic-string'
-import type { SourceMapInput, OutputChunk } from 'rollup'
+import type { SourceMapInput, OutputChunk, OutputOptions } from 'rollup'
 import { getElectronPath } from '../electron'
 import { toRelativePath } from '../utils'
 
@@ -159,136 +158,99 @@ export function bytecodePlugin(options: BytecodeOptions = {}): Plugin | null {
   const { chunkAlias = [], transformArrowFunctions = true, removeBundleJS = true, protectedStrings = [] } = options
   const _chunkAlias = Array.isArray(chunkAlias) ? chunkAlias : [chunkAlias]
 
-  const filter = createFilter(/\.(m?[jt]s|[jt]sx)$/)
-
-  const escapeRegExpString = (str: string): string => {
-    return str
-      .replace(/\\/g, '\\\\\\\\')
-      .replace(/[|{}()[\]^$+*?.]/g, '\\$&')
-      .replace(/-/g, '\\u002d')
-  }
-
   const transformAllChunks = _chunkAlias.length === 0
   const isBytecodeChunk = (chunkName: string): boolean => {
     return transformAllChunks || _chunkAlias.some(alias => alias === chunkName)
   }
 
-  const _transform = (code: string): string => {
-    const re = babel.transform(code, {
-      plugins: ['@babel/plugin-transform-arrow-functions']
-    })
-    return re.code || ''
+  const plugins: babel.PluginItem[] = []
+
+  if (transformArrowFunctions) {
+    plugins.push('@babel/plugin-transform-arrow-functions')
   }
+
+  if (protectedStrings.length > 0) {
+    plugins.push([protectStringsPlugin, { protectedStrings: new Set(protectedStrings) }])
+  }
+
+  const shouldTransformBytecodeChunk = plugins.length !== 0
+
+  const _transform = (code: string, sourceMaps: boolean = false): { code: string; map?: SourceMapInput } | null => {
+    const re = babel.transform(code, { plugins, sourceMaps })
+    return re ? { code: re.code || '', map: re.map } : null
+  }
+
+  let bytecodeChunkCount = 0
 
   const useStrict = '"use strict";'
   const bytecodeModuleLoader = 'bytecode-loader.cjs'
 
-  let config: ResolvedConfig
-  let useInRenderer = false
-  let bytecodeRequired = false
-  let bytecodeFiles: { name: string; size: number }[] = []
+  let logger: Logger
+  let sourcemap: boolean | 'inline' | 'hidden' = false
+  let supported = false
 
   return {
     name: 'vite:bytecode',
     apply: 'build',
     enforce: 'post',
-    configResolved(resolvedConfig): void {
-      config = resolvedConfig
-      useInRenderer = config.plugins.some(p => p.name === 'vite:electron-renderer-preset-config')
+    configResolved(config): void {
+      if (supported) {
+        return
+      }
+      logger = config.logger
+      sourcemap = config.build.sourcemap
+      const useInRenderer = config.plugins.some(p => p.name === 'vite:electron-renderer-preset-config')
       if (useInRenderer) {
         config.logger.warn(colors.yellow('bytecodePlugin does not support renderer.'))
+        return
       }
-      if (resolvedConfig.build.minify && protectedStrings.length > 0) {
+      const build = config.build
+      const resolvedOutputs = resolveBuildOutputs(build.rollupOptions.output, build.lib)
+      if (resolvedOutputs) {
+        const outputs = Array.isArray(resolvedOutputs) ? resolvedOutputs : [resolvedOutputs]
+        const output = outputs[0]
+        if (output.format === 'es') {
+          config.logger.warn(
+            colors.yellow(
+              'bytecodePlugin does not support ES module, please remove "type": "module" ' +
+                'in package.json or set the "build.rollupOptions.output.format" option to "cjs".'
+            )
+          )
+        }
+        supported = output.format === 'cjs' && !useInRenderer
+      }
+      if (supported && config.build.minify && protectedStrings.length > 0) {
         config.logger.warn(colors.yellow('Strings cannot be protected when minification is enabled.'))
       }
     },
-    transform(code, id): void | { code: string; map: SourceMapInput } {
-      if (config.build.minify || protectedStrings.length === 0 || !filter(id)) return
-
-      let match: RegExpExecArray | null
-      let s: MagicString | undefined
-
-      protectedStrings.forEach(str => {
-        const escapedStr = escapeRegExpString(str)
-        const re = new RegExp(`\\u0027${escapedStr}\\u0027|\\u0022${escapedStr}\\u0022`, 'g')
-        const charCodes = Array.from(str).map(s => s.charCodeAt(0))
-        const replacement = `String.fromCharCode(${charCodes.toString()})`
-        while ((match = re.exec(code))) {
-          s ||= new MagicString(code)
-          const [full] = match
-          s.overwrite(match.index, match.index + full.length, replacement, {
-            contentOnly: true
-          })
-        }
-      })
-
-      if (s) {
-        return {
-          code: s.toString(),
-          map: config.build.sourcemap ? s.generateMap({ hires: 'boundary' }) : null
-        }
-      }
-    },
-    renderChunk(code, chunk, options): { code: string } | null {
-      if (options.format === 'es') {
-        config.logger.warn(
-          colors.yellow(
-            'bytecodePlugin does not support ES module, please remove "type": "module" ' +
-              'in package.json or set the "build.rollupOptions.output.format" option to "cjs".'
-          )
-        )
-        return null
-      }
-      if (useInRenderer) {
-        return null
-      }
-      if (chunk.type === 'chunk' && isBytecodeChunk(chunk.name)) {
-        bytecodeRequired = true
-        if (transformArrowFunctions) {
-          return {
-            code: _transform(code)
-          }
-        }
+    renderChunk(code, chunk): { code: string; map?: SourceMapInput } | null {
+      if (supported && isBytecodeChunk(chunk.name) && shouldTransformBytecodeChunk) {
+        return _transform(code, !!sourcemap)
       }
       return null
     },
-    generateBundle(options): void {
-      if (options.format !== 'es' && !useInRenderer && bytecodeRequired) {
-        this.emitFile({
-          type: 'asset',
-          source: bytecodeModuleLoaderCode.join('\n') + '\n',
-          name: 'Bytecode Loader File',
-          fileName: bytecodeModuleLoader
-        })
+    async generateBundle(_, output): Promise<void> {
+      if (!supported) {
+        return
       }
-    },
-    async writeBundle(options, output): Promise<void> {
-      if (options.format === 'es' || useInRenderer || !bytecodeRequired) {
+      const _chunks = Object.values(output)
+      const chunks = _chunks.filter(chunk => chunk.type === 'chunk' && isBytecodeChunk(chunk.name)) as OutputChunk[]
+
+      if (chunks.length === 0) {
         return
       }
 
-      const outDir = options.dir!
-
-      bytecodeFiles = []
-
-      const bundles = Object.keys(output)
-      const chunks = Object.values(output).filter(
-        chunk => chunk.type === 'chunk' && isBytecodeChunk(chunk.name) && chunk.fileName !== bytecodeModuleLoader
-      ) as OutputChunk[]
       const bytecodeChunks = chunks.map(chunk => chunk.fileName)
       const nonEntryChunks = chunks.filter(chunk => !chunk.isEntry).map(chunk => path.basename(chunk.fileName))
 
       const pattern = nonEntryChunks.map(chunk => `(${chunk})`).join('|')
       const bytecodeRE = pattern ? new RegExp(`require\\(\\S*(?=(${pattern})\\S*\\))`, 'g') : null
 
-      const keepBundle = (chunkFileName: string): void => {
-        const newFileName = path.resolve(path.dirname(chunkFileName), `_${path.basename(chunkFileName)}`)
-        fs.renameSync(chunkFileName, newFileName)
-      }
-
       const getBytecodeLoaderBlock = (chunkFileName: string): string => {
         return `require("${toRelativePath(bytecodeModuleLoader, normalizePath(chunkFileName))}");`
       }
+
+      const bundles = Object.keys(output)
 
       await Promise.all(
         bundles.map(async name => {
@@ -307,26 +269,29 @@ export function bytecodePlugin(options: BytecodeOptions = {}): Plugin | null {
               }
               _code = s.toString()
             }
-            const chunkFileName = path.resolve(outDir, name)
             if (bytecodeChunks.includes(name)) {
               const bytecodeBuffer = await compileToBytecode(_code)
-              fs.writeFileSync(path.resolve(outDir, name + 'c'), bytecodeBuffer as unknown as Uint8Array)
+              this.emitFile({
+                type: 'asset',
+                fileName: name + 'c',
+                source: bytecodeBuffer
+              })
+              if (!removeBundleJS) {
+                this.emitFile({
+                  type: 'asset',
+                  fileName: '_' + chunk.fileName,
+                  source: chunk.code
+                })
+              }
               if (chunk.isEntry) {
-                if (!removeBundleJS) {
-                  keepBundle(chunkFileName)
-                }
                 const bytecodeLoaderBlock = getBytecodeLoaderBlock(chunk.fileName)
                 const bytecodeModuleBlock = `require("./${path.basename(name) + 'c'}");`
                 const code = `${useStrict}\n${bytecodeLoaderBlock}\n${bytecodeModuleBlock}\n`
-                fs.writeFileSync(chunkFileName, code)
+                chunk.code = code
               } else {
-                if (removeBundleJS) {
-                  fs.unlinkSync(chunkFileName)
-                } else {
-                  keepBundle(chunkFileName)
-                }
+                delete output[chunk.fileName]
               }
-              bytecodeFiles.push({ name: name + 'c', size: bytecodeBuffer.length })
+              bytecodeChunkCount += 1
             } else {
               if (chunk.isEntry) {
                 let hasBytecodeMoudle = false
@@ -343,36 +308,76 @@ export function bytecodePlugin(options: BytecodeOptions = {}): Plugin | null {
                     for (const importerId of dynamicImporters) idsToHandle.add(importerId)
                   }
                 }
-                const bytecodeLoaderBlock = getBytecodeLoaderBlock(chunk.fileName)
                 _code = hasBytecodeMoudle
-                  ? _code.replace(/("use strict";)|('use strict';)/, `${useStrict}\n${bytecodeLoaderBlock}`)
+                  ? _code.replace(
+                      /("use strict";)|('use strict';)/,
+                      `${useStrict}\n${getBytecodeLoaderBlock(chunk.fileName)}`
+                    )
                   : _code
               }
-              fs.writeFileSync(chunkFileName, _code)
+              chunk.code = _code
             }
           }
         })
       )
+
+      if (bytecodeChunkCount && !_chunks.some(ass => ass.type === 'asset' && ass.fileName === bytecodeModuleLoader)) {
+        this.emitFile({
+          type: 'asset',
+          source: bytecodeModuleLoaderCode.join('\n') + '\n',
+          name: 'Bytecode Loader File',
+          fileName: bytecodeModuleLoader
+        })
+      }
     },
-    closeBundle(): void {
-      if (!useInRenderer) {
-        const chunkLimit = config.build.chunkSizeWarningLimit
-        const outDir = normalizePath(path.relative(config.root, path.resolve(config.root, config.build.outDir))) + '/'
-        config.logger.info(`${colors.green(`✓`)} ${bytecodeFiles.length} bundles compiled into bytecode.`)
-        let longest = 0
-        bytecodeFiles.forEach(file => {
-          const len = file.name.length
-          if (len > longest) longest = len
-        })
-        bytecodeFiles.forEach(file => {
-          const kbs = file.size / 1000
-          config.logger.info(
-            `${colors.gray(colors.white(colors.dim(outDir)))}${colors.green(file.name.padEnd(longest + 2))} ${
-              kbs > chunkLimit ? colors.yellow(`${kbs.toFixed(2)} kB`) : colors.dim(`${kbs.toFixed(2)} kB`)
-            }`
+    writeBundle(): void {
+      if (supported) {
+        logger.info(`${colors.green(`✓`)} ${bytecodeChunkCount} chunks compiled into bytecode.`)
+      }
+    }
+  }
+}
+
+function resolveBuildOutputs(
+  outputs: OutputOptions | OutputOptions[] | undefined,
+  libOptions: LibraryOptions | false
+): OutputOptions | OutputOptions[] | undefined {
+  if (libOptions && !Array.isArray(outputs)) {
+    const libFormats = libOptions.formats || []
+    return libFormats.map(format => ({ ...outputs, format }))
+  }
+  return outputs
+}
+
+interface ProtectStringsPluginState extends babel.PluginPass {
+  opts: { protectedStrings: Set<string> }
+}
+
+function protectStringsPlugin(api: typeof babel & babel.ConfigAPI): babel.PluginObj<ProtectStringsPluginState> {
+  const { types: t } = api
+  return {
+    name: 'protect-strings-plugin',
+    visitor: {
+      StringLiteral(path, state) {
+        if (
+          path.parentPath.isImportDeclaration() || // import x from 'module'
+          path.parentPath.isExportNamedDeclaration() || // export { x } from 'module'
+          path.parentPath.isExportAllDeclaration() || // export * from 'module'
+          path.parentPath.isObjectProperty({ key: path.node, computed: false }) // { 'key': 'value' }
+        ) {
+          return
+        }
+
+        const { value } = path.node
+        if (state.opts.protectedStrings.has(value)) {
+          const charCodes = Array.from(value).map(s => s.charCodeAt(0))
+          const charCodeLiterals = charCodes.map(code => t.numericLiteral(code))
+          const replacement = t.callExpression(
+            t.memberExpression(t.identifier('String'), t.identifier('fromCharCode')),
+            charCodeLiterals
           )
-        })
-        bytecodeFiles = []
+          path.replaceWith(replacement)
+        }
       }
     }
   }
