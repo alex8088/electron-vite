@@ -150,7 +150,14 @@ export async function resolveConfig(
           ...electronMainVitePlugin({ root }),
           assetPlugin(),
           workerPlugin(),
-          modulePathPlugin(),
+          modulePathPlugin(
+            mergeConfig(
+              {
+                plugins: [electronMainVitePlugin({ root })[0], assetPlugin(), importMetaPlugin(), esmShimPlugin()]
+              },
+              mainViteConfig
+            )
+          ),
           importMetaPlugin(),
           esmShimPlugin()
         ])

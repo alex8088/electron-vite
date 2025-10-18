@@ -1,5 +1,6 @@
-import type { Plugin } from 'vite'
-import type { SourceMapInput } from 'rollup'
+import path from 'node:path'
+import { type Plugin, type InlineConfig, build as viteBuild, mergeConfig } from 'vite'
+import type { SourceMapInput, RollupOutput, OutputOptions } from 'rollup'
 import MagicString from 'magic-string'
 import { cleanUrl, parseRequest, toRelativePath } from '../utils'
 
@@ -8,7 +9,7 @@ const modulePathRE = /__VITE_MODULE_PATH__([\w$]+)__/g
 /**
  * Resolve `?modulePath` import and return the module bundle path.
  */
-export default function modulePathPlugin(): Plugin {
+export default function modulePathPlugin(config: InlineConfig): Plugin {
   let sourcemap: boolean | 'inline' | 'hidden' = false
   return {
     name: 'vite:module-path',
@@ -23,14 +24,23 @@ export default function modulePathPlugin(): Plugin {
         return id + `&importer=${importer}`
       }
     },
-    load(id): string | void {
+    async load(id): Promise<string | void> {
       const query = parseRequest(id)
       if (query && typeof query.modulePath === 'string' && typeof query.importer === 'string') {
-        const cleanPath = cleanUrl(id)
+        const entry = path.resolve(path.dirname(query.importer), cleanUrl(id))
+        const bundle = await bundleEntryFile(entry, config)
+        const [outputChunk, ...outputChunks] = bundle.output
         const hash = this.emitFile({
-          type: 'chunk',
-          id: cleanPath,
-          importer: query.importer
+          type: 'asset',
+          fileName: outputChunk.fileName,
+          source: outputChunk.code
+        })
+        outputChunks.forEach(chunk => {
+          this.emitFile({
+            type: 'asset',
+            fileName: chunk.fileName,
+            source: chunk.type === 'chunk' ? chunk.code : chunk.source
+          })
         })
         const refId = `__VITE_MODULE_PATH__${hash}__`
         return `
@@ -62,4 +72,29 @@ export default function modulePathPlugin(): Plugin {
       return null
     }
   }
+}
+
+async function bundleEntryFile(input: string, config: InlineConfig): Promise<RollupOutput> {
+  const viteConfig = mergeConfig(config, {
+    build: {
+      rollupOptions: { input },
+      write: false,
+      watch: false
+    },
+    plugins: [
+      {
+        name: 'vite:entry-file-name',
+        outputOptions(output): OutputOptions {
+          if (typeof output.entryFileNames !== 'function' && output.entryFileNames) {
+            output.entryFileNames = '[name]-[hash]' + path.extname(output.entryFileNames)
+          }
+          return output
+        }
+      }
+    ],
+    logLevel: 'warn',
+    configFile: false
+  })
+  const bundles = await viteBuild(viteConfig)
+  return bundles as RollupOutput
 }
