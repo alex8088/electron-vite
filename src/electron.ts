@@ -85,11 +85,7 @@ export function getElectronNodeTarget(): string {
     '25': '18.15',
     '24': '18.14',
     '23': '18.12',
-    '22': '16.17',
-    '21': '16.16',
-    '20': '16.15',
-    '19': '16.14',
-    '18': '16.13'
+    '22': '16.17'
   }
   if (electronVer && parseInt(electronVer) > 10) {
     let target = nodeVer[electronVer]
@@ -119,11 +115,7 @@ export function getElectronChromeTarget(): string {
     '25': '114',
     '24': '112',
     '23': '110',
-    '22': '108',
-    '21': '106',
-    '20': '104',
-    '19': '102',
-    '18': '100'
+    '22': '108'
   }
   if (electronVer && parseInt(electronVer) > 10) {
     let target = chromeVer[electronVer]
