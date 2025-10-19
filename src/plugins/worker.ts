@@ -37,20 +37,22 @@ export default function workerPlugin(): Plugin {
       }
     },
     renderChunk(code, chunk, { sourcemap }): { code: string; map: SourceMapInput } | null {
-      if (code.match(nodeWorkerAssetUrlRE)) {
-        let match: RegExpExecArray | null
-        const s = new MagicString(code)
+      let match: RegExpExecArray | null
+      let s: MagicString | undefined
 
-        while ((match = nodeWorkerAssetUrlRE.exec(code))) {
-          const [full, hash] = match
-          const filename = this.getFileName(hash)
-          const outputFilepath = toRelativePath(filename, chunk.fileName)
-          const replacement = JSON.stringify(outputFilepath)
-          s.overwrite(match.index, match.index + full.length, replacement, {
-            contentOnly: true
-          })
-        }
+      nodeWorkerAssetUrlRE.lastIndex = 0
+      while ((match = nodeWorkerAssetUrlRE.exec(code))) {
+        s ||= new MagicString(code)
+        const [full, hash] = match
+        const filename = this.getFileName(hash)
+        const outputFilepath = toRelativePath(filename, chunk.fileName)
+        const replacement = JSON.stringify(outputFilepath)
+        s.overwrite(match.index, match.index + full.length, replacement, {
+          contentOnly: true
+        })
+      }
 
+      if (s) {
         return {
           code: s.toString(),
           map: sourcemap ? s.generateMap({ hires: 'boundary' }) : null

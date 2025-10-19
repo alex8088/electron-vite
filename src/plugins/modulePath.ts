@@ -38,20 +38,22 @@ export default function modulePathPlugin(config: InlineConfig): Plugin {
       }
     },
     renderChunk(code, chunk, { sourcemap }): { code: string; map: SourceMapInput } | null {
-      if (code.match(modulePathRE)) {
-        let match: RegExpExecArray | null
-        const s = new MagicString(code)
+      let match: RegExpExecArray | null
+      let s: MagicString | undefined
 
-        while ((match = modulePathRE.exec(code))) {
-          const [full, hash] = match
-          const filename = this.getFileName(hash)
-          const outputFilepath = toRelativePath(filename, chunk.fileName)
-          const replacement = JSON.stringify(outputFilepath)
-          s.overwrite(match.index, match.index + full.length, replacement, {
-            contentOnly: true
-          })
-        }
+      modulePathRE.lastIndex = 0
+      while ((match = modulePathRE.exec(code))) {
+        s ||= new MagicString(code)
+        const [full, hash] = match
+        const filename = this.getFileName(hash)
+        const outputFilepath = toRelativePath(filename, chunk.fileName)
+        const replacement = JSON.stringify(outputFilepath)
+        s.overwrite(match.index, match.index + full.length, replacement, {
+          contentOnly: true
+        })
+      }
 
+      if (s) {
         return {
           code: s.toString(),
           map: sourcemap ? s.generateMap({ hires: 'boundary' }) : null

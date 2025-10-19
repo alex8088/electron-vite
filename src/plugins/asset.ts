@@ -107,31 +107,27 @@ export default function assetPlugin(): Plugin {
       let s: MagicString | undefined
 
       nodeAssetRE.lastIndex = 0
-      if (code.match(nodeAssetRE)) {
-        while ((match = nodeAssetRE.exec(code))) {
-          s ||= new MagicString(code)
-          const [full, hash] = match
-          const filename = this.getFileName(hash)
-          const outputFilepath = toRelativePath(filename, chunk.fileName)
-          const replacement = JSON.stringify(outputFilepath)
-          s.overwrite(match.index, match.index + full.length, replacement, {
-            contentOnly: true
-          })
-        }
+      while ((match = nodeAssetRE.exec(code))) {
+        s ||= new MagicString(code)
+        const [full, hash] = match
+        const filename = this.getFileName(hash)
+        const outputFilepath = toRelativePath(filename, chunk.fileName)
+        const replacement = JSON.stringify(outputFilepath)
+        s.overwrite(match.index, match.index + full.length, replacement, {
+          contentOnly: true
+        })
       }
 
       nodePublicAssetRE.lastIndex = 0
-      if (code.match(nodePublicAssetRE)) {
-        while ((match = nodePublicAssetRE.exec(code))) {
-          s ||= new MagicString(code)
-          const [full, hash] = match
-          const filename = publicAssetPathCache.get(hash)!
-          const outputFilepath = toRelativePath(filename, normalizePath(path.join(outDir, chunk.fileName)))
-          const replacement = JSON.stringify(outputFilepath)
-          s.overwrite(match.index, match.index + full.length, replacement, {
-            contentOnly: true
-          })
-        }
+      while ((match = nodePublicAssetRE.exec(code))) {
+        s ||= new MagicString(code)
+        const [full, hash] = match
+        const filename = publicAssetPathCache.get(hash)!
+        const outputFilepath = toRelativePath(filename, normalizePath(path.join(outDir, chunk.fileName)))
+        const replacement = JSON.stringify(outputFilepath)
+        s.overwrite(match.index, match.index + full.length, replacement, {
+          contentOnly: true
+        })
       }
 
       if (s) {
@@ -139,9 +135,9 @@ export default function assetPlugin(): Plugin {
           code: s.toString(),
           map: sourcemap ? s.generateMap({ hires: 'boundary' }) : null
         }
-      } else {
-        return null
       }
+
+      return null
     }
   }
 }

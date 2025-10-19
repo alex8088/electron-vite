@@ -255,17 +255,20 @@ export function bytecodePlugin(options: BytecodeOptions = {}): Plugin | null {
           const chunk = output[name]
           if (chunk.type === 'chunk') {
             let _code = chunk.code
-            if (bytecodeRE && _code.match(bytecodeRE)) {
+            if (bytecodeRE) {
               let match: RegExpExecArray | null
-              const s = new MagicString(_code)
+              let s: MagicString | undefined
               while ((match = bytecodeRE.exec(_code))) {
+                s ||= new MagicString(_code)
                 const [prefix, chunkName] = match
                 const len = prefix.length + chunkName.length
                 s.overwrite(match.index, match.index + len, prefix + chunkName + 'c', {
                   contentOnly: true
                 })
               }
-              _code = s.toString()
+              if (s) {
+                _code = s.toString()
+              }
             }
             if (bytecodeChunks.includes(name)) {
               const bytecodeBuffer = await compileToBytecode(_code)
