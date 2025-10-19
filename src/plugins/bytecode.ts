@@ -140,6 +140,8 @@ const bytecodeModuleLoaderCode = [
   `};`
 ]
 
+const bytecodeChunkExtensionRE = /.(jsc|cjsc)$/
+
 export interface BytecodeOptions {
   chunkAlias?: string | string[]
   transformArrowFunctions?: boolean
@@ -179,8 +181,6 @@ export function bytecodePlugin(options: BytecodeOptions = {}): Plugin | null {
     const re = babel.transform(code, { plugins, sourceMaps })
     return re ? { code: re.code || '', map: re.map } : null
   }
-
-  let bytecodeChunkCount = 0
 
   const useStrict = '"use strict";'
   const bytecodeModuleLoader = 'bytecode-loader.cjs'
@@ -247,6 +247,8 @@ export function bytecodePlugin(options: BytecodeOptions = {}): Plugin | null {
       const getBytecodeLoaderBlock = (chunkFileName: string): string => {
         return `require("${toRelativePath(bytecodeModuleLoader, normalizePath(chunkFileName))}");`
       }
+
+      let bytecodeChunkCount = 0
 
       const bundles = Object.keys(output)
 
@@ -331,8 +333,9 @@ export function bytecodePlugin(options: BytecodeOptions = {}): Plugin | null {
         })
       }
     },
-    writeBundle(): void {
+    writeBundle(_, output): void {
       if (supported) {
+        const bytecodeChunkCount = Object.keys(output).filter(chunk => bytecodeChunkExtensionRE.test(chunk)).length
         logger.info(`${colors.green(`✓`)} ${bytecodeChunkCount} chunks compiled into bytecode.`)
       }
     }
