@@ -26,7 +26,6 @@ export default async function loadWasm(file, importObject = {}) {
 `
 
 export default function assetPlugin(): Plugin {
-  let sourcemap: boolean | 'inline' | 'hidden' = false
   let publicDir = ''
   let outDir = ''
   const publicAssetPathCache = new Map<string, string>()
@@ -40,7 +39,6 @@ export default function assetPlugin(): Plugin {
       assetCache.clear()
     },
     configResolved(config): void {
-      sourcemap = config.build.sourcemap
       publicDir = normalizePath(config.publicDir)
       outDir = normalizePath(path.resolve(config.root, config.build.outDir))
     },
@@ -104,7 +102,7 @@ export default function assetPlugin(): Plugin {
         export default importObject => loadWasm(${referenceId}, importObject)`
       }
     },
-    renderChunk(code, chunk): { code: string; map: SourceMapInput } | null {
+    renderChunk(code, chunk, { sourcemap }): { code: string; map: SourceMapInput } | null {
       let match: RegExpExecArray | null
       let s: MagicString | undefined
 

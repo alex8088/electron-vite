@@ -11,14 +11,10 @@ const nodeWorkerImporterRE = /(?:\?)nodeWorker&importer=([^&]+)(?:&|$)/
  * Resolve `?nodeWorker` import and automatically generate `Worker` wrapper.
  */
 export default function workerPlugin(): Plugin {
-  let sourcemap: boolean | 'inline' | 'hidden' = false
   return {
     name: 'vite:node-worker',
     apply: 'build',
     enforce: 'pre',
-    configResolved(config): void {
-      sourcemap = config.build.sourcemap
-    },
     resolveId(id, importer): string | void {
       if (id.endsWith('?nodeWorker')) {
         return id + `&importer=${importer}`
@@ -40,7 +36,7 @@ export default function workerPlugin(): Plugin {
         }
       }
     },
-    renderChunk(code, chunk): { code: string; map: SourceMapInput } | null {
+    renderChunk(code, chunk, { sourcemap }): { code: string; map: SourceMapInput } | null {
       if (code.match(nodeWorkerAssetUrlRE)) {
         let match: RegExpExecArray | null
         const s = new MagicString(code)

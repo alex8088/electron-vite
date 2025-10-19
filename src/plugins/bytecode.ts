@@ -186,7 +186,6 @@ export function bytecodePlugin(options: BytecodeOptions = {}): Plugin | null {
   const bytecodeModuleLoader = 'bytecode-loader.cjs'
 
   let logger: Logger
-  let sourcemap: boolean | 'inline' | 'hidden' = false
   let supported = false
 
   return {
@@ -198,7 +197,6 @@ export function bytecodePlugin(options: BytecodeOptions = {}): Plugin | null {
         return
       }
       logger = config.logger
-      sourcemap = config.build.sourcemap
       const useInRenderer = config.plugins.some(p => p.name === 'vite:electron-renderer-preset-config')
       if (useInRenderer) {
         config.logger.warn(colors.yellow('bytecodePlugin does not support renderer.'))
@@ -223,7 +221,7 @@ export function bytecodePlugin(options: BytecodeOptions = {}): Plugin | null {
         config.logger.warn(colors.yellow('Strings cannot be protected when minification is enabled.'))
       }
     },
-    renderChunk(code, chunk): { code: string; map?: SourceMapInput } | null {
+    renderChunk(code, chunk, { sourcemap }): { code: string; map?: SourceMapInput } | null {
       if (supported && isBytecodeChunk(chunk.name) && shouldTransformBytecodeChunk) {
         return _transform(code, !!sourcemap)
       }

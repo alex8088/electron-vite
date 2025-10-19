@@ -10,14 +10,10 @@ const modulePathRE = /__VITE_MODULE_PATH__([\w$]+)__/g
  * Resolve `?modulePath` import and return the module bundle path.
  */
 export default function modulePathPlugin(config: InlineConfig): Plugin {
-  let sourcemap: boolean | 'inline' | 'hidden' = false
   return {
     name: 'vite:module-path',
     apply: 'build',
     enforce: 'pre',
-    configResolved(config): void {
-      sourcemap = config.build.sourcemap
-    },
     async load(id): Promise<string | void> {
       if (id.endsWith('?modulePath')) {
         // id resolved by Vite resolve plugin
@@ -41,7 +37,7 @@ export default function modulePathPlugin(config: InlineConfig): Plugin {
           export default join(__dirname, ${refId})`
       }
     },
-    renderChunk(code, chunk): { code: string; map: SourceMapInput } | null {
+    renderChunk(code, chunk, { sourcemap }): { code: string; map: SourceMapInput } | null {
       if (code.match(modulePathRE)) {
         let match: RegExpExecArray | null
         const s = new MagicString(code)

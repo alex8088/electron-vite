@@ -46,19 +46,14 @@ function findStaticImports(code: string): StaticImport[] {
 }
 
 export default function esmShimPlugin(): Plugin {
-  let sourcemap: boolean | 'inline' | 'hidden' = false
-
   const CJSShim = getElectronMajorVersion() >= 30 ? CJSShim_node_20_11 : CJSShim_normal
 
   return {
     name: 'vite:esm-shim',
     apply: 'build',
     enforce: 'post',
-    configResolved(config): void {
-      sourcemap = config.build.sourcemap
-    },
-    renderChunk(code, _chunk, options): { code: string; map?: SourceMapInput } | null {
-      if (options.format === 'es') {
+    renderChunk(code, _chunk, { format, sourcemap }): { code: string; map?: SourceMapInput } | null {
+      if (format === 'es') {
         if (code.includes(CJSShim) || !CJSyntaxRe.test(code)) {
           return null
         }
