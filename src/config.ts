@@ -19,7 +19,7 @@ import { electronMainVitePlugin, electronPreloadVitePlugin, electronRendererVite
 import assetPlugin from './plugins/asset'
 import workerPlugin from './plugins/worker'
 import importMetaPlugin from './plugins/importMeta'
-import esmShimPlugin from './plugins/esm'
+import esmShimPlugin from './plugins/esmShim'
 import modulePathPlugin from './plugins/modulePath'
 import { isObject, isFilePathESM } from './utils'
 
