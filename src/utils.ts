@@ -1,4 +1,3 @@
-import { URL, URLSearchParams } from 'node:url'
 import path from 'node:path'
 import fs from 'node:fs'
 import { createHash } from 'node:crypto'
@@ -19,14 +18,6 @@ export const queryRE = /\?.*$/s
 export const hashRE = /#.*$/s
 
 export const cleanUrl = (url: string): string => url.replace(hashRE, '').replace(queryRE, '')
-
-export function parseRequest(id: string): Record<string, string> | null {
-  const { search } = new URL(id, 'file:')
-  if (!search) {
-    return null
-  }
-  return Object.fromEntries(new URLSearchParams(search))
-}
 
 export function getHash(text: Buffer | string): string {
   return createHash('sha256')

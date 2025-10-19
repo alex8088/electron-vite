@@ -3,47 +3,14 @@ import fs from 'node:fs/promises'
 import type { SourceMapInput } from 'rollup'
 import { type Plugin, normalizePath } from 'vite'
 import MagicString from 'magic-string'
-import { cleanUrl, parseRequest, getHash, toRelativePath } from '../utils'
-
-interface AssetResolved {
-  type: 'asset' | 'native' | 'wasm'
-  file: string
-  query: Record<string, string> | null
-}
-
-function resolveAsset(id: string): AssetResolved | null {
-  const file = cleanUrl(id)
-  const query = parseRequest(id)
-
-  if (query && typeof query.asset === 'string') {
-    return {
-      type: 'asset',
-      file,
-      query
-    }
-  }
-
-  if (file.endsWith('.node')) {
-    return {
-      type: 'native',
-      file,
-      query
-    }
-  }
-
-  if (id.endsWith('.wasm?loader')) {
-    return {
-      type: 'wasm',
-      file,
-      query
-    }
-  }
-
-  return null
-}
+import { cleanUrl, getHash, toRelativePath } from '../utils'
 
 const nodeAssetRE = /__VITE_NODE_ASSET__([\w$]+)__/g
 const nodePublicAssetRE = /__VITE_NODE_PUBLIC_ASSET__([a-z\d]{8})__/g
+
+const assetImportRE = /(?:[?|&]asset(?:&|$)|\.wasm\?loader$|\.node$)/
+const assetRE = /[?|&]asset(?:&|$)/
+const assetUnpackRE = /[?|&]asset&asarUnpack$/
 
 const wasmHelperId = '\0__electron-vite-wasm-helper'
 
@@ -87,19 +54,12 @@ export default function assetPlugin(): Plugin {
         return wasmHelperCode
       }
 
-      if (id.startsWith('\0')) {
-        // Rollup convention, this id should be handled by the
-        // plugin that marked it with \0
-        return
-      }
-
-      const assetResolved = resolveAsset(id)
-      if (!assetResolved) {
+      if (id.startsWith('\0') || !assetImportRE.test(id)) {
         return
       }
 
       let referenceId: string
-      const file = assetResolved.file
+      const file = cleanUrl(id)
       if (publicDir && file.startsWith(publicDir)) {
         const hash = getHash(file)
         if (!publicAssetPathCache.get(hash)) {
@@ -122,8 +82,8 @@ export default function assetPlugin(): Plugin {
         }
       }
 
-      if (assetResolved.type === 'asset') {
-        if (assetResolved.query && typeof assetResolved.query.asarUnpack === 'string') {
+      if (assetRE.test(id)) {
+        if (assetUnpackRE.test(id)) {
           return `
           import { join } from 'path'
           export default join(__dirname, ${referenceId}).replace('app.asar', 'app.asar.unpacked')`
@@ -134,11 +94,11 @@ export default function assetPlugin(): Plugin {
         }
       }
 
-      if (assetResolved.type === 'native') {
+      if (id.endsWith('.node')) {
         return `export default require(${referenceId})`
       }
 
-      if (assetResolved.type === 'wasm') {
+      if (id.endsWith('.wasm?loader')) {
         return `
         import loadWasm from ${JSON.stringify(wasmHelperId)}
         export default importObject => loadWasm(${referenceId}, importObject)`
