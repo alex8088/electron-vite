@@ -8,7 +8,7 @@ import MagicString from 'magic-string'
 import type { SourceMapInput } from 'rollup'
 import type { Plugin } from 'vite'
 
-import { getElectronMajorVersion } from '../electron'
+import { supportImportMetaPaths } from '../electron'
 
 const CJSyntaxRe = /__filename|__dirname|require\(|require\.resolve\(/
 
@@ -46,7 +46,7 @@ function findStaticImports(code: string): StaticImport[] {
 }
 
 export default function esmShimPlugin(): Plugin {
-  const CJSShim = getElectronMajorVersion() >= 30 ? CJSShim_node_20_11 : CJSShim_normal
+  const CJSShim = supportImportMetaPaths() ? CJSShim_node_20_11 : CJSShim_normal
 
   return {
     name: 'vite:esm-shim',

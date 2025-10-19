@@ -3,6 +3,7 @@ import { type Plugin, type InlineConfig, build as viteBuild, mergeConfig } from 
 import type { SourceMapInput, RollupOutput, OutputOptions } from 'rollup'
 import MagicString from 'magic-string'
 import { cleanUrl, toRelativePath } from '../utils'
+import { supportImportMetaPaths } from '../electron'
 
 const modulePathRE = /__VITE_MODULE_PATH__([\w$]+)__/g
 
@@ -10,6 +11,7 @@ const modulePathRE = /__VITE_MODULE_PATH__([\w$]+)__/g
  * Resolve `?modulePath` import and return the module bundle path.
  */
 export default function modulePathPlugin(config: InlineConfig): Plugin {
+  const isImportMetaPathSupported = supportImportMetaPaths()
   return {
     name: 'vite:module-path',
     apply: 'build',
@@ -32,9 +34,10 @@ export default function modulePathPlugin(config: InlineConfig): Plugin {
           })
         })
         const refId = `__VITE_MODULE_PATH__${hash}__`
+        const dirnameExpr = isImportMetaPathSupported ? 'import.meta.dirname' : '__dirname'
         return `
           import { join } from 'path'
-          export default join(__dirname, ${refId})`
+          export default join(${dirnameExpr}, ${refId})`
       }
     },
     renderChunk(code, chunk, { sourcemap }): { code: string; map: SourceMapInput } | null {

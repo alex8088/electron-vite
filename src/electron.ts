@@ -41,9 +41,9 @@ export function supportESM(): boolean {
   return parseInt(majorVer) >= 28
 }
 
-export function getElectronMajorVersion(): number {
+export function supportImportMetaPaths(): boolean {
   const majorVer = getElectronMajorVer()
-  return parseInt(majorVer)
+  return parseInt(majorVer) >= 30
 }
 
 export function getElectronPath(): string {

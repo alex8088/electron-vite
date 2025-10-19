@@ -4,6 +4,7 @@ import type { SourceMapInput } from 'rollup'
 import { type Plugin, normalizePath } from 'vite'
 import MagicString from 'magic-string'
 import { cleanUrl, getHash, toRelativePath } from '../utils'
+import { supportImportMetaPaths } from '../electron'
 
 const nodeAssetRE = /__VITE_NODE_ASSET__([\w$]+)__/g
 const nodePublicAssetRE = /__VITE_NODE_PUBLIC_ASSET__([a-z\d]{8})__/g
@@ -30,6 +31,7 @@ export default function assetPlugin(): Plugin {
   let outDir = ''
   const publicAssetPathCache = new Map<string, string>()
   const assetCache = new Map<string, string>()
+  const isImportMetaPathSupported = supportImportMetaPaths()
   return {
     name: 'vite:node-asset',
     apply: 'build',
@@ -81,14 +83,15 @@ export default function assetPlugin(): Plugin {
       }
 
       if (assetRE.test(id)) {
+        const dirnameExpr = isImportMetaPathSupported ? 'import.meta.dirname' : '__dirname'
         if (assetUnpackRE.test(id)) {
           return `
           import { join } from 'path'
-          export default join(__dirname, ${referenceId}).replace('app.asar', 'app.asar.unpacked')`
+          export default join(${dirnameExpr}, ${referenceId}).replace('app.asar', 'app.asar.unpacked')`
         } else {
           return `
           import { join } from 'path'
-          export default join(__dirname, ${referenceId})`
+          export default join(${dirnameExpr}, ${referenceId})`
         }
       }
 
