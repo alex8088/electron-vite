@@ -1,3 +1,19 @@
+### v5.0.0-beta.0 (_2025-10-19_)
+
+- refactor(bytecodePlugin): improved bytecode bundle generation and made a new string protection plugin
+- refactor(modulePath): better support for tree-shaking and code-splitting
+- refactor: remove Electron 18, 19, 20, 21 build compatilibity target
+- perf(plugin): more efficient module filtering via regular expressions
+- perf(plugin): no need to cache `sourcemap` option
+- perf(plugin): lazily initialize `MagicString` and remove the redundant pre-check
+- perf(bytecodePlugin): better way to count bytecode chunks
+- perf(plugin): enhance path resolution using `import.meta.dirname` for ES modules
+- chore(deps): update all non-major dependencies
+- chore: update eslint config
+- chore: replace `tseslint.config` with `defineConfig`
+- chore: remove redundant external id
+- chore: rename the file `esm` to `esmShim`
+
 ### v4.0.1 (_2025-09-21_)
 
 - perf: build compatibility target for Electron 38
