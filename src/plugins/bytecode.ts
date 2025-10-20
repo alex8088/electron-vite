@@ -217,9 +217,6 @@ export function bytecodePlugin(options: BytecodeOptions = {}): Plugin | null {
         }
         supported = output.format === 'cjs' && !useInRenderer
       }
-      if (supported && config.build.minify && protectedStrings.length > 0) {
-        config.logger.warn(colors.yellow('Strings cannot be protected when minification is enabled.'))
-      }
     },
     renderChunk(code, chunk, { sourcemap }): { code: string; map?: SourceMapInput } | null {
       if (supported && isBytecodeChunk(chunk.name) && shouldTransformBytecodeChunk) {
@@ -359,28 +356,69 @@ interface ProtectStringsPluginState extends babel.PluginPass {
 
 function protectStringsPlugin(api: typeof babel & babel.ConfigAPI): babel.PluginObj<ProtectStringsPluginState> {
   const { types: t } = api
+
+  function createFromCharCodeFunction(value: string): babel.types.CallExpression {
+    const charCodes = Array.from(value).map(s => s.charCodeAt(0))
+    const charCodeLiterals = charCodes.map(code => t.numericLiteral(code))
+
+    // String.fromCharCode
+    const memberExpression = t.memberExpression(t.identifier('String'), t.identifier('fromCharCode'))
+    // String.fromCharCode(...arr)
+    const callExpression = t.callExpression(memberExpression, [t.spreadElement(t.identifier('arr'))])
+    // return String.fromCharCode(...arr)
+    const returnStatement = t.returnStatement(callExpression)
+    // function (arr) { return ... }
+    const functionExpression = t.functionExpression(null, [t.identifier('arr')], t.blockStatement([returnStatement]))
+
+    // (function(...) { ... })([x, x, x])
+    return t.callExpression(functionExpression, [t.arrayExpression(charCodeLiterals)])
+  }
+
   return {
     name: 'protect-strings-plugin',
     visitor: {
       StringLiteral(path, state) {
+        // obj['property']
+        if (path.parentPath.isMemberExpression({ property: path.node, computed: true })) {
+          return
+        }
+
+        // { 'key': value }
+        if (path.parentPath.isObjectProperty({ key: path.node, computed: false })) {
+          return
+        }
+
+        // require('fs')
         if (
-          path.parentPath.isImportDeclaration() || // import x from 'module'
-          path.parentPath.isExportNamedDeclaration() || // export { x } from 'module'
-          path.parentPath.isExportAllDeclaration() || // export * from 'module'
-          path.parentPath.isObjectProperty({ key: path.node, computed: false }) // { 'key': 'value' }
+          path.parentPath.isCallExpression() &&
+          t.isIdentifier(path.parentPath.node.callee) &&
+          path.parentPath.node.callee.name === 'require' &&
+          path.parentPath.node.arguments[0] === path.node
         ) {
           return
         }
 
+        // Only CommonJS is supported, import declaration and export declaration checks are ignored
+
         const { value } = path.node
         if (state.opts.protectedStrings.has(value)) {
-          const charCodes = Array.from(value).map(s => s.charCodeAt(0))
-          const charCodeLiterals = charCodes.map(code => t.numericLiteral(code))
-          const replacement = t.callExpression(
-            t.memberExpression(t.identifier('String'), t.identifier('fromCharCode')),
-            charCodeLiterals
-          )
-          path.replaceWith(replacement)
+          path.replaceWith(createFromCharCodeFunction(value))
+        }
+      },
+      TemplateLiteral(path, state) {
+        // Must be a pure static template literal
+        // expressions must be empty (no ${variables})
+        // quasis must have only one element (meaning the entire string is a single static part).
+        if (path.node.expressions.length > 0 || path.node.quasis.length !== 1) {
+          return
+        }
+
+        // Extract the raw value of the template literal
+        // path.node.quasis[0].value.raw is used to get the raw string, including escape sequences
+        // path.node.quasis[0].value.cooked is used to get the processed/cooked string (with escape sequences handled)
+        const value = path.node.quasis[0].value.cooked
+        if (value && state.opts.protectedStrings.has(value)) {
+          path.replaceWith(createFromCharCodeFunction(value))
         }
       }
     }
