@@ -25,25 +25,27 @@ import { isObject, isFilePathESM } from './utils'
 
 export { defineConfig as defineViteConfig } from 'vite'
 
+export type InlineUserConfig = ViteConfig & { configFile?: string | false }
+
 export interface UserConfig {
   /**
    * Vite config options for electron main process
    *
    * https://vitejs.dev/config/
    */
-  main?: ViteConfig & { configFile?: string | false }
+  main?: InlineUserConfig
   /**
    * Vite config options for electron renderer process
    *
    * https://vitejs.dev/config/
    */
-  renderer?: ViteConfig & { configFile?: string | false }
+  renderer?: InlineUserConfig
   /**
    * Vite config options for electron preload files
    *
    * https://vitejs.dev/config/
    */
-  preload?: ViteConfig & { configFile?: string | false }
+  preload?: InlineUserConfig | InlineUserConfig[]
 }
 
 export interface ElectronViteConfig {
@@ -64,7 +66,7 @@ export interface ElectronViteConfig {
    *
    * https://vitejs.dev/config/
    */
-  preload?: ViteConfigExport
+  preload?: ViteConfigExport | ViteConfigExport[]
 }
 
 export type InlineConfig = Omit<ViteConfig, 'base'> & {
@@ -167,22 +169,48 @@ export async function resolveConfig(
       }
 
       if (loadResult.config.preload) {
-        const preloadViteConfig: ViteConfig = mergeConfig(loadResult.config.preload, deepClone(config))
-
-        preloadViteConfig.mode = inlineConfig.mode || preloadViteConfig.mode || defaultMode
-
-        if (outDir) {
-          resetOutDir(preloadViteConfig, outDir, 'preload')
+        if (Array.isArray(loadResult.config.preload)) {
+          const shouldNotEmptyOutDir = loadResult.config.preload.length > 1 ? true : undefined
+          loadResult.config.preload = loadResult.config.preload.map(config =>
+            normalizePreloadViteConfig(config, shouldNotEmptyOutDir)
+          )
+        } else {
+          loadResult.config.preload = normalizePreloadViteConfig(loadResult.config.preload)
         }
-        mergePlugins(preloadViteConfig, [
-          ...electronPreloadVitePlugin({ root }),
-          assetPlugin(),
-          importMetaPlugin(),
-          esmShimPlugin()
-        ])
 
-        loadResult.config.preload = preloadViteConfig
-        loadResult.config.preload.configFile = false
+        function normalizePreloadViteConfig(
+          preloadConfig: InlineUserConfig,
+          shouldNotEmptyOutDir?: boolean
+        ): InlineUserConfig {
+          const preloadViteConfig: InlineUserConfig = mergeConfig(preloadConfig, deepClone(config))
+
+          preloadViteConfig.mode = inlineConfig.mode || preloadViteConfig.mode || defaultMode
+          preloadViteConfig.configFile = false
+
+          if (shouldNotEmptyOutDir) {
+            preloadViteConfig.build ||= {}
+
+            if (preloadViteConfig.build.emptyOutDir === true) {
+              throw new Error(
+                "The electron vite preload config `build.emptyOutDir` should be set to `false` when multiple preload scripts are used to prevent overwriting each other's output files."
+              )
+            }
+
+            preloadViteConfig.build.emptyOutDir = false
+          }
+
+          if (outDir) {
+            resetOutDir(preloadViteConfig, outDir, 'preload')
+          }
+          mergePlugins(preloadViteConfig, [
+            ...electronPreloadVitePlugin({ root }),
+            assetPlugin(),
+            importMetaPlugin(),
+            esmShimPlugin()
+          ])
+
+          return preloadViteConfig
+        }
       }
 
       if (loadResult.config.renderer) {
@@ -306,8 +334,8 @@ export async function loadConfigFromFile(
     if (config.preload) {
       const preloadViteConfig = config.preload
       preloadConfig = await (typeof preloadViteConfig === 'function' ? preloadViteConfig(configEnv) : preloadViteConfig)
-      if (!isObject(preloadConfig)) {
-        throw new Error(`preload config must export or return an object`)
+      if (!isObject(preloadConfig) && (!Array.isArray(preloadConfig) || !preloadConfig.every(isObject))) {
+        throw new Error(`preload config must export or return an object or an array of objects`)
       }
     } else {
       configRequired.push('preload')
