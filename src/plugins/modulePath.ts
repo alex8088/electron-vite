@@ -12,10 +12,14 @@ const modulePathRE = /__VITE_MODULE_PATH__([\w$]+)__/g
  */
 export default function modulePathPlugin(config: InlineConfig): Plugin {
   const isImportMetaPathSupported = supportImportMetaPaths()
+  const assetCache = new Set<string>()
   return {
     name: 'vite:module-path',
     apply: 'build',
     enforce: 'pre',
+    buildStart(): void {
+      assetCache.clear()
+    },
     async load(id): Promise<string | void> {
       if (id.endsWith('?modulePath')) {
         // id resolved by Vite resolve plugin
@@ -26,13 +30,19 @@ export default function modulePathPlugin(config: InlineConfig): Plugin {
           fileName: outputChunk.fileName,
           source: outputChunk.code
         })
-        outputChunks.forEach(chunk => {
+        for (const chunk of outputChunks) {
+          if (chunk.type === 'asset' && assetCache.has(chunk.fileName)) {
+            continue
+          }
           this.emitFile({
             type: 'asset',
             fileName: chunk.fileName,
             source: chunk.type === 'chunk' ? chunk.code : chunk.source
           })
-        })
+          if (chunk.type === 'asset') {
+            assetCache.add(chunk.fileName)
+          }
+        }
         const refId = `__VITE_MODULE_PATH__${hash}__`
         const dirnameExpr = isImportMetaPathSupported ? 'import.meta.dirname' : '__dirname'
         return `
