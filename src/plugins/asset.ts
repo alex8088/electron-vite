@@ -1,7 +1,7 @@
 import path from 'node:path'
 import fs from 'node:fs/promises'
 import type { SourceMapInput } from 'rollup'
-import { type Plugin, normalizePath } from 'vite'
+import { type Plugin } from 'vite'
 import MagicString from 'magic-string'
 import { cleanUrl, getHash, toRelativePath } from '../utils'
 import { supportImportMetaPaths } from '../electron'
@@ -41,8 +41,8 @@ export default function assetPlugin(): Plugin {
       assetCache.clear()
     },
     configResolved(config): void {
-      publicDir = normalizePath(config.publicDir)
-      outDir = normalizePath(path.resolve(config.root, config.build.outDir))
+      publicDir = config.publicDir
+      outDir = config.build.outDir
     },
     resolveId(id): string | void {
       if (id === wasmHelperId) {
@@ -126,7 +126,7 @@ export default function assetPlugin(): Plugin {
         s ||= new MagicString(code)
         const [full, hash] = match
         const filename = publicAssetPathCache.get(hash)!
-        const outputFilepath = toRelativePath(filename, normalizePath(path.join(outDir, chunk.fileName)))
+        const outputFilepath = toRelativePath(filename, path.join(outDir, chunk.fileName))
         const replacement = JSON.stringify(outputFilepath)
         s.overwrite(match.index, match.index + full.length, replacement, {
           contentOnly: true
