@@ -1,6 +1,5 @@
 import type { ChildProcess } from 'node:child_process'
 import {
-  type UserConfig as ViteConfig,
   type ViteDevServer,
   createServer as viteCreateServer,
   build as viteBuild,
@@ -8,7 +7,7 @@ import {
   mergeConfig
 } from 'vite'
 import colors from 'picocolors'
-import { type InlineConfig, resolveConfig } from './config'
+import { type InlineConfig, resolveConfig, type InlineUserConfig } from './config'
 import { resolveHostname } from './utils'
 import { startElectron } from './electron'
 
@@ -53,7 +52,14 @@ export async function createServer(
     if (preloadViteConfig && !options.rendererOnly) {
       logger.info(colors.gray(`\n-----\n`))
 
+      let resolvedCount = 0
       const watchHook = (): void => {
+        resolvedCount++
+        if (Array.isArray(preloadViteConfig) && resolvedCount < preloadViteConfig.length) {
+          // Only resolve when all preload scripts are built
+          return
+        }
+
         logger.info(colors.green(`\nrebuild the electron preload files successfully`))
 
         if (server) {
@@ -63,7 +69,11 @@ export async function createServer(
         }
       }
 
-      await doBuild(preloadViteConfig, watchHook, errorHook)
+      if (Array.isArray(preloadViteConfig)) {
+        await Promise.all(preloadViteConfig.map(config => doBuild(config, watchHook, errorHook)))
+      } else {
+        await doBuild(preloadViteConfig, watchHook, errorHook)
+      }
 
       logger.info(colors.green(`\nbuild the electron preload files successfully`))
     }
@@ -110,9 +120,7 @@ export async function createServer(
   }
 }
 
-type UserConfig = ViteConfig & { configFile?: string | false }
-
-async function doBuild(config: UserConfig, watchHook: () => void, errorHook: (e: Error) => void): Promise<void> {
+async function doBuild(config: InlineUserConfig, watchHook: () => void, errorHook: (e: Error) => void): Promise<void> {
   return new Promise(resolve => {
     if (config.build?.watch) {
       let firstBundle = true
