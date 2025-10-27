@@ -21,9 +21,36 @@ import workerPlugin from './plugins/worker'
 import importMetaPlugin from './plugins/importMeta'
 import esmShimPlugin from './plugins/esmShim'
 import modulePathPlugin from './plugins/modulePath'
+import isolateEntriesPlugin from './plugins/isolateEntries'
 import { isObject, isFilePathESM } from './utils'
 
 export { defineConfig as defineViteConfig } from 'vite'
+
+interface ElectronVitePreloadConfig {
+  /**
+   * Build each entry point as an isolated bundle without code splitting.
+   *
+   * When enabled, each entry will include all its dependencies inline,
+   * preventing automatic code splitting across entries and ensuring each
+   * output file is fully standalone.
+   *
+   * @default false
+   */
+  isolatedEntries?: boolean
+}
+
+interface ElectronViteRendererConfig {
+  /**
+   * Build each entry point as an isolated bundle without code splitting.
+   *
+   * When enabled, each entry will include all its dependencies inline,
+   * preventing automatic code splitting across entries and ensuring each
+   * output file is fully standalone.
+   *
+   * @default false
+   */
+  isolatedEntries?: boolean
+}
 
 export interface UserConfig {
   /**
@@ -37,13 +64,13 @@ export interface UserConfig {
    *
    * https://vitejs.dev/config/
    */
-  renderer?: ViteConfig & { configFile?: string | false }
+  renderer?: ViteConfig & { configFile?: string | false } & ElectronViteRendererConfig
   /**
    * Vite config options for electron preload files
    *
    * https://vitejs.dev/config/
    */
-  preload?: ViteConfig & { configFile?: string | false }
+  preload?: ViteConfig & { configFile?: string | false } & ElectronVitePreloadConfig
 }
 
 export interface ElectronViteConfig {
@@ -58,13 +85,13 @@ export interface ElectronViteConfig {
    *
    * https://vitejs.dev/config/
    */
-  renderer?: ViteConfigExport
+  renderer?: ViteConfigExport & ElectronViteRendererConfig
   /**
    * Vite config options for electron preload files
    *
    * https://vitejs.dev/config/
    */
-  preload?: ViteConfigExport
+  preload?: ViteConfigExport & ElectronVitePreloadConfig
 }
 
 export type InlineConfig = Omit<ViteConfig, 'base'> & {
@@ -167,7 +194,10 @@ export async function resolveConfig(
       }
 
       if (loadResult.config.preload) {
-        const preloadViteConfig: ViteConfig = mergeConfig(loadResult.config.preload, deepClone(config))
+        const preloadViteConfig: ViteConfig & ElectronVitePreloadConfig = mergeConfig(
+          loadResult.config.preload,
+          deepClone(config)
+        )
 
         preloadViteConfig.mode = inlineConfig.mode || preloadViteConfig.mode || defaultMode
 
@@ -178,7 +208,24 @@ export async function resolveConfig(
           ...electronPreloadVitePlugin({ root }),
           assetPlugin(),
           importMetaPlugin(),
-          esmShimPlugin()
+          esmShimPlugin(),
+          ...(preloadViteConfig.isolatedEntries
+            ? [
+                isolateEntriesPlugin(
+                  mergeConfig(
+                    {
+                      plugins: [
+                        electronPreloadVitePlugin({ root })[0],
+                        assetPlugin(),
+                        importMetaPlugin(),
+                        esmShimPlugin()
+                      ]
+                    },
+                    preloadViteConfig
+                  )
+                )
+              ]
+            : [])
         ])
 
         loadResult.config.preload = preloadViteConfig
@@ -186,7 +233,10 @@ export async function resolveConfig(
       }
 
       if (loadResult.config.renderer) {
-        const rendererViteConfig: ViteConfig = mergeConfig(loadResult.config.renderer, deepClone(config))
+        const rendererViteConfig: ViteConfig & ElectronViteRendererConfig = mergeConfig(
+          loadResult.config.renderer,
+          deepClone(config)
+        )
 
         rendererViteConfig.mode = inlineConfig.mode || rendererViteConfig.mode || defaultMode
 
@@ -194,7 +244,21 @@ export async function resolveConfig(
           resetOutDir(rendererViteConfig, outDir, 'renderer')
         }
 
-        mergePlugins(rendererViteConfig, electronRendererVitePlugin({ root }))
+        mergePlugins(rendererViteConfig, [
+          ...electronRendererVitePlugin({ root }),
+          ...(rendererViteConfig.isolatedEntries
+            ? [
+                isolateEntriesPlugin(
+                  mergeConfig(
+                    {
+                      plugins: [electronRendererVitePlugin({ root })[0]]
+                    },
+                    rendererViteConfig
+                  )
+                )
+              ]
+            : [])
+        ])
 
         loadResult.config.renderer = rendererViteConfig
         loadResult.config.renderer.configFile = false
