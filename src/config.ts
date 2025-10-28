@@ -5,7 +5,6 @@ import { createRequire } from 'node:module'
 import colors from 'picocolors'
 import {
   type UserConfig as ViteConfig,
-  type UserConfigExport as ViteConfigExport,
   type ConfigEnv,
   type PluginOption,
   type LogLevel,
@@ -33,7 +32,7 @@ import { isObject, isFilePathESM } from './utils'
 
 export { defineConfig as defineViteConfig } from 'vite'
 
-interface ElectronVitePreloadConfig {
+interface IsolatedEntriesOption {
   /**
    * Build each entry point as an isolated bundle without code splitting.
    *
@@ -41,95 +40,69 @@ interface ElectronVitePreloadConfig {
    * preventing automatic code splitting across entries and ensuring each
    * output file is fully standalone.
    *
+   * @experimental
    * @default false
    */
   isolatedEntries?: boolean
 }
 
-interface ElectronViteRendererConfig {
-  /**
-   * Build each entry point as an isolated bundle without code splitting.
-   *
-   * When enabled, each entry will include all its dependencies inline,
-   * preventing automatic code splitting across entries and ensuring each
-   * output file is fully standalone.
-   *
-   * @default false
-   */
-  isolatedEntries?: boolean
-}
+export interface MainViteConfig extends ViteConfig {}
+
+export interface PreloadViteConfig extends ViteConfig, IsolatedEntriesOption {}
+
+export interface RendererViteConfig extends ViteConfig, IsolatedEntriesOption {}
 
 export interface UserConfig {
   /**
    * Vite config options for electron main process
    *
-   * https://vitejs.dev/config/
+   * @see https://vitejs.dev/config/
    */
-  main?: ViteConfig & { configFile?: string | false }
+  main?: MainViteConfig
   /**
    * Vite config options for electron renderer process
    *
-   * https://vitejs.dev/config/
+   * @see https://vitejs.dev/config/
    */
-  renderer?: ViteConfig & { configFile?: string | false } & ElectronViteRendererConfig
+  renderer?: RendererViteConfig
   /**
-   * Vite config options for electron preload files
+   * Vite config options for electron preload scripts
    *
-   * https://vitejs.dev/config/
+   * @see https://vitejs.dev/config/
    */
-  preload?: ViteConfig & { configFile?: string | false } & ElectronVitePreloadConfig
+  preload?: PreloadViteConfig
 }
 
-export interface ElectronViteConfig {
-  /**
-   * Vite config options for electron main process
-   *
-   * https://vitejs.dev/config/
-   */
-  main?: ViteConfigExport
-  /**
-   * Vite config options for electron renderer process
-   *
-   * https://vitejs.dev/config/
-   */
-  renderer?: ViteConfigExport & ElectronViteRendererConfig
-  /**
-   * Vite config options for electron preload files
-   *
-   * https://vitejs.dev/config/
-   */
-  preload?: ViteConfigExport & ElectronVitePreloadConfig
-}
-
-export type InlineConfig = Omit<ViteConfig, 'base'> & {
-  configFile?: string | false
-  envFile?: false
-  ignoreConfigWarning?: boolean
-}
-
-export type ElectronViteConfigFnObject = (env: ConfigEnv) => ElectronViteConfig
-export type ElectronViteConfigFnPromise = (env: ConfigEnv) => Promise<ElectronViteConfig>
-export type ElectronViteConfigFn = (env: ConfigEnv) => ElectronViteConfig | Promise<ElectronViteConfig>
+export type ElectronViteConfigFnObject = (env: ConfigEnv) => UserConfig
+export type ElectronViteConfigFnPromise = (env: ConfigEnv) => Promise<UserConfig>
+export type ElectronViteConfigFn = (env: ConfigEnv) => UserConfig | Promise<UserConfig>
 
 export type ElectronViteConfigExport =
-  | ElectronViteConfig
-  | Promise<ElectronViteConfig>
+  | UserConfig
+  | Promise<UserConfig>
   | ElectronViteConfigFnObject
   | ElectronViteConfigFnPromise
   | ElectronViteConfigFn
 
 /**
  * Type helper to make it easier to use `electron.vite.config.*`
- * accepts a direct {@link ElectronViteConfig} object, or a function that returns it.
+ * accepts a direct {@link UserConfig} object, or a function that returns it.
  * The function receives a object that exposes two properties:
  * `command` (either `'build'` or `'serve'`), and `mode`.
  */
-export function defineConfig(config: ElectronViteConfig): ElectronViteConfig
-export function defineConfig(config: Promise<ElectronViteConfig>): Promise<ElectronViteConfig>
+export function defineConfig(config: UserConfig): UserConfig
+export function defineConfig(config: Promise<UserConfig>): Promise<UserConfig>
 export function defineConfig(config: ElectronViteConfigFnObject): ElectronViteConfigFnObject
+export function defineConfig(config: ElectronViteConfigFnPromise): ElectronViteConfigFnPromise
 export function defineConfig(config: ElectronViteConfigExport): ElectronViteConfigExport
 export function defineConfig(config: ElectronViteConfigExport): ElectronViteConfigExport {
   return config
+}
+
+export type InlineConfig = Omit<ViteConfig, 'base'> & {
+  configFile?: string | false
+  envFile?: false
+  ignoreConfigWarning?: boolean
 }
 
 export interface ResolvedConfig {
@@ -157,6 +130,7 @@ export async function resolveConfig(
       mode,
       command
     }
+
     const loadResult = await loadConfigFromFile(
       configEnv,
       configFile,
@@ -164,15 +138,18 @@ export async function resolveConfig(
       config.logLevel,
       config.ignoreConfigWarning
     )
+
     if (loadResult) {
       const root = config.root
       delete config.root
       delete config.configFile
 
+      config.configFile = false
+
       const outDir = config.build?.outDir
 
       if (loadResult.config.main) {
-        const mainViteConfig: ViteConfig = mergeConfig(loadResult.config.main, deepClone(config))
+        const mainViteConfig: MainViteConfig = mergeConfig(loadResult.config.main, deepClone(config))
 
         mainViteConfig.mode = inlineConfig.mode || mainViteConfig.mode || defaultMode
 
@@ -200,14 +177,10 @@ export async function resolveConfig(
         mainViteConfig.plugins = builtInMainPlugins.concat(mainViteConfig.plugins || [])
 
         loadResult.config.main = mainViteConfig
-        loadResult.config.main.configFile = false
       }
 
       if (loadResult.config.preload) {
-        const preloadViteConfig: ViteConfig & ElectronVitePreloadConfig = mergeConfig(
-          loadResult.config.preload,
-          deepClone(config)
-        )
+        const preloadViteConfig: PreloadViteConfig = mergeConfig(loadResult.config.preload, deepClone(config))
 
         preloadViteConfig.mode = inlineConfig.mode || preloadViteConfig.mode || defaultMode
 
@@ -244,14 +217,10 @@ export async function resolveConfig(
         preloadViteConfig.plugins = builtInPreloadPlugins.concat(preloadViteConfig.plugins)
 
         loadResult.config.preload = preloadViteConfig
-        loadResult.config.preload.configFile = false
       }
 
       if (loadResult.config.renderer) {
-        const rendererViteConfig: ViteConfig & ElectronViteRendererConfig = mergeConfig(
-          loadResult.config.renderer,
-          deepClone(config)
-        )
+        const rendererViteConfig: RendererViteConfig = mergeConfig(loadResult.config.renderer, deepClone(config))
 
         rendererViteConfig.mode = inlineConfig.mode || rendererViteConfig.mode || defaultMode
 
@@ -280,7 +249,6 @@ export async function resolveConfig(
         rendererViteConfig.plugins = builtInRendererPlugins.concat(rendererViteConfig.plugins || [])
 
         loadResult.config.renderer = rendererViteConfig
-        loadResult.config.renderer.configFile = false
       }
 
       userConfig = loadResult.config
