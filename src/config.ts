@@ -7,7 +7,7 @@ import {
   type UserConfig as ViteConfig,
   type UserConfigExport as ViteConfigExport,
   type ConfigEnv,
-  type Plugin,
+  type PluginOption,
   type LogLevel,
   createLogger,
   mergeConfig,
@@ -15,7 +15,14 @@ import {
 } from 'vite'
 import { build } from 'esbuild'
 
-import { electronMainVitePlugin, electronPreloadVitePlugin, electronRendererVitePlugin } from './plugins/electron'
+import {
+  electronMainConfigPresetPlugin,
+  electronMainConfigValidatorPlugin,
+  electronPreloadConfigPresetPlugin,
+  electronPreloadConfigValidatorPlugin,
+  electronRendererConfigPresetPlugin,
+  electronRendererConfigValidatorPlugin
+} from './plugins/electron'
 import assetPlugin from './plugins/asset'
 import workerPlugin from './plugins/worker'
 import importMetaPlugin from './plugins/importMeta'
@@ -173,21 +180,24 @@ export async function resolveConfig(
           resetOutDir(mainViteConfig, outDir, 'main')
         }
 
-        mergePlugins(mainViteConfig, [
-          ...electronMainVitePlugin({ root }),
+        const builtInMainPlugins: PluginOption[] = [
+          electronMainConfigPresetPlugin({ root }),
+          electronMainConfigValidatorPlugin(),
           assetPlugin(),
           workerPlugin(),
           modulePathPlugin(
             mergeConfig(
               {
-                plugins: [electronMainVitePlugin({ root })[0], assetPlugin(), importMetaPlugin(), esmShimPlugin()]
+                plugins: [electronMainConfigPresetPlugin({ root }), assetPlugin(), importMetaPlugin(), esmShimPlugin()]
               },
               mainViteConfig
             )
           ),
           importMetaPlugin(),
           esmShimPlugin()
-        ])
+        ]
+
+        mainViteConfig.plugins = builtInMainPlugins.concat(mainViteConfig.plugins || [])
 
         loadResult.config.main = mainViteConfig
         loadResult.config.main.configFile = false
@@ -204,29 +214,34 @@ export async function resolveConfig(
         if (outDir) {
           resetOutDir(preloadViteConfig, outDir, 'preload')
         }
-        mergePlugins(preloadViteConfig, [
-          ...electronPreloadVitePlugin({ root }),
+
+        const builtInPreloadPlugins: PluginOption[] = [
+          electronPreloadConfigPresetPlugin({ root }),
+          electronPreloadConfigValidatorPlugin(),
           assetPlugin(),
           importMetaPlugin(),
-          esmShimPlugin(),
-          ...(preloadViteConfig.isolatedEntries
-            ? [
-                isolateEntriesPlugin(
-                  mergeConfig(
-                    {
-                      plugins: [
-                        electronPreloadVitePlugin({ root })[0],
-                        assetPlugin(),
-                        importMetaPlugin(),
-                        esmShimPlugin()
-                      ]
-                    },
-                    preloadViteConfig
-                  )
-                )
-              ]
-            : [])
-        ])
+          esmShimPlugin()
+        ]
+
+        if (preloadViteConfig.isolatedEntries) {
+          builtInPreloadPlugins.push(
+            isolateEntriesPlugin(
+              mergeConfig(
+                {
+                  plugins: [
+                    electronPreloadConfigPresetPlugin({ root }),
+                    assetPlugin(),
+                    importMetaPlugin(),
+                    esmShimPlugin()
+                  ]
+                },
+                preloadViteConfig
+              )
+            )
+          )
+        }
+
+        preloadViteConfig.plugins = builtInPreloadPlugins.concat(preloadViteConfig.plugins)
 
         loadResult.config.preload = preloadViteConfig
         loadResult.config.preload.configFile = false
@@ -244,21 +259,25 @@ export async function resolveConfig(
           resetOutDir(rendererViteConfig, outDir, 'renderer')
         }
 
-        mergePlugins(rendererViteConfig, [
-          ...electronRendererVitePlugin({ root }),
-          ...(rendererViteConfig.isolatedEntries
-            ? [
-                isolateEntriesPlugin(
-                  mergeConfig(
-                    {
-                      plugins: [electronRendererVitePlugin({ root })[0]]
-                    },
-                    rendererViteConfig
-                  )
-                )
-              ]
-            : [])
-        ])
+        const builtInRendererPlugins: PluginOption[] = [
+          electronRendererConfigPresetPlugin({ root }),
+          electronRendererConfigValidatorPlugin()
+        ]
+
+        if (rendererViteConfig.isolatedEntries) {
+          builtInRendererPlugins.push(
+            isolateEntriesPlugin(
+              mergeConfig(
+                {
+                  plugins: [electronRendererConfigPresetPlugin({ root })]
+                },
+                rendererViteConfig
+              )
+            )
+          )
+        }
+
+        rendererViteConfig.plugins = builtInRendererPlugins.concat(rendererViteConfig.plugins || [])
 
         loadResult.config.renderer = rendererViteConfig
         loadResult.config.renderer.configFile = false
@@ -293,11 +312,6 @@ function resetOutDir(config: ViteConfig, outDir: string, subOutDir: string): voi
       config.build = { outDir: userOutDir }
     }
   }
-}
-
-function mergePlugins(config: ViteConfig, plugins: Plugin[]): void {
-  const userPlugins = config.plugins || []
-  config.plugins = userPlugins.concat(plugins)
 }
 
 const CONFIG_FILE_NAME = 'electron.vite.config'
