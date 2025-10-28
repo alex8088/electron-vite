@@ -23,8 +23,8 @@ export default function modulePathPlugin(config: InlineConfig): Plugin {
     async load(id): Promise<string | void> {
       if (id.endsWith('?modulePath')) {
         // id resolved by Vite resolve plugin
-        const bundle = await bundleEntryFile(cleanUrl(id), config)
-        const [outputChunk, ...outputChunks] = bundle.output
+        const re = await bundleEntryFile(cleanUrl(id), config, this.meta.watchMode)
+        const [outputChunk, ...outputChunks] = re.bundles.output
         const hash = this.emitFile({
           type: 'asset',
           fileName: outputChunk.fileName,
@@ -42,6 +42,9 @@ export default function modulePathPlugin(config: InlineConfig): Plugin {
           if (chunk.type === 'asset') {
             assetCache.add(chunk.fileName)
           }
+        }
+        for (const id of re.watchFiles) {
+          this.addWatchFile(id)
         }
         const refId = `__VITE_MODULE_PATH__${hash}__`
         const dirnameExpr = isImportMetaPathSupported ? 'import.meta.dirname' : '__dirname'
@@ -78,7 +81,12 @@ export default function modulePathPlugin(config: InlineConfig): Plugin {
   }
 }
 
-async function bundleEntryFile(input: string, config: InlineConfig): Promise<RollupOutput> {
+async function bundleEntryFile(
+  input: string,
+  config: InlineConfig,
+  watch: boolean
+): Promise<{ bundles: RollupOutput; watchFiles: string[] }> {
+  const moduleIds: string[] = []
   const viteConfig = mergeConfig(config, {
     build: {
       rollupOptions: { input },
@@ -94,11 +102,32 @@ async function bundleEntryFile(input: string, config: InlineConfig): Promise<Rol
           }
           return output
         }
-      }
+      },
+      ...(watch
+        ? [
+            {
+              name: 'vite:get-watch-files',
+              buildEnd(): void {
+                const allModuleIds = Array.from(this.getModuleIds())
+
+                const sourceFiles = allModuleIds.filter(id => {
+                  const info = this.getModuleInfo(id)
+                  return info && !info.isExternal
+                })
+
+                moduleIds.push(...sourceFiles)
+              }
+            } as Plugin
+          ]
+        : [])
     ],
     logLevel: 'warn',
     configFile: false
   })
   const bundles = await viteBuild(viteConfig)
-  return bundles as RollupOutput
+
+  return {
+    bundles: bundles as RollupOutput,
+    watchFiles: moduleIds
+  }
 }
