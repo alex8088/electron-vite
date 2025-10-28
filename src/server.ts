@@ -31,22 +31,20 @@ export async function createServer(
     const mainViteConfig = config.config?.main
     if (mainViteConfig && !options.rendererOnly) {
       const watchHook = (): void => {
-        logger.info(colors.green(`\nrebuild the electron main process successfully`))
+        logger.info(colors.green(`\nelectron main process rebuilt successfully`))
 
         if (ps) {
-          logger.info(colors.cyan(`\n  waiting for electron to exit...`))
-
           ps.removeAllListeners()
           ps.kill()
           ps = startElectron(inlineConfig.root)
 
-          logger.info(colors.green(`\nrestart electron app...`))
+          logger.info(colors.green(`\nrestarting electron app...\n`))
         }
       }
 
       await doBuild(mainViteConfig, watchHook, errorHook)
 
-      logger.info(colors.green(`\nbuild the electron main process successfully`))
+      logger.info(colors.green(`\nelectron main process built successfully`))
     }
 
     const preloadViteConfig = config.config?.preload
@@ -54,10 +52,10 @@ export async function createServer(
       logger.info(colors.gray(`\n-----\n`))
 
       const watchHook = (): void => {
-        logger.info(colors.green(`\nrebuild the electron preload files successfully`))
+        logger.info(colors.green(`\nelectron preload scripts rebuilt successfully`))
 
         if (server) {
-          logger.info(colors.cyan(`\n  trigger renderer reload`))
+          logger.info(colors.cyan(`\nreloading electron renderer...\n`))
 
           server.ws.send({ type: 'full-reload' })
         }
@@ -65,14 +63,12 @@ export async function createServer(
 
       await doBuild(preloadViteConfig, watchHook, errorHook)
 
-      logger.info(colors.green(`\nbuild the electron preload files successfully`))
+      logger.info(colors.green(`\nelectron preload scripts built successfully`))
     }
 
     if (options.rendererOnly) {
       logger.warn(
-        `\n${colors.yellow(colors.bold('warn'))}:${colors.yellow(
-          ' you have skipped the main process and preload scripts building'
-        )}`
+        `\n${colors.yellow(colors.bold('(!)'))} ${colors.yellow('skipped building main process and preload scripts (using previous build)')}`
       )
     }
 
@@ -106,7 +102,7 @@ export async function createServer(
 
     ps = startElectron(inlineConfig.root)
 
-    logger.info(colors.green(`\nstart electron app...\n`))
+    logger.info(colors.green(`\nstarting electron app...\n`))
   }
 }
 
