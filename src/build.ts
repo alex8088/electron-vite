@@ -7,27 +7,22 @@ import { type InlineConfig, resolveConfig } from './config'
 export async function build(inlineConfig: InlineConfig = {}): Promise<void> {
   process.env.NODE_ENV_ELECTRON_VITE = 'production'
   const config = await resolveConfig(inlineConfig, 'build', 'production')
-  if (config.config) {
-    const mainViteConfig = config.config?.main
-    if (mainViteConfig) {
-      if (mainViteConfig.build?.watch) {
-        mainViteConfig.build.watch = null
+
+  if (!config.config) {
+    return
+  }
+
+  // Build targets in order: main -> preload -> renderer
+  const buildTargets = ['main', 'preload', 'renderer'] as const
+
+  for (const target of buildTargets) {
+    const viteConfig = config.config[target]
+    if (viteConfig) {
+      // Disable watch mode in production builds
+      if (viteConfig.build?.watch) {
+        viteConfig.build.watch = null
       }
-      await viteBuild(mainViteConfig)
-    }
-    const preloadViteConfig = config.config?.preload
-    if (preloadViteConfig) {
-      if (preloadViteConfig.build?.watch) {
-        preloadViteConfig.build.watch = null
-      }
-      await viteBuild(preloadViteConfig)
-    }
-    const rendererViteConfig = config.config?.renderer
-    if (rendererViteConfig) {
-      if (rendererViteConfig.build?.watch) {
-        rendererViteConfig.build.watch = null
-      }
-      await viteBuild(rendererViteConfig)
+      await viteBuild(viteConfig)
     }
   }
 }
