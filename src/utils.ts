@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-function-type */
 import path from 'node:path'
 import fs from 'node:fs'
 import { createHash } from 'node:crypto'
@@ -77,4 +78,36 @@ export function isFilePathESM(filePath: string): boolean {
     const pkg = loadPackageData()
     return pkg?.type === 'module'
   }
+}
+
+type DeepWritable<T> =
+  T extends ReadonlyArray<unknown>
+    ? { -readonly [P in keyof T]: DeepWritable<T[P]> }
+    : T extends RegExp
+      ? RegExp
+      : T[keyof T] extends Function
+        ? T
+        : { -readonly [P in keyof T]: DeepWritable<T[P]> }
+
+export function deepClone<T>(value: T): DeepWritable<T> {
+  if (Array.isArray(value)) {
+    return value.map(v => deepClone(v)) as DeepWritable<T>
+  }
+  if (isObject(value)) {
+    const cloned: Record<string, any> = {}
+    for (const key in value) {
+      cloned[key] = deepClone(value[key])
+    }
+    return cloned as DeepWritable<T>
+  }
+  if (typeof value === 'function') {
+    return value as DeepWritable<T>
+  }
+  if (value instanceof RegExp) {
+    return new RegExp(value) as DeepWritable<T>
+  }
+  if (typeof value === 'object' && value != null) {
+    throw new Error('Cannot deep clone non-plain object')
+  }
+  return value as DeepWritable<T>
 }

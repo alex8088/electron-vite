@@ -28,7 +28,7 @@ import importMetaPlugin from './plugins/importMeta'
 import esmShimPlugin from './plugins/esmShim'
 import modulePathPlugin from './plugins/modulePath'
 import isolateEntriesPlugin from './plugins/isolateEntries'
-import { isObject, isFilePathESM } from './utils'
+import { isObject, isFilePathESM, deepClone } from './utils'
 
 export { defineConfig as defineViteConfig } from 'vite'
 
@@ -264,10 +264,6 @@ export async function resolveConfig(
   }
 
   return resolved
-}
-
-function deepClone<T>(data: T): T {
-  return JSON.parse(JSON.stringify(data))
 }
 
 function resetOutDir(config: ViteConfig, outDir: string, subOutDir: string): void {
