@@ -1,3 +1,17 @@
+### v5.0.0-beta.1 (_2025-10-29_)
+
+- feat: enhanced string protection
+- feat: add `isolatedEntries` option for `preload` and `renderer` to build entries as standalone bundles [#154](https://github.com/alex8088/electron-vite/issues/154)
+- refactor(asset): remove redundant path normalization
+- refactor: split electron plugin into preset and validator plugins
+- refactor(config)!: restructure Electron Vite config interfaces
+- refactor(build): simplify build logic
+- refactor: replace `JSON.parse/stringify` with manual deep clone
+- perf: build compatibility target for Electron 39
+- fix(modulePath): prevent duplicate asset emission
+- fix(modulePath): support watch mode
+- chore: improve logging message clarity and consistency
+
 ### v5.0.0-beta.0 (_2025-10-19_)
 
 - refactor(bytecodePlugin): improved bytecode bundle generation and made a new string protection plugin
