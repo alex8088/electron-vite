@@ -1,9 +1,18 @@
-import { type InlineConfig, type Plugin, type Logger, build as viteBuild, mergeConfig } from 'vite'
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-function-type */
+import path from 'node:path'
+import { type InlineConfig, type Plugin, type Logger, type LogLevel, build as viteBuild, mergeConfig } from 'vite'
 import type { InputOptions, RollupOutput } from 'rollup'
 import colors from 'picocolors'
 import buildReporterPlugin from './buildReporter'
 
 const VIRTUAL_ENTRY_ID = '\0virtual:isolate-entries'
+
+const LogLevels: Record<LogLevel, number> = {
+  silent: 0,
+  error: 1,
+  warn: 2,
+  info: 3
+}
 
 export default function isolateEntriesPlugin(userConfig: InlineConfig): Plugin {
   let logger: Logger
@@ -16,9 +25,11 @@ export default function isolateEntriesPlugin(userConfig: InlineConfig): Plugin {
   return {
     name: 'vite:isolate-entries',
     apply: 'build',
+
     configResolved(config): void {
       logger = config.logger
     },
+
     options(opts): InputOptions | void {
       const { input } = opts
       if (input && typeof input === 'object') {
@@ -29,24 +40,32 @@ export default function isolateEntriesPlugin(userConfig: InlineConfig): Plugin {
         }
       }
     },
+
     buildStart(): void {
       transformedCount = 0
       assetCache.clear()
     },
+
     resolveId(id): string | null {
       if (id === VIRTUAL_ENTRY_ID) {
         return id
       }
       return null
     },
+
     async load(id): Promise<string | void> {
       if (id === VIRTUAL_ENTRY_ID) {
         const _entries = Array.isArray(entries)
           ? entries
           : Object.entries(entries).map(([key, value]) => ({ [key]: value }))
+
         const watchFiles = new Set<string>()
+        const shouldLog = LogLevels[userConfig.logLevel || 'info'] >= LogLevels.info
+        const shouldWatch = this.meta.watchMode
+
         for (const entry of _entries) {
-          const re = await bundleEntryFile(entry, userConfig, this.meta.watchMode)
+          const re = await bundleEntryFile(entry, userConfig, shouldWatch, shouldLog, transformedCount)
+
           const outputChunks = re.bundles.output
           for (const chunk of outputChunks) {
             if (assetCache.has(chunk.fileName)) {
@@ -59,23 +78,29 @@ export default function isolateEntriesPlugin(userConfig: InlineConfig): Plugin {
             })
             assetCache.add(chunk.fileName)
           }
+
           for (const id of re.watchFiles) {
             watchFiles.add(id)
           }
+
           transformedCount += re.transformedCount
         }
+
         for (const id of watchFiles) {
           this.addWatchFile(id)
         }
+
         return `
         // This is the virtual entry file
         console.log(1)`
       }
     },
+
     renderStart(): void {
-      clearLine()
+      clearLine(-1)
       logger.info(`${colors.green(`✓`)} ${transformedCount} modules transformed.`)
     },
+
     generateBundle(_, bundle): void {
       for (const chunkName in bundle) {
         if (chunkName.includes('virtual_isolate-entries')) {
@@ -89,25 +114,18 @@ export default function isolateEntriesPlugin(userConfig: InlineConfig): Plugin {
 async function bundleEntryFile(
   input: string | Record<string, string>,
   config: InlineConfig,
-  watch: boolean
+  watch: boolean,
+  shouldLog: boolean,
+  preTransformedCount: number
 ): Promise<{ bundles: RollupOutput; watchFiles: string[]; transformedCount: number }> {
-  let transformedCount = 0
-
-  const reporter = watch ? buildReporterPlugin() : undefined
+  const transformReporter = transformReporterPlugin(preTransformedCount, shouldLog)
+  const buildReporter = watch ? buildReporterPlugin() : undefined
   const viteConfig = mergeConfig(config, {
     build: {
       write: false,
       watch: false
     },
-    plugins: [
-      {
-        name: 'vite:transform-counter',
-        transform(): void {
-          transformedCount++
-        }
-      } as Plugin,
-      reporter
-    ],
+    plugins: [transformReporter, buildReporter],
     logLevel: 'warn',
     configFile: false
   }) as InlineConfig
@@ -119,13 +137,63 @@ async function bundleEntryFile(
 
   return {
     bundles: bundles as RollupOutput,
-    watchFiles: reporter?.api?.getWatchFiles() || [],
-    transformedCount
+    watchFiles: buildReporter?.api?.getWatchFiles() || [],
+    transformedCount: transformReporter?.api?.getTransformedCount() || 0
   }
 }
 
-function clearLine(): void {
-  process.stdout.moveCursor(0, -1)
+function transformReporterPlugin(
+  preTransformedCount = 0,
+  shouldLog = true
+): Plugin<{ getTransformedCount: () => number }> {
+  let transformedCount = 0
+  let root
+  const log = throttle(id => {
+    writeLine(`transforming (${preTransformedCount + transformedCount}) ${colors.dim(path.relative(root, id))}`)
+  })
+  return {
+    name: 'vite:transform-reporter',
+    configResolved(config) {
+      root = config.root
+    },
+    transform(_, id) {
+      transformedCount++
+      if (!shouldLog) return
+      if (id.includes('?')) return
+      log(id)
+    },
+    api: {
+      getTransformedCount() {
+        return transformedCount
+      }
+    }
+  }
+}
+
+function writeLine(output: string): void {
+  clearLine()
+  if (output.length < process.stdout.columns) {
+    process.stdout.write(output)
+  } else {
+    process.stdout.write(output.substring(0, process.stdout.columns - 1))
+  }
+}
+
+function clearLine(move: number = 0): void {
+  if (move < 0) {
+    process.stdout.moveCursor(0, move)
+  }
   process.stdout.clearLine(0)
   process.stdout.cursorTo(0)
+}
+
+function throttle(fn: Function) {
+  let timerHandle: NodeJS.Timeout | null = null
+  return (...args: any[]) => {
+    if (timerHandle) return
+    fn(...args)
+    timerHandle = setTimeout(() => {
+      timerHandle = null
+    }, 100)
+  }
 }
