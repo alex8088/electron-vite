@@ -2,6 +2,7 @@ import path from 'node:path'
 import { type Plugin, type InlineConfig, build as viteBuild, mergeConfig } from 'vite'
 import type { SourceMapInput, RollupOutput, OutputOptions } from 'rollup'
 import MagicString from 'magic-string'
+import buildReporterPlugin from './buildReporter'
 import { cleanUrl, toRelativePath } from '../utils'
 import { supportImportMetaPaths } from '../electron'
 
@@ -84,7 +85,7 @@ async function bundleEntryFile(
   config: InlineConfig,
   watch: boolean
 ): Promise<{ bundles: RollupOutput; watchFiles: string[] }> {
-  const moduleIds: string[] = []
+  const reporter = watch ? buildReporterPlugin() : undefined
   const viteConfig = mergeConfig(config, {
     build: {
       rollupOptions: { input },
@@ -101,23 +102,7 @@ async function bundleEntryFile(
           return output
         }
       },
-      ...(watch
-        ? [
-            {
-              name: 'vite:get-watch-files',
-              buildEnd(): void {
-                const allModuleIds = Array.from(this.getModuleIds())
-
-                const sourceFiles = allModuleIds.filter(id => {
-                  const info = this.getModuleInfo(id)
-                  return info && !info.isExternal
-                })
-
-                moduleIds.push(...sourceFiles)
-              }
-            } as Plugin
-          ]
-        : [])
+      reporter
     ],
     logLevel: 'warn',
     configFile: false
@@ -126,6 +111,6 @@ async function bundleEntryFile(
 
   return {
     bundles: bundles as RollupOutput,
-    watchFiles: moduleIds
+    watchFiles: reporter?.api?.getWatchFiles() || []
   }
 }

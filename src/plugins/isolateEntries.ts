@@ -1,6 +1,7 @@
 import { type InlineConfig, type Plugin, type Logger, build as viteBuild, mergeConfig } from 'vite'
 import type { InputOptions, RollupOutput } from 'rollup'
 import colors from 'picocolors'
+import buildReporterPlugin from './buildReporter'
 
 const VIRTUAL_ENTRY_ID = '\0virtual:isolate-entries'
 
@@ -90,9 +91,9 @@ async function bundleEntryFile(
   config: InlineConfig,
   watch: boolean
 ): Promise<{ bundles: RollupOutput; watchFiles: string[]; transformedCount: number }> {
-  const moduleIds: string[] = []
   let transformedCount = 0
 
+  const reporter = watch ? buildReporterPlugin() : undefined
   const viteConfig = mergeConfig(config, {
     build: {
       write: false,
@@ -105,23 +106,7 @@ async function bundleEntryFile(
           transformedCount++
         }
       } as Plugin,
-      ...(watch
-        ? [
-            {
-              name: 'vite:get-watch-files',
-              buildEnd(): void {
-                const allModuleIds = Array.from(this.getModuleIds())
-
-                const sourceFiles = allModuleIds.filter(id => {
-                  const info = this.getModuleInfo(id)
-                  return info && !info.isExternal
-                })
-
-                moduleIds.push(...sourceFiles)
-              }
-            } as Plugin
-          ]
-        : [])
+      reporter
     ],
     logLevel: 'warn',
     configFile: false
@@ -134,7 +119,7 @@ async function bundleEntryFile(
 
   return {
     bundles: bundles as RollupOutput,
-    watchFiles: moduleIds,
+    watchFiles: reporter?.api?.getWatchFiles() || [],
     transformedCount
   }
 }
