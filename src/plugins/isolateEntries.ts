@@ -17,7 +17,8 @@ const LogLevels: Record<LogLevel, number> = {
 export default function isolateEntriesPlugin(userConfig: InlineConfig): Plugin {
   let logger: Logger
 
-  let entries: string[] | Record<string, string>
+  let entries: string[] | { [x: string]: string }[]
+
   let transformedCount = 0
 
   const assetCache = new Set<string>()
@@ -35,7 +36,7 @@ export default function isolateEntriesPlugin(userConfig: InlineConfig): Plugin {
       if (input && typeof input === 'object') {
         if ((Array.isArray(input) && input.length > 0) || Object.keys(input).length > 1) {
           opts.input = VIRTUAL_ENTRY_ID
-          entries = input
+          entries = Array.isArray(input) ? input : Object.entries(input).map(([key, value]) => ({ [key]: value }))
           return opts
         }
       }
@@ -55,15 +56,12 @@ export default function isolateEntriesPlugin(userConfig: InlineConfig): Plugin {
 
     async load(id): Promise<string | void> {
       if (id === VIRTUAL_ENTRY_ID) {
-        const _entries = Array.isArray(entries)
-          ? entries
-          : Object.entries(entries).map(([key, value]) => ({ [key]: value }))
-
-        const watchFiles = new Set<string>()
         const shouldLog = LogLevels[userConfig.logLevel || 'info'] >= LogLevels.info
         const shouldWatch = this.meta.watchMode
 
-        for (const entry of _entries) {
+        const watchFiles = new Set<string>()
+
+        for (const entry of entries) {
           const re = await bundleEntryFile(entry, userConfig, shouldWatch, shouldLog, transformedCount)
 
           const outputChunks = re.bundles.output
@@ -120,6 +118,7 @@ async function bundleEntryFile(
 ): Promise<{ bundles: RollupOutput; watchFiles: string[]; transformedCount: number }> {
   const transformReporter = transformReporterPlugin(preTransformedCount, shouldLog)
   const buildReporter = watch ? buildReporterPlugin() : undefined
+
   const viteConfig = mergeConfig(config, {
     build: {
       write: false,
