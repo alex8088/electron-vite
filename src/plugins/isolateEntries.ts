@@ -48,7 +48,7 @@ export default function isolateEntriesPlugin(userConfig: InlineConfig): Plugin {
           const re = await bundleEntryFile(entry, userConfig, this.meta.watchMode)
           const outputChunks = re.bundles.output
           for (const chunk of outputChunks) {
-            if (chunk.type === 'asset' && assetCache.has(chunk.fileName)) {
+            if (assetCache.has(chunk.fileName)) {
               continue
             }
             this.emitFile({
@@ -56,9 +56,7 @@ export default function isolateEntriesPlugin(userConfig: InlineConfig): Plugin {
               fileName: chunk.fileName,
               source: chunk.type === 'chunk' ? chunk.code : chunk.source
             })
-            if (chunk.type === 'asset') {
-              assetCache.add(chunk.fileName)
-            }
+            assetCache.add(chunk.fileName)
           }
           for (const id of re.watchFiles) {
             watchFiles.add(id)

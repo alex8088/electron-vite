@@ -31,7 +31,7 @@ export default function modulePathPlugin(config: InlineConfig): Plugin {
           source: outputChunk.code
         })
         for (const chunk of outputChunks) {
-          if (chunk.type === 'asset' && assetCache.has(chunk.fileName)) {
+          if (assetCache.has(chunk.fileName)) {
             continue
           }
           this.emitFile({
@@ -39,9 +39,7 @@ export default function modulePathPlugin(config: InlineConfig): Plugin {
             fileName: chunk.fileName,
             source: chunk.type === 'chunk' ? chunk.code : chunk.source
           })
-          if (chunk.type === 'asset') {
-            assetCache.add(chunk.fileName)
-          }
+          assetCache.add(chunk.fileName)
         }
         for (const id of re.watchFiles) {
           this.addWatchFile(id)
