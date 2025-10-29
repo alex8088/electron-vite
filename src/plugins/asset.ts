@@ -1,7 +1,7 @@
 import path from 'node:path'
 import fs from 'node:fs/promises'
 import type { SourceMapInput } from 'rollup'
-import { type Plugin } from 'vite'
+import { type Plugin, normalizePath } from 'vite'
 import MagicString from 'magic-string'
 import { cleanUrl, getHash, toRelativePath } from '../utils'
 import { supportImportMetaPaths } from '../electron'
@@ -28,7 +28,6 @@ export default async function loadWasm(file, importObject = {}) {
 
 export default function assetPlugin(): Plugin {
   let publicDir = ''
-  let outDir = ''
   const publicAssetPathCache = new Map<string, string>()
   const assetCache = new Map<string, string>()
   const isImportMetaPathSupported = supportImportMetaPaths()
@@ -42,7 +41,6 @@ export default function assetPlugin(): Plugin {
     },
     configResolved(config): void {
       publicDir = config.publicDir
-      outDir = config.build.outDir
     },
     resolveId(id): string | void {
       if (id === wasmHelperId) {
@@ -105,7 +103,7 @@ export default function assetPlugin(): Plugin {
         export default importObject => loadWasm(${referenceId}, importObject)`
       }
     },
-    renderChunk(code, chunk, { sourcemap }): { code: string; map: SourceMapInput } | null {
+    renderChunk(code, chunk, { sourcemap, dir }): { code: string; map: SourceMapInput } | null {
       let match: RegExpExecArray | null
       let s: MagicString | undefined
 
@@ -126,7 +124,7 @@ export default function assetPlugin(): Plugin {
         s ||= new MagicString(code)
         const [full, hash] = match
         const filename = publicAssetPathCache.get(hash)!
-        const outputFilepath = toRelativePath(filename, path.join(outDir, chunk.fileName))
+        const outputFilepath = toRelativePath(filename, normalizePath(path.join(dir!, chunk.fileName)))
         const replacement = JSON.stringify(outputFilepath)
         s.overwrite(match.index, match.index + full.length, replacement, {
           contentOnly: true
