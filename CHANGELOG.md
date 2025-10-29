@@ -1,3 +1,11 @@
+### v5.0.0-beta.2 (_2025-10-30_)
+
+- feat: reporter plugin for isolated builds
+- perf(isolateEntries): transform log
+- perf(isolateEntries): optimize entries transformation
+- fix(asset): normalize imported public asset chunk path
+- fix: avoid duplicate chunk emission
+
 ### v5.0.0-beta.1 (_2025-10-29_)
 
 - feat: enhanced string protection
