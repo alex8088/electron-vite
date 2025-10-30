@@ -150,7 +150,9 @@ export interface BytecodeOptions {
 }
 
 /**
- * Compile to v8 bytecode to protect source code.
+ * Compile source code to v8 bytecode.
+ *
+ * @deprecated use `build.bytecode` config option instead
  */
 export function bytecodePlugin(options: BytecodeOptions = {}): Plugin | null {
   if (process.env.NODE_ENV_ELECTRON_VITE !== 'production') {
