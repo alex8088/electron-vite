@@ -88,7 +88,6 @@ async function bundleEntryFile(
   const reporter = watch ? buildReporterPlugin() : undefined
   const viteConfig = mergeConfig(config, {
     build: {
-      rollupOptions: { input },
       write: false,
       watch: false
     },
@@ -106,7 +105,15 @@ async function bundleEntryFile(
     ],
     logLevel: 'warn',
     configFile: false
-  })
+  }) as InlineConfig
+
+  // rewrite the input instead of merging
+  const buildOptions = viteConfig.build!
+  buildOptions.rollupOptions = {
+    ...buildOptions.rollupOptions,
+    input
+  }
+
   const bundles = await viteBuild(viteConfig)
 
   return {
