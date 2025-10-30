@@ -36,13 +36,18 @@ import { isObject, isFilePathESM, deepClone, asyncFlatten } from './utils'
 
 export { defineConfig as defineViteConfig } from 'vite'
 
-interface IsolatedEntriesOption {
+interface IsolatedEntriesMixin {
   /**
    * Build each entry point as an isolated bundle without code splitting.
    *
    * When enabled, each entry will include all its dependencies inline,
    * preventing automatic code splitting across entries and ensuring each
    * output file is fully standalone.
+   *
+   * **Important**: When using `isolatedEntries` in `preload` config, you
+   * should also disable `build.externalizeDeps` to ensure third-party dependencies
+   * from `node_modules` are bundled together, which is required for Electron
+   * sandbox support.
    *
    * @experimental
    * @default false
@@ -73,9 +78,9 @@ interface BytecodeMixin {
 
 interface MainBuildOptions extends ViteBuildOptions, ExternalizeDepsMixin, BytecodeMixin {}
 
-interface PreloadBuildOptions extends ViteBuildOptions, ExternalizeDepsMixin, BytecodeMixin {}
+interface PreloadBuildOptions extends ViteBuildOptions, ExternalizeDepsMixin, BytecodeMixin, IsolatedEntriesMixin {}
 
-interface RendererBuildOptions extends ViteBuildOptions {}
+interface RendererBuildOptions extends ViteBuildOptions, IsolatedEntriesMixin {}
 
 interface BaseViteConfig<T> extends Omit<ViteConfig, 'build'> {
   /**
@@ -86,9 +91,9 @@ interface BaseViteConfig<T> extends Omit<ViteConfig, 'build'> {
 
 export interface MainViteConfig extends BaseViteConfig<MainBuildOptions> {}
 
-export interface PreloadViteConfig extends BaseViteConfig<PreloadBuildOptions>, IsolatedEntriesOption {}
+export interface PreloadViteConfig extends BaseViteConfig<PreloadBuildOptions> {}
 
-export interface RendererViteConfig extends BaseViteConfig<RendererBuildOptions>, IsolatedEntriesOption {}
+export interface RendererViteConfig extends BaseViteConfig<RendererBuildOptions> {}
 
 export interface UserConfig {
   /**
@@ -246,7 +251,7 @@ export async function resolveConfig(
           ...configDrivenPlugins
         ]
 
-        if (preloadViteConfig.isolatedEntries) {
+        if (preloadViteConfig.build?.isolatedEntries) {
           builtInPreloadPlugins.push(
             isolateEntriesPlugin(
               mergeConfig(
@@ -284,7 +289,7 @@ export async function resolveConfig(
           electronRendererConfigValidatorPlugin()
         ]
 
-        if (rendererViteConfig.isolatedEntries) {
+        if (rendererViteConfig.build?.isolatedEntries) {
           builtInRendererPlugins.push(
             isolateEntriesPlugin(
               mergeConfig(
