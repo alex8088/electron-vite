@@ -7,6 +7,8 @@ import {
   type UserConfig as ViteConfig,
   type ConfigEnv,
   type PluginOption,
+  type Plugin,
+  type BuildEnvironmentOptions as ViteBuildOptions,
   type LogLevel,
   createLogger,
   mergeConfig,
@@ -28,7 +30,9 @@ import importMetaPlugin from './plugins/importMeta'
 import esmShimPlugin from './plugins/esmShim'
 import modulePathPlugin from './plugins/modulePath'
 import isolateEntriesPlugin from './plugins/isolateEntries'
-import { isObject, isFilePathESM, deepClone } from './utils'
+import { type ExternalOptions, externalizeDepsPlugin } from './plugins/externalizeDeps'
+import { type BytecodeOptions, bytecodePlugin } from './plugins/bytecode'
+import { isObject, isFilePathESM, deepClone, asyncFlatten } from './utils'
 
 export { defineConfig as defineViteConfig } from 'vite'
 
@@ -46,11 +50,45 @@ interface IsolatedEntriesOption {
   isolatedEntries?: boolean
 }
 
-export interface MainViteConfig extends ViteConfig {}
+interface ExternalizeDepsMixin {
+  /**
+   * Options pass on to `externalizeDeps` plugin in electron-vite.
+   *
+   * Automatically externalize dependencies.
+   *
+   * @default true
+   */
+  externalizeDeps?: boolean | ExternalOptions
+}
 
-export interface PreloadViteConfig extends ViteConfig, IsolatedEntriesOption {}
+interface BytecodeMixin {
+  /**
+   * Options pass on to `bytecode` plugin in electron-vite.
+   * https://electron-vite.org/guide/source-code-protection#bytecodeplugin-options
+   *
+   * Compile source code to v8 bytecode.
+   */
+  bytecode?: boolean | BytecodeOptions
+}
 
-export interface RendererViteConfig extends ViteConfig, IsolatedEntriesOption {}
+interface MainBuildOptions extends ViteBuildOptions, ExternalizeDepsMixin, BytecodeMixin {}
+
+interface PreloadBuildOptions extends ViteBuildOptions, ExternalizeDepsMixin, BytecodeMixin {}
+
+interface RendererBuildOptions extends ViteBuildOptions {}
+
+interface BaseViteConfig<T> extends Omit<ViteConfig, 'build'> {
+  /**
+   * Build specific options
+   */
+  build?: T
+}
+
+export interface MainViteConfig extends BaseViteConfig<MainBuildOptions> {}
+
+export interface PreloadViteConfig extends BaseViteConfig<PreloadBuildOptions>, IsolatedEntriesOption {}
+
+export interface RendererViteConfig extends BaseViteConfig<RendererBuildOptions>, IsolatedEntriesOption {}
 
 export interface UserConfig {
   /**
@@ -157,6 +195,8 @@ export async function resolveConfig(
           resetOutDir(mainViteConfig, outDir, 'main')
         }
 
+        const configDrivenPlugins: PluginOption[] = await resolveConfigDrivenPlugins(mainViteConfig)
+
         const builtInMainPlugins: PluginOption[] = [
           electronMainConfigPresetPlugin({ root }),
           electronMainConfigValidatorPlugin(),
@@ -165,13 +205,20 @@ export async function resolveConfig(
           modulePathPlugin(
             mergeConfig(
               {
-                plugins: [electronMainConfigPresetPlugin({ root }), assetPlugin(), importMetaPlugin(), esmShimPlugin()]
+                plugins: [
+                  electronMainConfigPresetPlugin({ root }),
+                  assetPlugin(),
+                  importMetaPlugin(),
+                  esmShimPlugin(),
+                  ...configDrivenPlugins
+                ]
               },
               mainViteConfig
             )
           ),
           importMetaPlugin(),
-          esmShimPlugin()
+          esmShimPlugin(),
+          ...configDrivenPlugins
         ]
 
         mainViteConfig.plugins = builtInMainPlugins.concat(mainViteConfig.plugins || [])
@@ -188,12 +235,15 @@ export async function resolveConfig(
           resetOutDir(preloadViteConfig, outDir, 'preload')
         }
 
+        const configDrivenPlugins: PluginOption[] = await resolveConfigDrivenPlugins(preloadViteConfig)
+
         const builtInPreloadPlugins: PluginOption[] = [
           electronPreloadConfigPresetPlugin({ root }),
           electronPreloadConfigValidatorPlugin(),
           assetPlugin(),
           importMetaPlugin(),
-          esmShimPlugin()
+          esmShimPlugin(),
+          ...configDrivenPlugins
         ]
 
         if (preloadViteConfig.isolatedEntries) {
@@ -205,7 +255,8 @@ export async function resolveConfig(
                     electronPreloadConfigPresetPlugin({ root }),
                     assetPlugin(),
                     importMetaPlugin(),
-                    esmShimPlugin()
+                    esmShimPlugin(),
+                    ...configDrivenPlugins
                   ]
                 },
                 preloadViteConfig
@@ -276,6 +327,38 @@ function resetOutDir(config: ViteConfig, outDir: string, subOutDir: string): voi
       config.build = { outDir: userOutDir }
     }
   }
+}
+
+async function resolveConfigDrivenPlugins(config: MainViteConfig | PreloadViteConfig): Promise<PluginOption[]> {
+  const userPlugins = (await asyncFlatten(config.plugins || [])).filter(Boolean) as Plugin[]
+
+  const configDrivenPlugins: PluginOption[] = []
+
+  const hasExternalizeDepsPlugin = userPlugins.some(p => p.name === 'vite:externalize-deps')
+  if (!hasExternalizeDepsPlugin) {
+    const externalOptions = config.build?.externalizeDeps ?? true
+    if (externalOptions) {
+      isOptions<ExternalOptions>(externalOptions)
+        ? configDrivenPlugins.push(externalizeDepsPlugin(externalOptions))
+        : configDrivenPlugins.push(externalizeDepsPlugin())
+    }
+  }
+
+  const hasBytecodePlugin = userPlugins.some(p => p.name === 'vite:bytecode')
+  if (!hasBytecodePlugin) {
+    const bytecodeOptions = config.build?.bytecode
+    if (bytecodeOptions) {
+      isOptions<BytecodeOptions>(bytecodeOptions)
+        ? configDrivenPlugins.push(bytecodePlugin(bytecodeOptions))
+        : configDrivenPlugins.push(bytecodePlugin())
+    }
+  }
+
+  return configDrivenPlugins
+}
+
+function isOptions<T extends object>(value: boolean | T): value is T {
+  return typeof value === 'object' && value !== null
 }
 
 const CONFIG_FILE_NAME = 'electron.vite.config'
