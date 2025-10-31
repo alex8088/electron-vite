@@ -12,6 +12,9 @@ export default function buildReporterPlugin(): Plugin<BuildReporterApi> {
     buildEnd() {
       const allModuleIds = Array.from(this.getModuleIds())
       const sourceFiles = allModuleIds.filter(id => {
+        if (id.includes('node_modules')) {
+          return false
+        }
         const info = this.getModuleInfo(id)
         return info && !info.isExternal
       })
