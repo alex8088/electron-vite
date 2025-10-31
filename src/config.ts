@@ -398,63 +398,27 @@ export async function loadConfigFromFile(
   const isESM = isFilePathESM(resolvedPath)
 
   try {
-    const bundled = await bundleConfigFile(resolvedPath, isESM)
-    const userConfig = await loadConfigFormBundledFile(configRoot, resolvedPath, bundled.code, isESM)
+    const { code, dependencies } = await bundleConfigFile(resolvedPath, isESM)
+    const configExport = await loadConfigFormBundledFile(configRoot, resolvedPath, code, isESM)
 
-    const config = await (typeof userConfig === 'function' ? userConfig(configEnv) : userConfig)
+    const config = await (typeof configExport === 'function' ? configExport(configEnv) : configExport)
     if (!isObject(config)) {
       throw new Error(`config must export or return an object`)
     }
 
-    const configRequired: string[] = []
-
-    let mainConfig
-    if (config.main) {
-      const mainViteConfig = config.main
-      mainConfig = await (typeof mainViteConfig === 'function' ? mainViteConfig(configEnv) : mainViteConfig)
-      if (!isObject(mainConfig)) {
-        throw new Error(`main config must export or return an object`)
+    if (!ignoreConfigWarning) {
+      const missingFields = ['main', 'renderer', 'preload'].filter(field => !config[field])
+      if (missingFields.length > 0) {
+        createLogger(logLevel).warn(
+          `${colors.yellow(colors.bold('(!)'))} ${colors.yellow(`${missingFields.join(' and ')} config is missing`)}\n`
+        )
       }
-    } else {
-      configRequired.push('main')
-    }
-
-    let rendererConfig
-    if (config.renderer) {
-      const rendererViteConfig = config.renderer
-      rendererConfig = await (typeof rendererViteConfig === 'function'
-        ? rendererViteConfig(configEnv)
-        : rendererViteConfig)
-      if (!isObject(rendererConfig)) {
-        throw new Error(`renderer config must export or return an object`)
-      }
-    } else {
-      configRequired.push('renderer')
-    }
-
-    let preloadConfig
-    if (config.preload) {
-      const preloadViteConfig = config.preload
-      preloadConfig = await (typeof preloadViteConfig === 'function' ? preloadViteConfig(configEnv) : preloadViteConfig)
-      if (!isObject(preloadConfig)) {
-        throw new Error(`preload config must export or return an object`)
-      }
-    } else {
-      configRequired.push('preload')
-    }
-
-    if (!ignoreConfigWarning && configRequired.length > 0) {
-      createLogger(logLevel).warn(colors.yellow(`${configRequired.join(' and ')} config is missing`))
     }
 
     return {
       path: normalizePath(resolvedPath),
-      config: {
-        main: mainConfig,
-        renderer: rendererConfig,
-        preload: preloadConfig
-      },
-      dependencies: bundled.dependencies
+      config,
+      dependencies
     }
   } catch (e) {
     createLogger(logLevel).error(colors.red(`failed to load config from ${resolvedPath}`), { error: e as Error })
