@@ -1,3 +1,12 @@
+### v5.0.0-beta.3 (_2025-11-01_)
+
+- feat(config): add `build.externalizeDeps` and `build.bytecode` config options to replace `externalizeDepsPlugin` and `bytecodePlugin`
+- refactor(config): move the `isolateEntries` options to the `build` option
+- refactor: deprecated `externalizeDepsPlugin` and `bytecodePlugin`
+- refactor(config)!: remove function resolution for nested config fields
+- perf(buildReport): exclude node_modules from watch list
+- fix(modulePath): rewrite the build input instead of merging
+
 ### v5.0.0-beta.2 (_2025-10-30_)
 
 - feat: reporter plugin for isolated builds
