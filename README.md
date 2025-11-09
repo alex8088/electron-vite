@@ -28,13 +28,13 @@
 ## Features
 
 - ⚡️ [Vite](https://vitejs.dev) powered and use the same way.
-- 🛠 Pre-configured for Electron, don't worry about configuration.
-- 💡 Optimize asset handling (Node.js addons, WebAssembly, Worker Thread, etc).
-- 🚀 Fast HMR for renderer processes.
-- 🔥 Hot reloading for main process and preload scripts.
-- 🔌 Easy to debug in IDEs like VSCode or WebStorm.
-- 🔒 Compile to v8 bytecode to protect source code.
-- 🏷️ Support for TypeScript decorators.
+- 🛠 Pre-configure with sensible defaults optimized for Electron.
+- 💡 Optimize asset handling for Electron main process.
+- 🚀 Fast HMR & hot reloading.
+- 🔥 Isolated build for multi-entry application development.
+- ✨ Simplify multi-threading development.
+- 🔒 Compile code to v8 bytecode to protect source code.
+- 🔌 Easy to debug in IDEs such as VSCode or WebStorm.
 - 📦 Out-of-the-box support for TypeScript, Vue, React, Svelte, SolidJS and more.
 
 ## Usage
@@ -83,7 +83,7 @@ export default {
 Clone the [electron-vite-boilerplate](https://github.com/alex8088/electron-vite-boilerplate) or use the [create-electron](https://github.com/alex8088/quick-start/tree/master/packages/create-electron) tool to scaffold your project.
 
 ```bash
-npm create @quick-start/electron
+npm create @quick-start/electron@latest
 ```
 
 Currently supported template presets include:
