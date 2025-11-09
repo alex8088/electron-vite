@@ -69,7 +69,7 @@ interface ExternalizeDepsMixin {
 interface BytecodeMixin {
   /**
    * Options pass on to `bytecode` plugin in electron-vite.
-   * https://electron-vite.org/guide/source-code-protection#bytecodeplugin-options
+   * https://electron-vite.org/guide/source-code-protection#options
    *
    * Compile source code to v8 bytecode.
    */
