@@ -1,49 +1,58 @@
-### v5.0.0-beta.3 (_2025-11-01_)
+### v5.0.0 (_2025-12-07_)
 
 - feat(config): add `build.externalizeDeps` and `build.bytecode` config options to replace `externalizeDepsPlugin` and `bytecodePlugin`
+- feat: reporter plugin for isolated builds
+- feat: enhanced string protection
+- feat: add `isolatedEntries` option for `preload` and `renderer` to build entries as standalone bundles [#154](https://github.com/alex8088/electron-vite/issues/154)
 - refactor(config): move the `isolateEntries` options to the `build` option
 - refactor: deprecated `externalizeDepsPlugin` and `bytecodePlugin`
 - refactor(config)!: remove function resolution for nested config fields
-- perf(buildReport): exclude node_modules from watch list
-- fix(modulePath): rewrite the build input instead of merging
-
-### v5.0.0-beta.2 (_2025-10-30_)
-
-- feat: reporter plugin for isolated builds
-- perf(isolateEntries): transform log
-- perf(isolateEntries): optimize entries transformation
-- fix(asset): normalize imported public asset chunk path
-- fix: avoid duplicate chunk emission
-
-### v5.0.0-beta.1 (_2025-10-29_)
-
-- feat: enhanced string protection
-- feat: add `isolatedEntries` option for `preload` and `renderer` to build entries as standalone bundles [#154](https://github.com/alex8088/electron-vite/issues/154)
 - refactor(asset): remove redundant path normalization
 - refactor: split electron plugin into preset and validator plugins
 - refactor(config)!: restructure Electron Vite config interfaces
 - refactor(build): simplify build logic
 - refactor: replace `JSON.parse/stringify` with manual deep clone
-- perf: build compatibility target for Electron 39
-- fix(modulePath): prevent duplicate asset emission
-- fix(modulePath): support watch mode
-- chore: improve logging message clarity and consistency
-
-### v5.0.0-beta.0 (_2025-10-19_)
-
 - refactor(bytecodePlugin): improved bytecode bundle generation and made a new string protection plugin
 - refactor(modulePath): better support for tree-shaking and code-splitting
 - refactor: remove Electron 18, 19, 20, 21 build compatilibity target
+- perf(buildReport): exclude node_modules from watch list
+- perf(isolateEntries): transform log
+- perf(isolateEntries): optimize entries transformation
+- perf: build compatibility target for Electron 39
 - perf(plugin): more efficient module filtering via regular expressions
 - perf(plugin): no need to cache `sourcemap` option
 - perf(plugin): lazily initialize `MagicString` and remove the redundant pre-check
 - perf(bytecodePlugin): better way to count bytecode chunks
 - perf(plugin): enhance path resolution using `import.meta.dirname` for ES modules
+- fix(modulePath): rewrite the build input instead of merging
+- fix(asset): normalize imported public asset chunk path
+- fix: avoid duplicate chunk emission
+- fix(modulePath): prevent duplicate asset emission
+- fix(modulePath): support watch mode
+- chore: fix jsdoc
+- chore: improve logging message clarity and consistency
 - chore(deps): update all non-major dependencies
 - chore: update eslint config
 - chore: replace `tseslint.config` with `defineConfig`
 - chore: remove redundant external id
 - chore: rename the file `esm` to `esmShim`
+- docs: update
+
+### v5.0.0-beta.3 (_2025-11-01_)
+
+See [v5.0.0-beta.3 changelog](https://github.com/alex8088/electron-vite/blob/v5.0.0-beta.3/CHANGELOG.md)
+
+### v5.0.0-beta.2 (_2025-10-30_)
+
+See [v5.0.0-beta.2 changelog](https://github.com/alex8088/electron-vite/blob/v5.0.0-beta.2/CHANGELOG.md)
+
+### v5.0.0-beta.1 (_2025-10-29_)
+
+See [v5.0.0-beta.1 changelog](https://github.com/alex8088/electron-vite/blob/v5.0.0-beta.1/CHANGELOG.md)
+
+### v5.0.0-beta.0 (_2025-10-19_)
+
+See [v5.0.0-beta.0 changelog](https://github.com/alex8088/electron-vite/blob/v5.0.0-beta.0/CHANGELOG.md)
 
 ### v4.0.1 (_2025-09-21_)
 
