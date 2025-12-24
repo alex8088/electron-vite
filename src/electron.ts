@@ -6,6 +6,10 @@ import { loadPackageData } from './utils'
 
 const _require = createRequire(import.meta.url)
 
+const getElectronPackageName = (): string => {
+  return process.env.ELECTRON_PKG_NAME || 'electron'
+}
+
 const ensureElectronEntryFile = (root = process.cwd()): void => {
   if (process.env.ELECTRON_ENTRY) return
   const pkg = loadPackageData()
@@ -26,7 +30,8 @@ const ensureElectronEntryFile = (root = process.cwd()): void => {
 const getElectronMajorVer = (): string => {
   let majorVer = process.env.ELECTRON_MAJOR_VER || ''
   if (!majorVer) {
-    const pkg = _require.resolve('electron/package.json')
+    const electronPkgName = getElectronPackageName()
+    const pkg = _require.resolve(`${electronPkgName}/package.json`)
     if (fs.existsSync(pkg)) {
       const version = _require(pkg).version
       majorVer = version.split('.')[0]
@@ -49,7 +54,8 @@ export function supportImportMetaPaths(): boolean {
 export function getElectronPath(): string {
   let electronExecPath = process.env.ELECTRON_EXEC_PATH || ''
   if (!electronExecPath) {
-    const electronModulePath = path.dirname(_require.resolve('electron'))
+    const electronPkgName = getElectronPackageName()
+    const electronModulePath = path.dirname(_require.resolve(electronPkgName))
     const pathFile = path.join(electronModulePath, 'path.txt')
     let executablePath
     if (fs.existsSync(pathFile)) {
@@ -59,7 +65,7 @@ export function getElectronPath(): string {
       electronExecPath = path.join(electronModulePath, 'dist', executablePath)
       process.env.ELECTRON_EXEC_PATH = electronExecPath
     } else {
-      throw new Error('Electron uninstall')
+      throw new Error(`Electron package "${electronPkgName}" not found or uninstalled`)
     }
   }
   return electronExecPath
