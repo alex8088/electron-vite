@@ -143,7 +143,7 @@ const bytecodeModuleLoaderCode = [
 const bytecodeChunkExtensionRE = /.(jsc|cjsc)$/
 
 export interface BytecodeOptions {
-  chunkAlias?: string | string[]
+  chunkAlias?: string | string[] | RegExp
   transformArrowFunctions?: boolean
   removeBundleJS?: boolean
   protectedStrings?: string[]
@@ -160,11 +160,13 @@ export function bytecodePlugin(options: BytecodeOptions = {}): Plugin | null {
   }
 
   const { chunkAlias = [], transformArrowFunctions = true, removeBundleJS = true, protectedStrings = [] } = options
-  const _chunkAlias = Array.isArray(chunkAlias) ? chunkAlias : [chunkAlias]
+  const _chunkAlias = chunkAlias instanceof RegExp ? chunkAlias : Array.isArray(chunkAlias) ? chunkAlias : [chunkAlias]
 
-  const transformAllChunks = _chunkAlias.length === 0
   const isBytecodeChunk = (chunkName: string): boolean => {
-    return transformAllChunks || _chunkAlias.some(alias => alias === chunkName)
+    if (_chunkAlias instanceof RegExp) {
+      return _chunkAlias.test(chunkName)
+    }
+    return _chunkAlias.length === 0 || _chunkAlias.some(alias => alias === chunkName)
   }
 
   const plugins: babel.PluginItem[] = []
