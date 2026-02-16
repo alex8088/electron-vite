@@ -12,17 +12,22 @@ import { type InlineConfig, resolveConfig } from './config'
 import { resolveHostname } from './utils'
 import { startElectron } from './electron'
 
+type ElectronViteDevServer = {
+  getElectronProcess: () => ChildProcess | undefined
+  getViteServer: () => ViteDevServer | undefined
+}
+
 export async function createServer(
   inlineConfig: InlineConfig = {},
-  options: { rendererOnly?: boolean }
-): Promise<void> {
+  options: { rendererOnly?: boolean } = {}
+): Promise<ElectronViteDevServer> {
   process.env.NODE_ENV_ELECTRON_VITE = 'development'
   const config = await resolveConfig(inlineConfig, 'serve', 'development')
+  let server: ViteDevServer | undefined
+  let ps: ChildProcess | undefined
+
   if (config.config) {
     const logger = createLogger(inlineConfig.logLevel)
-
-    let server: ViteDevServer | undefined
-    let ps: ChildProcess | undefined
 
     const errorHook = (e): void => {
       logger.error(`${colors.bgRed(colors.white(' ERROR '))} ${colors.red(e.message)}`)
@@ -103,6 +108,11 @@ export async function createServer(
     ps = startElectron(inlineConfig.root)
 
     logger.info(colors.green(`\nstarting electron app...\n`))
+  }
+
+  return {
+    getElectronProcess: () => ps,
+    getViteServer: () => server
   }
 }
 
