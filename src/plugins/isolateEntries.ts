@@ -170,6 +170,7 @@ function transformReporterPlugin(
 }
 
 function writeLine(output: string): void {
+  if (!process.stdout.isTTY) return
   clearLine()
   if (output.length < process.stdout.columns) {
     process.stdout.write(output)
@@ -179,6 +180,7 @@ function writeLine(output: string): void {
 }
 
 function clearLine(move: number = 0): void {
+  if (!process.stdout.isTTY) return
   if (move < 0) {
     process.stdout.moveCursor(0, move)
   }
