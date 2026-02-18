@@ -157,5 +157,13 @@ export function startElectron(root: string | undefined): ChildProcess {
   const ps = spawn(electronPath, [entry].concat(args), { stdio: 'inherit' })
   ps.on('close', process.exit)
 
+  for (const signal of ['SIGINT', 'SIGTERM', 'SIGUSR2'] as NodeJS.Signals[]) {
+    process.on(signal, () => {
+      if (!ps.killed) {
+        ps.kill(signal)
+      }
+    })
+  }
+
   return ps
 }
