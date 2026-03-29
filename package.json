@@ -94,7 +94,7 @@
   "dependencies": {
     "@babel/core": "^7.29.0",
     "@babel/plugin-transform-arrow-functions": "^7.27.1",
-    "cac": "^6.7.14",
+    "cac": "^7.0.0",
     "esbuild": "^0.25.11",
     "magic-string": "^0.30.21",
     "picocolors": "^1.1.1"
