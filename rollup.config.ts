@@ -26,7 +26,7 @@ export default defineConfig([
     plugins: [
       rm('dist', 'buildStart'),
       json(),
-      ts({ compilerOptions: { rootDir: 'src', declaration: true, declarationDir: 'dist/types' } }),
+      ts({ compilerOptions: { rootDir: 'src', outDir: 'dist', declaration: true, declarationDir: 'dist/types' } }),
       resolve()
     ],
     treeshake: {
