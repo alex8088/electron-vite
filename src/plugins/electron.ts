@@ -122,7 +122,7 @@ export function electronMainConfigPresetPlugin(options?: ElectronPluginOptions):
       // enable ssr build
       config.build.ssr = true
       config.build.ssrEmitAssets = true
-      config.ssr = { ...config.ssr, ...{ noExternal: true } }
+      config.ssr = { ...config.ssr, noExternal: true, external: ['electron'] }
     }
   }
 }
@@ -272,6 +272,7 @@ export function electronPreloadConfigPresetPlugin(options?: ElectronPluginOption
       config.build.ssrEmitAssets = true
       config.ssr = mergeConfig(defaultConfig.ssr, config.ssr || {})
       config.ssr.noExternal = true
+      config.ssr.external = ['electron']
     }
   }
 }
