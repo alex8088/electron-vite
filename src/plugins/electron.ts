@@ -2,8 +2,7 @@ import path from 'node:path'
 import fs from 'node:fs'
 import { builtinModules } from 'node:module'
 import colors from 'picocolors'
-import { type Plugin, type LibraryOptions, mergeConfig, normalizePath } from 'vite'
-import type { OutputOptions } from 'rollup'
+import { type Plugin, type LibraryOptions, type Rolldown, mergeConfig, normalizePath } from 'vite'
 import { getElectronNodeTarget, getElectronChromeTarget, supportESM } from '../electron'
 import { loadPackageData } from '../utils'
 
@@ -40,9 +39,9 @@ function processEnvDefine(): Record<string, string> {
 }
 
 function resolveBuildOutputs(
-  outputs: OutputOptions | OutputOptions[] | undefined,
+  outputs: Rolldown.OutputOptions | Rolldown.OutputOptions[] | undefined,
   libOptions: LibraryOptions | false
-): OutputOptions | OutputOptions[] | undefined {
+): Rolldown.OutputOptions | Rolldown.OutputOptions[] | undefined {
   if (libOptions && !Array.isArray(outputs)) {
     const libFormats = libOptions.formats || []
     return libFormats.map(format => ({ ...outputs, format }))
@@ -122,6 +121,7 @@ export function electronMainConfigPresetPlugin(options?: ElectronPluginOptions):
       // enable ssr build
       config.build.ssr = true
       config.build.ssrEmitAssets = true
+      config.build.rolldownOptions = config.build.rollupOptions
       config.ssr = { ...config.ssr, ...{ noExternal: true } }
     }
   }
@@ -270,6 +270,7 @@ export function electronPreloadConfigPresetPlugin(options?: ElectronPluginOption
       // enable ssr build
       config.build.ssr = true
       config.build.ssrEmitAssets = true
+      config.build.rolldownOptions = config.build.rollupOptions
       config.ssr = mergeConfig(defaultConfig.ssr, config.ssr || {})
       config.ssr.noExternal = true
     }

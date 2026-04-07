@@ -1,8 +1,6 @@
 import path from 'node:path'
-import { type Plugin, type InlineConfig, build as viteBuild, mergeConfig } from 'vite'
-import type { SourceMapInput, RollupOutput, OutputOptions } from 'rollup'
+import { type Plugin, type InlineConfig, type Rolldown, build as viteBuild, mergeConfig } from 'vite'
 import MagicString from 'magic-string'
-import buildReporterPlugin from './buildReporter'
 import { cleanUrl, toRelativePath } from '../utils'
 import { supportImportMetaPaths } from '../electron'
 
@@ -24,8 +22,8 @@ export default function modulePathPlugin(config: InlineConfig): Plugin {
     async load(id): Promise<string | void> {
       if (id.endsWith('?modulePath')) {
         // id resolved by Vite resolve plugin
-        const re = await bundleEntryFile(cleanUrl(id), config, this.meta.watchMode)
-        const [outputChunk, ...outputChunks] = re.bundles.output
+        const bundles = await bundleEntryFile(cleanUrl(id), config)
+        const [outputChunk, ...outputChunks] = bundles.output
         const hash = this.emitFile({
           type: 'asset',
           fileName: outputChunk.fileName,
@@ -42,8 +40,20 @@ export default function modulePathPlugin(config: InlineConfig): Plugin {
           })
           assetCache.add(chunk.fileName)
         }
-        for (const id of re.watchFiles) {
-          this.addWatchFile(id)
+        if (this.meta.watchMode) {
+          const moduleIds = new Set<string>()
+          for (const chunk of bundles.output) {
+            if (chunk.type === 'chunk') {
+              for (const id of chunk.moduleIds) {
+                if (!id.startsWith('\0')) {
+                  moduleIds.add(cleanUrl(id))
+                }
+              }
+            }
+          }
+          for (const id of moduleIds) {
+            this.addWatchFile(id)
+          }
         }
         const refId = `__VITE_MODULE_PATH__${hash}__`
         const dirnameExpr = isImportMetaPathSupported ? 'import.meta.dirname' : '__dirname'
@@ -52,7 +62,7 @@ export default function modulePathPlugin(config: InlineConfig): Plugin {
           export default join(${dirnameExpr}, ${refId})`
       }
     },
-    renderChunk(code, chunk, { sourcemap }): { code: string; map: SourceMapInput } | null {
+    renderChunk(code, chunk, { sourcemap }): { code: string; map: Rolldown.SourceMapInput } | null {
       let match: RegExpExecArray | null
       let s: MagicString | undefined
 
@@ -80,12 +90,7 @@ export default function modulePathPlugin(config: InlineConfig): Plugin {
   }
 }
 
-async function bundleEntryFile(
-  input: string,
-  config: InlineConfig,
-  watch: boolean
-): Promise<{ bundles: RollupOutput; watchFiles: string[] }> {
-  const reporter = watch ? buildReporterPlugin() : undefined
+async function bundleEntryFile(input: string, config: InlineConfig): Promise<Rolldown.RolldownOutput> {
   const viteConfig = mergeConfig(config, {
     build: {
       write: false,
@@ -94,15 +99,14 @@ async function bundleEntryFile(
     plugins: [
       {
         name: 'vite:entry-file-name',
-        outputOptions(output): OutputOptions {
+        outputOptions(output): Rolldown.OutputOptions {
           if (typeof output.entryFileNames !== 'function' && output.entryFileNames) {
             output.entryFileNames = '[name]-[hash]' + path.extname(output.entryFileNames)
           }
           return output
         }
-      },
-      reporter
-    ],
+      }
+    ] as Plugin[],
     logLevel: 'warn',
     configFile: false
   }) as InlineConfig
@@ -116,8 +120,5 @@ async function bundleEntryFile(
 
   const bundles = await viteBuild(viteConfig)
 
-  return {
-    bundles: bundles as RollupOutput,
-    watchFiles: reporter?.api?.getWatchFiles() || []
-  }
+  return bundles as Rolldown.RolldownOutput
 }

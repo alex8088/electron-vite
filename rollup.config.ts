@@ -35,6 +35,7 @@ export default defineConfig([
   },
   {
     input: 'dist/types/index.d.ts',
+    external: ['vite'],
     output: [{ file: pkg.types, format: 'es' }],
     plugins: [dts(), rm('dist/types', 'buildEnd')]
   }

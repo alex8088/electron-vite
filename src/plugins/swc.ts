@@ -79,7 +79,7 @@ export type SwcOptions = {
 export function swcPlugin(options: SwcOptions = {}): Plugin {
   const filter = createFilter(options.include || /\.(m?ts|[jt]sx)$/, options.exclude || /\.js$/)
   let sourcemap: boolean | 'inline' = false
-  let minify: boolean | 'esbuild' | 'terser' = false
+  let minify: boolean | 'esbuild' | 'oxc' | 'terser' = false
   return {
     name: 'vite:swc',
     config(): UserConfig {

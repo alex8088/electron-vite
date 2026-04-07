@@ -1,9 +1,16 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-function-type */
 import path from 'node:path'
-import { type InlineConfig, type Plugin, type Logger, type LogLevel, build as viteBuild, mergeConfig } from 'vite'
-import type { InputOptions, RollupOutput } from 'rollup'
+import {
+  type InlineConfig,
+  type Plugin,
+  type Logger,
+  type LogLevel,
+  type Rolldown,
+  build as viteBuild,
+  mergeConfig
+} from 'vite'
 import colors from 'picocolors'
-import buildReporterPlugin from './buildReporter'
+import { cleanUrl } from '../utils'
 
 const VIRTUAL_ENTRY_ID = '\0virtual:isolate-entries'
 
@@ -31,7 +38,7 @@ export default function isolateEntriesPlugin(userConfig: InlineConfig): Plugin {
       logger = config.logger
     },
 
-    options(opts): InputOptions | void {
+    options(opts): Rolldown.InputOptions | void {
       const { input } = opts
       if (input && typeof input === 'object') {
         if ((Array.isArray(input) && input.length > 0) || Object.keys(input).length > 1) {
@@ -57,12 +64,11 @@ export default function isolateEntriesPlugin(userConfig: InlineConfig): Plugin {
     async load(id): Promise<string | void> {
       if (id === VIRTUAL_ENTRY_ID) {
         const shouldLog = LogLevels[userConfig.logLevel || 'info'] >= LogLevels.info
-        const shouldWatch = this.meta.watchMode
 
         const watchFiles = new Set<string>()
 
         for (const entry of entries) {
-          const re = await bundleEntryFile(entry, userConfig, shouldWatch, shouldLog, transformedCount)
+          const re = await bundleEntryFile(entry, userConfig, shouldLog, transformedCount)
 
           const outputChunks = re.bundles.output
           for (const chunk of outputChunks) {
@@ -77,8 +83,20 @@ export default function isolateEntriesPlugin(userConfig: InlineConfig): Plugin {
             assetCache.add(chunk.fileName)
           }
 
-          for (const id of re.watchFiles) {
-            watchFiles.add(id)
+          if (this.meta.watchMode) {
+            const moduleIds = new Set<string>()
+            for (const chunk of re.bundles.output) {
+              if (chunk.type === 'chunk') {
+                for (const id of chunk.moduleIds) {
+                  if (!id.startsWith('\0')) {
+                    moduleIds.add(cleanUrl(id))
+                  }
+                }
+              }
+            }
+            for (const id of moduleIds) {
+              this.addWatchFile(id)
+            }
           }
 
           transformedCount += re.transformedCount
@@ -112,19 +130,17 @@ export default function isolateEntriesPlugin(userConfig: InlineConfig): Plugin {
 async function bundleEntryFile(
   input: string | Record<string, string>,
   config: InlineConfig,
-  watch: boolean,
   shouldLog: boolean,
   preTransformedCount: number
-): Promise<{ bundles: RollupOutput; watchFiles: string[]; transformedCount: number }> {
+): Promise<{ bundles: Rolldown.RolldownOutput; transformedCount: number }> {
   const transformReporter = transformReporterPlugin(preTransformedCount, shouldLog)
-  const buildReporter = watch ? buildReporterPlugin() : undefined
 
   const viteConfig = mergeConfig(config, {
     build: {
       write: false,
       watch: false
     },
-    plugins: [transformReporter, buildReporter],
+    plugins: [transformReporter],
     logLevel: 'warn',
     configFile: false
   }) as InlineConfig
@@ -132,11 +148,10 @@ async function bundleEntryFile(
   // rewrite the input instead of merging
   viteConfig.build!.rollupOptions!.input = input
 
-  const bundles = await viteBuild(viteConfig)
+  const bundles = (await viteBuild(viteConfig)) as Rolldown.RolldownOutput
 
   return {
-    bundles: bundles as RollupOutput,
-    watchFiles: buildReporter?.api?.getWatchFiles() || [],
+    bundles: bundles,
     transformedCount: transformReporter?.api?.getTransformedCount() || 0
   }
 }

@@ -2,10 +2,9 @@ import path from 'node:path'
 import { spawn } from 'node:child_process'
 import { createRequire } from 'node:module'
 import colors from 'picocolors'
-import { type Plugin, type Logger, type LibraryOptions, normalizePath } from 'vite'
+import { type Plugin, type Logger, type LibraryOptions, type Rolldown, normalizePath } from 'vite'
 import * as babel from '@babel/core'
 import MagicString from 'magic-string'
-import type { SourceMapInput, OutputChunk, OutputOptions } from 'rollup'
 import { getElectronPath } from '../electron'
 import { toRelativePath } from '../utils'
 
@@ -179,7 +178,10 @@ export function bytecodePlugin(options: BytecodeOptions = {}): Plugin | null {
 
   const shouldTransformBytecodeChunk = plugins.length !== 0
 
-  const _transform = (code: string, sourceMaps: boolean = false): { code: string; map?: SourceMapInput } | null => {
+  const _transform = (
+    code: string,
+    sourceMaps: boolean = false
+  ): { code: string; map?: Rolldown.SourceMapInput } | null => {
     const re = babel.transform(code, { plugins, sourceMaps })
     return re ? { code: re.code || '', map: re.map } : null
   }
@@ -220,7 +222,7 @@ export function bytecodePlugin(options: BytecodeOptions = {}): Plugin | null {
         supported = output.format === 'cjs' && !useInRenderer
       }
     },
-    renderChunk(code, chunk, { sourcemap }): { code: string; map?: SourceMapInput } | null {
+    renderChunk(code, chunk, { sourcemap }): { code: string; map?: Rolldown.SourceMapInput } | null {
       if (supported && isBytecodeChunk(chunk.name) && shouldTransformBytecodeChunk) {
         return _transform(code, !!sourcemap)
       }
@@ -231,7 +233,9 @@ export function bytecodePlugin(options: BytecodeOptions = {}): Plugin | null {
         return
       }
       const _chunks = Object.values(output)
-      const chunks = _chunks.filter(chunk => chunk.type === 'chunk' && isBytecodeChunk(chunk.name)) as OutputChunk[]
+      const chunks = _chunks.filter(
+        chunk => chunk.type === 'chunk' && isBytecodeChunk(chunk.name)
+      ) as Rolldown.OutputChunk[]
 
       if (chunks.length === 0) {
         return
@@ -304,7 +308,7 @@ export function bytecodePlugin(options: BytecodeOptions = {}): Plugin | null {
                     break
                   }
                   const moduleInfo = this.getModuleInfo(moduleId)
-                  if (moduleInfo && !moduleInfo.isExternal) {
+                  if (moduleInfo) {
                     const { importers, dynamicImporters } = moduleInfo
                     for (const importerId of importers) idsToHandle.add(importerId)
                     for (const importerId of dynamicImporters) idsToHandle.add(importerId)
@@ -342,9 +346,9 @@ export function bytecodePlugin(options: BytecodeOptions = {}): Plugin | null {
 }
 
 function resolveBuildOutputs(
-  outputs: OutputOptions | OutputOptions[] | undefined,
+  outputs: Rolldown.OutputOptions | Rolldown.OutputOptions[] | undefined,
   libOptions: LibraryOptions | false
-): OutputOptions | OutputOptions[] | undefined {
+): Rolldown.OutputOptions | Rolldown.OutputOptions[] | undefined {
   if (libOptions && !Array.isArray(outputs)) {
     const libFormats = libOptions.formats || []
     return libFormats.map(format => ({ ...outputs, format }))
