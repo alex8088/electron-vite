@@ -1,4 +1,3 @@
-import path from 'node:path'
 import { type Plugin, type InlineConfig, type Rolldown, build as viteBuild, mergeConfig } from 'vite'
 import MagicString from 'magic-string'
 import { cleanUrl, toRelativePath } from '../utils'
@@ -100,9 +99,10 @@ async function bundleEntryFile(input: string, config: InlineConfig): Promise<Rol
       {
         name: 'vite:entry-file-name',
         outputOptions(output): Rolldown.OutputOptions {
-          if (typeof output.entryFileNames !== 'function' && output.entryFileNames) {
-            output.entryFileNames = '[name]-[hash]' + path.extname(output.entryFileNames)
-          }
+          // Prevent output conflicts
+          output.hashCharacters = 'hex'
+          // Assign chunkFileNames to entryFileNames to treat sub-entries as internal chunks
+          output.entryFileNames = output.chunkFileNames
           return output
         }
       }
