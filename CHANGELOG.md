@@ -1,3 +1,17 @@
+### v6.0.0-beta.0 (_2026-04-09_)
+
+- refactor: `?modulePath` sub-build output strategy
+- fix(asset): isolate asset caches per environment
+- fix: use the environment api in plugins
+- fix: skip TTY terminal manipulations in CI environments
+- fix(deps)!: update vite to v8 ([#894](https://github.com/alex8088/electron-vite/issues/894))
+- fix: Typescript compiler option 'outDir' must be located inside Rollup 'dir' option
+- fix(isolateEntries): handle non-TTY stdout in build reporter (#887)
+- chore(deps): update cac to v7
+- chore(deps): update globals to v17
+- chore(deps): update eslint and @eslint/js to v10
+- chore(deps): update all non-major dependencies
+
 ### v5.0.0 (_2025-12-07_)
 
 - feat(config): add `build.externalizeDeps` and `build.bytecode` config options to replace `externalizeDepsPlugin` and `bytecodePlugin`
