@@ -1,7 +1,7 @@
 import path from 'node:path'
 import fs from 'node:fs/promises'
 import type { SourceMapInput } from 'rollup'
-import { type Plugin, normalizePath } from 'vite'
+import { type Plugin, type Environment, normalizePath } from 'vite'
 import MagicString from 'magic-string'
 import { cleanUrl, getHash, toRelativePath } from '../utils'
 import { supportImportMetaPaths } from '../electron'
@@ -26,17 +26,18 @@ export default async function loadWasm(file, importObject = {}) {
 }
 `
 
+const assetCache = new WeakMap<Environment, Map<string, string>>()
+const publicAssetPathCache = new WeakMap<Environment, Map<string, string>>()
+
 export default function assetPlugin(): Plugin {
-  const publicAssetPathCache = new Map<string, string>()
-  const assetCache = new Map<string, string>()
   const isImportMetaPathSupported = supportImportMetaPaths()
   return {
     name: 'vite:node-asset',
     apply: 'build',
     enforce: 'pre',
     buildStart(): void {
-      publicAssetPathCache.clear()
-      assetCache.clear()
+      publicAssetPathCache.set(this.environment, new Map())
+      assetCache.set(this.environment, new Map())
     },
     resolveId(id): string | void {
       if (id === wasmHelperId) {
@@ -60,12 +61,14 @@ export default function assetPlugin(): Plugin {
 
       if (publicDir && file.startsWith(publicDir)) {
         const hash = getHash(file)
-        if (!publicAssetPathCache.get(hash)) {
-          publicAssetPathCache.set(hash, file)
+        const publicAssetPathMap = publicAssetPathCache.get(this.environment)!
+        if (!publicAssetPathMap.get(hash)) {
+          publicAssetPathMap.set(hash, file)
         }
         referenceId = `__VITE_NODE_PUBLIC_ASSET__${hash}__`
       } else {
-        const cached = assetCache.get(file)
+        const cache = assetCache.get(this.environment)!
+        const cached = cache.get(id)
         if (cached) {
           referenceId = cached
         } else {
@@ -76,7 +79,7 @@ export default function assetPlugin(): Plugin {
             source: source as unknown as Uint8Array
           })
           referenceId = `__VITE_NODE_ASSET__${hash}__`
-          assetCache.set(file, referenceId)
+          cache.set(file, referenceId)
         }
       }
 
@@ -119,11 +122,13 @@ export default function assetPlugin(): Plugin {
         })
       }
 
+      const publicAssetPathMap = publicAssetPathCache.get(this.environment)!
+
       nodePublicAssetRE.lastIndex = 0
       while ((match = nodePublicAssetRE.exec(code))) {
         s ||= new MagicString(code)
         const [full, hash] = match
-        const filename = publicAssetPathCache.get(hash)!
+        const filename = publicAssetPathMap.get(hash)!
         const outputFilepath = toRelativePath(filename, normalizePath(path.join(dir!, chunk.fileName)))
         const replacement = JSON.stringify(outputFilepath)
         s.overwrite(match.index, match.index + full.length, replacement, {
