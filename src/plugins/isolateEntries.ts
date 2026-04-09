@@ -1,14 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-function-type */
 import path from 'node:path'
-import {
-  type InlineConfig,
-  type Plugin,
-  type Logger,
-  type LogLevel,
-  type Rolldown,
-  build as viteBuild,
-  mergeConfig
-} from 'vite'
+import { type InlineConfig, type Plugin, type LogLevel, type Rolldown, build as viteBuild, mergeConfig } from 'vite'
 import colors from 'picocolors'
 import { cleanUrl } from '../utils'
 
@@ -22,8 +14,6 @@ const LogLevels: Record<LogLevel, number> = {
 }
 
 export default function isolateEntriesPlugin(userConfig: InlineConfig): Plugin {
-  let logger: Logger
-
   let entries: string[] | { [x: string]: string }[]
 
   let transformedCount = 0
@@ -33,10 +23,6 @@ export default function isolateEntriesPlugin(userConfig: InlineConfig): Plugin {
   return {
     name: 'vite:isolate-entries',
     apply: 'build',
-
-    configResolved(config): void {
-      logger = config.logger
-    },
 
     options(opts): Rolldown.InputOptions | void {
       const { input } = opts
@@ -114,7 +100,7 @@ export default function isolateEntriesPlugin(userConfig: InlineConfig): Plugin {
 
     renderStart(): void {
       clearLine(-1)
-      logger.info(`${colors.green(`✓`)} ${transformedCount} modules transformed.`)
+      this.environment.logger.info(`${colors.green(`✓`)} ${transformedCount} modules transformed.`)
     },
 
     generateBundle(_, bundle): void {
@@ -161,20 +147,16 @@ function transformReporterPlugin(
   shouldLog = true
 ): Plugin<{ getTransformedCount: () => number }> {
   let transformedCount = 0
-  let root
-  const log = throttle(id => {
+  const log = throttle((id, root) => {
     writeLine(`transforming (${preTransformedCount + transformedCount}) ${colors.dim(path.relative(root, id))}`)
   })
   return {
     name: 'vite:transform-reporter',
-    configResolved(config) {
-      root = config.root
-    },
     transform(_, id) {
       transformedCount++
       if (!shouldLog) return
       if (id.includes('?')) return
-      log(id)
+      log(id, this.environment.config.root)
     },
     api: {
       getTransformedCount() {

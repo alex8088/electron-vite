@@ -2,7 +2,7 @@ import path from 'node:path'
 import { spawn } from 'node:child_process'
 import { createRequire } from 'node:module'
 import colors from 'picocolors'
-import { type Plugin, type Logger, type LibraryOptions, type Rolldown, normalizePath } from 'vite'
+import { type Plugin, type LibraryOptions, type Rolldown, normalizePath } from 'vite'
 import * as babel from '@babel/core'
 import MagicString from 'magic-string'
 import { getElectronPath } from '../electron'
@@ -189,7 +189,6 @@ export function bytecodePlugin(options: BytecodeOptions = {}): Plugin | null {
   const useStrict = '"use strict";'
   const bytecodeModuleLoader = 'bytecode-loader.cjs'
 
-  let logger: Logger
   let supported = false
 
   return {
@@ -200,7 +199,6 @@ export function bytecodePlugin(options: BytecodeOptions = {}): Plugin | null {
       if (supported) {
         return
       }
-      logger = config.logger
       const useInRenderer = config.plugins.some(p => p.name === 'vite:electron-renderer-preset-config')
       if (useInRenderer) {
         config.logger.warn(colors.yellow('bytecodePlugin does not support renderer.'))
@@ -339,7 +337,7 @@ export function bytecodePlugin(options: BytecodeOptions = {}): Plugin | null {
     writeBundle(_, output): void {
       if (supported) {
         const bytecodeChunkCount = Object.keys(output).filter(chunk => bytecodeChunkExtensionRE.test(chunk)).length
-        logger.info(`${colors.green(`✓`)} ${bytecodeChunkCount} chunks compiled into bytecode.`)
+        this.environment.logger.info(`${colors.green(`✓`)} ${bytecodeChunkCount} chunks compiled into bytecode.`)
       }
     }
   }

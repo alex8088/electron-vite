@@ -27,7 +27,6 @@ export default async function loadWasm(file, importObject = {}) {
 `
 
 export default function assetPlugin(): Plugin {
-  let publicDir = ''
   const publicAssetPathCache = new Map<string, string>()
   const assetCache = new Map<string, string>()
   const isImportMetaPathSupported = supportImportMetaPaths()
@@ -38,9 +37,6 @@ export default function assetPlugin(): Plugin {
     buildStart(): void {
       publicAssetPathCache.clear()
       assetCache.clear()
-    },
-    configResolved(config): void {
-      publicDir = config.publicDir
     },
     resolveId(id): string | void {
       if (id === wasmHelperId) {
@@ -57,7 +53,11 @@ export default function assetPlugin(): Plugin {
       }
 
       let referenceId: string
+
       const file = cleanUrl(id)
+
+      const { publicDir } = this.environment.config
+
       if (publicDir && file.startsWith(publicDir)) {
         const hash = getHash(file)
         if (!publicAssetPathCache.get(hash)) {
