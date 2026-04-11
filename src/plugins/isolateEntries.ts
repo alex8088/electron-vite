@@ -3,6 +3,7 @@ import path from 'node:path'
 import { type InlineConfig, type Plugin, type LogLevel, type Rolldown, build as viteBuild, mergeConfig } from 'vite'
 import colors from 'picocolors'
 import { cleanUrl } from '../utils'
+import type { ConfigFactory, PreloadViteConfig, RendererViteConfig } from '../config'
 
 const VIRTUAL_ENTRY_ID = '\0virtual:isolate-entries'
 
@@ -13,7 +14,7 @@ const LogLevels: Record<LogLevel, number> = {
   info: 3
 }
 
-export default function isolateEntriesPlugin(userConfig: InlineConfig): Plugin {
+export default function isolateEntriesPlugin(factory: ConfigFactory<PreloadViteConfig | RendererViteConfig>): Plugin {
   let entries: string[] | { [x: string]: string }[]
 
   let transformedCount = 0
@@ -49,6 +50,7 @@ export default function isolateEntriesPlugin(userConfig: InlineConfig): Plugin {
 
     async load(id): Promise<string | void> {
       if (id === VIRTUAL_ENTRY_ID) {
+        const userConfig = await factory.build(true)
         const shouldLog = LogLevels[userConfig.logLevel || 'info'] >= LogLevels.info
 
         const watchFiles = new Set<string>()

@@ -2,13 +2,14 @@ import { type Plugin, type InlineConfig, type Rolldown, build as viteBuild, merg
 import MagicString from 'magic-string'
 import { cleanUrl, toRelativePath } from '../utils'
 import { supportImportMetaPaths } from '../electron'
+import type { ConfigFactory, MainViteConfig } from '../config'
 
 const modulePathRE = /__VITE_MODULE_PATH__([\w$]+)__/g
 
 /**
  * Resolve `?modulePath` import and return the module bundle path.
  */
-export default function modulePathPlugin(config: InlineConfig): Plugin {
+export default function modulePathPlugin(factory: ConfigFactory<MainViteConfig>): Plugin {
   const isImportMetaPathSupported = supportImportMetaPaths()
   const assetCache = new Set<string>()
   return {
@@ -21,6 +22,7 @@ export default function modulePathPlugin(config: InlineConfig): Plugin {
     async load(id): Promise<string | void> {
       if (id.endsWith('?modulePath')) {
         // id resolved by Vite resolve plugin
+        const config = await factory.build(true)
         const bundles = await bundleEntryFile(cleanUrl(id), config)
         const [outputChunk, ...outputChunks] = bundles.output
         const hash = this.emitFile({

@@ -164,7 +164,8 @@ export async function resolveConfig(
 
   process.env.NODE_ENV = defaultMode
 
-  let userConfig: UserConfig | undefined
+  const userConfig: UserConfig | undefined = {}
+
   let configFileDependencies: string[] = []
 
   let { configFile } = config
@@ -191,123 +192,20 @@ export async function resolveConfig(
 
       const outDir = config.build?.outDir
 
-      if (loadResult.config.main) {
-        const mainViteConfig: MainViteConfig = mergeConfig(loadResult.config.main, deepClone(config))
+      const { main, preload, renderer } = loadResult.config
 
-        mainViteConfig.mode = inlineConfig.mode || mainViteConfig.mode || defaultMode
-
-        if (outDir) {
-          resetOutDir(mainViteConfig, outDir, 'main')
-        }
-
-        const configDrivenPlugins: PluginOption[] = await resolveConfigDrivenPlugins(mainViteConfig)
-
-        const builtInMainPlugins: PluginOption[] = [
-          electronMainConfigPresetPlugin({ root }),
-          electronMainConfigValidatorPlugin(),
-          assetPlugin(),
-          workerPlugin(),
-          modulePathPlugin(
-            mergeConfig(
-              {
-                plugins: [
-                  electronMainConfigPresetPlugin({ root }),
-                  assetPlugin(),
-                  importMetaPlugin(),
-                  esmShimPlugin(),
-                  ...configDrivenPlugins
-                ]
-              },
-              mainViteConfig
-            )
-          ),
-          importMetaPlugin(),
-          esmShimPlugin(),
-          ...configDrivenPlugins
-        ]
-
-        mainViteConfig.plugins = builtInMainPlugins.concat(mainViteConfig.plugins || [])
-
-        loadResult.config.main = mainViteConfig
+      if (main) {
+        userConfig.main = await new MainConfigFactory(main, config, { outDir, root }).build()
       }
 
-      if (loadResult.config.preload) {
-        const preloadViteConfig: PreloadViteConfig = mergeConfig(loadResult.config.preload, deepClone(config))
-
-        preloadViteConfig.mode = inlineConfig.mode || preloadViteConfig.mode || defaultMode
-
-        if (outDir) {
-          resetOutDir(preloadViteConfig, outDir, 'preload')
-        }
-
-        const configDrivenPlugins: PluginOption[] = await resolveConfigDrivenPlugins(preloadViteConfig)
-
-        const builtInPreloadPlugins: PluginOption[] = [
-          electronPreloadConfigPresetPlugin({ root }),
-          electronPreloadConfigValidatorPlugin(),
-          assetPlugin(),
-          importMetaPlugin(),
-          esmShimPlugin(),
-          ...configDrivenPlugins
-        ]
-
-        if (preloadViteConfig.build?.isolatedEntries) {
-          builtInPreloadPlugins.push(
-            isolateEntriesPlugin(
-              mergeConfig(
-                {
-                  plugins: [
-                    electronPreloadConfigPresetPlugin({ root }),
-                    assetPlugin(),
-                    importMetaPlugin(),
-                    esmShimPlugin(),
-                    ...configDrivenPlugins
-                  ]
-                },
-                preloadViteConfig
-              )
-            )
-          )
-        }
-
-        preloadViteConfig.plugins = builtInPreloadPlugins.concat(preloadViteConfig.plugins)
-
-        loadResult.config.preload = preloadViteConfig
+      if (preload) {
+        userConfig.preload = await new PreloadConfigFactory(preload, config, { outDir, root }).build()
       }
 
-      if (loadResult.config.renderer) {
-        const rendererViteConfig: RendererViteConfig = mergeConfig(loadResult.config.renderer, deepClone(config))
-
-        rendererViteConfig.mode = inlineConfig.mode || rendererViteConfig.mode || defaultMode
-
-        if (outDir) {
-          resetOutDir(rendererViteConfig, outDir, 'renderer')
-        }
-
-        const builtInRendererPlugins: PluginOption[] = [
-          electronRendererConfigPresetPlugin({ root }),
-          electronRendererConfigValidatorPlugin()
-        ]
-
-        if (rendererViteConfig.build?.isolatedEntries) {
-          builtInRendererPlugins.push(
-            isolateEntriesPlugin(
-              mergeConfig(
-                {
-                  plugins: [electronRendererConfigPresetPlugin({ root })]
-                },
-                rendererViteConfig
-              )
-            )
-          )
-        }
-
-        rendererViteConfig.plugins = builtInRendererPlugins.concat(rendererViteConfig.plugins || [])
-
-        loadResult.config.renderer = rendererViteConfig
+      if (renderer) {
+        userConfig.renderer = await new RendererConfigFactory(renderer, config, { outDir, root }).build()
       }
 
-      userConfig = loadResult.config
       configFile = loadResult.path
       configFileDependencies = loadResult.dependencies
     }
@@ -320,6 +218,108 @@ export async function resolveConfig(
   }
 
   return resolved
+}
+
+export abstract class ConfigFactory<T extends MainViteConfig | PreloadViteConfig | RendererViteConfig> {
+  constructor(
+    protected readonly baseConfig: T,
+    protected readonly inlineConfig: InlineConfig,
+    protected readonly options: { outDir?: string; root?: string }
+  ) {}
+
+  async build(cleanMode?: boolean): Promise<T> {
+    /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
+    const config = mergeConfig(deepClone(this.baseConfig) as any, deepClone(this.inlineConfig)) as T
+
+    config.mode = this.inlineConfig.mode || config.mode || process.env.NODE_ENV
+
+    if (this.options.outDir) {
+      resetOutDir(config, this.options.outDir, this.processType())
+    }
+
+    const builtinPlugins = await this.resolveBuiltinPlugins(config, cleanMode)
+
+    config.plugins = builtinPlugins.concat(config.plugins || [])
+
+    return config
+  }
+
+  protected abstract processType(): 'main' | 'preload' | 'renderer'
+
+  protected abstract resolveBuiltinPlugins(config: T, cleanMode?: boolean): Promise<PluginOption[]>
+}
+
+export class MainConfigFactory extends ConfigFactory<MainViteConfig> {
+  protected processType(): 'main' {
+    return 'main'
+  }
+
+  protected async resolveBuiltinPlugins(config: MainViteConfig, cleanMode?: boolean): Promise<PluginOption[]> {
+    const configDrivenPlugins: PluginOption[] = await resolveConfigDrivenPlugins(config)
+
+    return cleanMode
+      ? [
+          electronMainConfigPresetPlugin({ root: this.options.root }),
+          assetPlugin(),
+          importMetaPlugin(),
+          esmShimPlugin(),
+          ...configDrivenPlugins
+        ]
+      : [
+          electronMainConfigPresetPlugin({ root: this.options.root }),
+          electronMainConfigValidatorPlugin(),
+          assetPlugin(),
+          workerPlugin(),
+          modulePathPlugin(this),
+          importMetaPlugin(),
+          esmShimPlugin(),
+          ...configDrivenPlugins
+        ]
+  }
+}
+
+export class PreloadConfigFactory extends ConfigFactory<PreloadViteConfig> {
+  protected processType(): 'preload' {
+    return 'preload'
+  }
+
+  protected async resolveBuiltinPlugins(config: PreloadViteConfig, cleanMode?: boolean): Promise<PluginOption[]> {
+    const configDrivenPlugins: PluginOption[] = await resolveConfigDrivenPlugins(config)
+
+    return cleanMode
+      ? [
+          electronPreloadConfigPresetPlugin({ root: this.options.root }),
+          assetPlugin(),
+          importMetaPlugin(),
+          esmShimPlugin(),
+          ...configDrivenPlugins
+        ]
+      : [
+          electronPreloadConfigPresetPlugin({ root: this.options.root }),
+          electronPreloadConfigValidatorPlugin(),
+          assetPlugin(),
+          importMetaPlugin(),
+          esmShimPlugin(),
+          ...configDrivenPlugins,
+          ...(config.build?.isolatedEntries ? [isolateEntriesPlugin(this)] : [])
+        ]
+  }
+}
+
+export class RendererConfigFactory extends ConfigFactory<RendererViteConfig> {
+  protected processType(): 'renderer' {
+    return 'renderer'
+  }
+
+  protected async resolveBuiltinPlugins(config: RendererViteConfig, cleanMode?: boolean): Promise<PluginOption[]> {
+    return cleanMode
+      ? [electronRendererConfigPresetPlugin({ root: this.options.root })]
+      : [
+          electronRendererConfigPresetPlugin({ root: this.options.root }),
+          electronRendererConfigValidatorPlugin(),
+          ...(config.build?.isolatedEntries ? [isolateEntriesPlugin(this)] : [])
+        ]
+  }
 }
 
 function resetOutDir(config: ViteConfig, outDir: string, subOutDir: string): void {
