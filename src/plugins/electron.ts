@@ -254,7 +254,9 @@ export function electronPreloadConfigPresetPlugin(options?: ElectronPluginOption
             })
           } else {
             config.build.rolldownOptions!.output!['entryFileNames'] = '[name].mjs'
-            config.build.rolldownOptions!.output!['chunkFileNames'] = '[name]-[hash].mjs'
+            config.build.rolldownOptions!.output!['chunkFileNames'] = config.build.lib
+              ? '[name]-[hash].mjs'
+              : path.posix.join(build.assetsDir || defaultConfig.build.assetsDir, '[name]-[hash].mjs')
           }
         }
       }
