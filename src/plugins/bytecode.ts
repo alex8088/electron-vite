@@ -205,7 +205,7 @@ export function bytecodePlugin(options: BytecodeOptions = {}): Plugin | null {
         return
       }
       const build = config.build
-      const resolvedOutputs = resolveBuildOutputs(build.rollupOptions.output, build.lib)
+      const resolvedOutputs = resolveBuildOutputs(build.rolldownOptions.output, build.lib)
       if (resolvedOutputs) {
         const outputs = Array.isArray(resolvedOutputs) ? resolvedOutputs : [resolvedOutputs]
         const output = outputs[0]
@@ -213,7 +213,7 @@ export function bytecodePlugin(options: BytecodeOptions = {}): Plugin | null {
           config.logger.warn(
             colors.yellow(
               'bytecodePlugin does not support ES module, please remove "type": "module" ' +
-                'in package.json or set the "build.rollupOptions.output.format" option to "cjs".'
+                'in package.json or set build.rollupOptions.output.format (or build.rolldownOptions.output.format) to "cjs".'
             )
           )
         }

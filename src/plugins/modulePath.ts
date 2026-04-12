@@ -115,8 +115,8 @@ async function bundleEntryFile(input: string, config: InlineConfig): Promise<Rol
 
   // rewrite the input instead of merging
   const buildOptions = viteConfig.build!
-  buildOptions.rollupOptions = {
-    ...buildOptions.rollupOptions,
+  buildOptions.rolldownOptions = {
+    ...buildOptions.rolldownOptions,
     input
   }
 

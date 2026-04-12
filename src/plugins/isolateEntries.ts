@@ -134,7 +134,7 @@ async function bundleEntryFile(
   }) as InlineConfig
 
   // rewrite the input instead of merging
-  viteConfig.build!.rollupOptions!.input = input
+  viteConfig.build!.rolldownOptions!.input = input
 
   const bundles = (await viteBuild(viteConfig)) as Rolldown.RolldownOutput
 

@@ -33,13 +33,15 @@ export function externalizeDepsPlugin(options: ExternalOptions = {}): Plugin | n
     config(config): void {
       const defaultConfig = {
         build: {
-          rollupOptions: {
+          rolldownOptions: {
             external: deps.length > 0 ? [...deps, new RegExp(`^(${deps.join('|')})/.+`)] : []
           }
         }
       }
       const buildConfig = mergeConfig(defaultConfig.build, config.build || {})
       config.build = buildConfig
+
+      config.build.rollupOptions = config.build.rolldownOptions
     }
   }
 }

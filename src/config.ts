@@ -195,14 +195,20 @@ export async function resolveConfig(
       const { main, preload, renderer } = loadResult.config
 
       if (main) {
+        main.build ??= {}
+        setupRollupOptionCompat(main.build)
         userConfig.main = await new MainConfigFactory(main, config, { outDir, root }).build()
       }
 
       if (preload) {
+        preload.build ??= {}
+        setupRollupOptionCompat(preload.build)
         userConfig.preload = await new PreloadConfigFactory(preload, config, { outDir, root }).build()
       }
 
       if (renderer) {
+        renderer.build ??= {}
+        setupRollupOptionCompat(renderer.build)
         userConfig.renderer = await new RendererConfigFactory(renderer, config, { outDir, root }).build()
       }
 
@@ -218,6 +224,14 @@ export async function resolveConfig(
   }
 
   return resolved
+}
+
+function setupRollupOptionCompat<T extends Pick<ViteBuildOptions, 'rollupOptions' | 'rolldownOptions'>>(
+  buildConfig: T
+): asserts buildConfig is T & {
+  rolldownOptions: Exclude<T['rolldownOptions'], undefined>
+} {
+  buildConfig.rolldownOptions ??= buildConfig.rollupOptions
 }
 
 export abstract class ConfigFactory<T extends MainViteConfig | PreloadViteConfig | RendererViteConfig> {

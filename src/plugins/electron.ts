@@ -73,7 +73,7 @@ export function electronMainConfigPresetPlugin(options?: ElectronPluginOptions):
           outDir: path.resolve(root, 'out', 'main'),
           target: nodeTarget,
           assetsDir: 'chunks',
-          rollupOptions: {
+          rolldownOptions: {
             external: ['electron', /^electron\/.+/, ...builtinModules.flatMap(m => [m, `node:${m}`])],
             output: {}
           },
@@ -83,10 +83,10 @@ export function electronMainConfigPresetPlugin(options?: ElectronPluginOptions):
       }
 
       const build = config.build || {}
-      const rollupOptions = build.rollupOptions || {}
-      if (!rollupOptions.input) {
+      const rolldownOptions = build.rolldownOptions || {}
+      if (!rolldownOptions.input) {
         const libOptions = build.lib
-        const outputOptions = rollupOptions.output
+        const outputOptions = rolldownOptions.output
         defaultConfig.build['lib'] = {
           entry: findLibEntry(root, 'main'),
           formats:
@@ -95,10 +95,10 @@ export function electronMainConfigPresetPlugin(options?: ElectronPluginOptions):
               : [outputOptions && !Array.isArray(outputOptions) && outputOptions.format ? outputOptions.format : format]
         }
       } else {
-        defaultConfig.build.rollupOptions.output['format'] = format
+        defaultConfig.build.rolldownOptions.output['format'] = format
       }
 
-      defaultConfig.build.rollupOptions.output['assetFileNames'] = path.posix.join(
+      defaultConfig.build.rolldownOptions.output['assetFileNames'] = path.posix.join(
         build.assetsDir || defaultConfig.build.assetsDir,
         '[name]-[hash].[ext]'
       )
@@ -121,8 +121,9 @@ export function electronMainConfigPresetPlugin(options?: ElectronPluginOptions):
       // enable ssr build
       config.build.ssr = true
       config.build.ssrEmitAssets = true
-      config.build.rolldownOptions = config.build.rollupOptions
       config.ssr = { ...config.ssr, ...{ noExternal: true } }
+
+      config.build.rollupOptions = config.build.rolldownOptions
     }
   }
 }
@@ -144,16 +145,17 @@ export function electronMainConfigValidatorPlugin(): Plugin {
       }
 
       const libOptions = build.lib
-      const rollupOptions = build.rollupOptions
+      const rolldownOptions = build.rolldownOptions
 
-      if (!(libOptions && libOptions.entry) && !rollupOptions?.input) {
+      if (!(libOptions && libOptions.entry) && !rolldownOptions?.input) {
         throw new Error(
           'An entry point is required in the electron vite main config, ' +
-            'which can be specified using "build.lib.entry" or "build.rollupOptions.input".'
+            'which can be specified using build.lib.entry, build.rollupOptions.input, ' +
+            'or build.rolldownOptions.input.'
         )
       }
 
-      const resolvedOutputs = resolveBuildOutputs(rollupOptions.output, libOptions)
+      const resolvedOutputs = resolveBuildOutputs(rolldownOptions.output, libOptions)
 
       if (resolvedOutputs) {
         const outputs = Array.isArray(resolvedOutputs) ? resolvedOutputs : [resolvedOutputs]
@@ -204,7 +206,7 @@ export function electronPreloadConfigPresetPlugin(options?: ElectronPluginOption
           outDir: path.resolve(root, 'out', 'preload'),
           target: nodeTarget,
           assetsDir: 'chunks',
-          rollupOptions: {
+          rolldownOptions: {
             external: ['electron', /^electron\/.+/, ...builtinModules.flatMap(m => [m, `node:${m}`])],
             output: {}
           },
@@ -214,10 +216,10 @@ export function electronPreloadConfigPresetPlugin(options?: ElectronPluginOption
       }
 
       const build = config.build || {}
-      const rollupOptions = build.rollupOptions || {}
-      if (!rollupOptions.input) {
+      const rolldownOptions = build.rolldownOptions || {}
+      if (!rolldownOptions.input) {
         const libOptions = build.lib
-        const outputOptions = rollupOptions.output
+        const outputOptions = rolldownOptions.output
         defaultConfig.build['lib'] = {
           entry: findLibEntry(root, 'preload'),
           formats:
@@ -226,10 +228,10 @@ export function electronPreloadConfigPresetPlugin(options?: ElectronPluginOption
               : [outputOptions && !Array.isArray(outputOptions) && outputOptions.format ? outputOptions.format : format]
         }
       } else {
-        defaultConfig.build.rollupOptions.output['format'] = format
+        defaultConfig.build.rolldownOptions.output['format'] = format
       }
 
-      defaultConfig.build.rollupOptions.output['assetFileNames'] = path.posix.join(
+      defaultConfig.build.rolldownOptions.output['assetFileNames'] = path.posix.join(
         build.assetsDir || defaultConfig.build.assetsDir,
         '[name]-[hash].[ext]'
       )
@@ -237,22 +239,22 @@ export function electronPreloadConfigPresetPlugin(options?: ElectronPluginOption
       const buildConfig = mergeConfig(defaultConfig.build, build)
       config.build = buildConfig
 
-      const resolvedOutputs = resolveBuildOutputs(config.build.rollupOptions!.output, config.build.lib || false)
+      const resolvedOutputs = resolveBuildOutputs(config.build.rolldownOptions!.output, config.build.lib || false)
 
       if (resolvedOutputs) {
         const outputs = Array.isArray(resolvedOutputs) ? resolvedOutputs : [resolvedOutputs]
 
         if (outputs.find(({ format }) => format === 'es')) {
-          if (Array.isArray(config.build.rollupOptions!.output)) {
-            config.build.rollupOptions!.output.forEach(output => {
+          if (Array.isArray(config.build.rolldownOptions!.output)) {
+            config.build.rolldownOptions!.output.forEach(output => {
               if (output.format === 'es') {
                 output['entryFileNames'] = '[name].mjs'
                 output['chunkFileNames'] = '[name]-[hash].mjs'
               }
             })
           } else {
-            config.build.rollupOptions!.output!['entryFileNames'] = '[name].mjs'
-            config.build.rollupOptions!.output!['chunkFileNames'] = '[name]-[hash].mjs'
+            config.build.rolldownOptions!.output!['entryFileNames'] = '[name].mjs'
+            config.build.rolldownOptions!.output!['chunkFileNames'] = '[name]-[hash].mjs'
           }
         }
       }
@@ -270,9 +272,10 @@ export function electronPreloadConfigPresetPlugin(options?: ElectronPluginOption
       // enable ssr build
       config.build.ssr = true
       config.build.ssrEmitAssets = true
-      config.build.rolldownOptions = config.build.rollupOptions
       config.ssr = mergeConfig(defaultConfig.ssr, config.ssr || {})
       config.ssr.noExternal = true
+
+      config.build.rollupOptions = config.build.rolldownOptions
     }
   }
 }
@@ -294,16 +297,17 @@ export function electronPreloadConfigValidatorPlugin(): Plugin {
       }
 
       const libOptions = build.lib
-      const rollupOptions = build.rollupOptions
+      const rolldownOptions = build.rolldownOptions
 
-      if (!(libOptions && libOptions.entry) && !rollupOptions?.input) {
+      if (!(libOptions && libOptions.entry) && !rolldownOptions?.input) {
         throw new Error(
           'An entry point is required in the electron vite preload config, ' +
-            'which can be specified using "build.lib.entry" or "build.rollupOptions.input".'
+            'which can be specified using build.lib.entry, build.rollupOptions.input, ' +
+            ' or build.rolldownOptions.input.'
         )
       }
 
-      const resolvedOutputs = resolveBuildOutputs(rollupOptions.output, libOptions)
+      const resolvedOutputs = resolveBuildOutputs(rolldownOptions.output, libOptions)
 
       if (resolvedOutputs) {
         const outputs = Array.isArray(resolvedOutputs) ? resolvedOutputs : [resolvedOutputs]
@@ -359,7 +363,7 @@ export function electronRendererConfigPresetPlugin(options?: ElectronPluginOptio
           outDir: path.resolve(root, 'out', 'renderer'),
           target: chromeTarget,
           modulePreload: { polyfill: false },
-          rollupOptions: {
+          rolldownOptions: {
             input: findInput(root)
           },
           reportCompressedSize: false,
@@ -378,6 +382,8 @@ export function electronRendererConfigPresetPlugin(options?: ElectronPluginOptio
       config.envDir = config.envDir || path.resolve(root)
 
       config.envPrefix = config.envPrefix || ['RENDERER_VITE_', 'VITE_']
+
+      config.build.rollupOptions = config.build.rolldownOptions
     }
   }
 }
@@ -403,10 +409,12 @@ export function electronRendererConfigValidatorPlugin(): Plugin {
         }
       }
 
-      const rollupOptions = build.rollupOptions
-      if (!rollupOptions.input) {
+      const rolldownOptions = build.rolldownOptions
+      if (!rolldownOptions.input) {
         config.logger.warn(colors.yellow(`index.html file is not found in ${colors.dim('/src/renderer')} directory.`))
-        throw new Error('build.rollupOptions.input option is required in the electron vite renderer config.')
+        throw new Error(
+          'build.rollupOptions.input or build.rolldownOptions.input option is required in the electron vite renderer config.'
+        )
       }
     }
   }
