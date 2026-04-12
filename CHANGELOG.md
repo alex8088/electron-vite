@@ -1,3 +1,9 @@
+### v6.0.0-beta.0 (_2026-04-12_)
+
+- refactor!: simplify resolve config and isolate user config for sub-builds
+- fix!: compatible with rollupOptions and rolldownOptions
+- fix: chunk filename is wrong in ES mode
+
 ### v6.0.0-beta.0 (_2026-04-09_)
 
 - refactor: `?modulePath` sub-build output strategy
