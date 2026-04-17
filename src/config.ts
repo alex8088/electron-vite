@@ -97,6 +97,13 @@ export interface RendererViteConfig extends BaseViteConfig<RendererBuildOptions>
 
 export interface UserConfig {
   /**
+   * Custom Electron package name (e.g., '@overwolf/ow-electron').
+   * Can also be set via ELECTRON_PKG_NAME environment variable.
+   *
+   * @default 'electron'
+   */
+  electronPackage?: string
+  /**
    * Vite config options for electron main process
    *
    * @see https://vitejs.dev/config/
@@ -208,6 +215,16 @@ export async function resolveConfig(
 
       configFile = loadResult.path
       configFileDependencies = loadResult.dependencies
+    }
+  }
+
+  // Set ELECTRON_PKG_NAME from config or environment variable
+  // Priority: existing env var > config file > default to 'electron'
+  if (!process.env.ELECTRON_PKG_NAME) {
+    if (userConfig?.electronPackage) {
+      process.env.ELECTRON_PKG_NAME = userConfig.electronPackage
+    } else {
+      process.env.ELECTRON_PKG_NAME = 'electron'
     }
   }
 
