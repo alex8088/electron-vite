@@ -2,7 +2,7 @@ import path from 'node:path'
 import fs from 'node:fs'
 import { builtinModules } from 'node:module'
 import colors from 'picocolors'
-import { type Plugin, type LibraryOptions, type Rolldown, mergeConfig, normalizePath } from 'vite'
+import { type Plugin, type LibraryOptions, type Rolldown, type UserConfig, mergeConfig, normalizePath } from 'vite'
 import { getElectronNodeTarget, getElectronChromeTarget, supportESM } from '../electron'
 import { loadPackageData } from '../utils'
 
@@ -64,11 +64,6 @@ export function electronMainConfigPresetPlugin(options?: ElectronPluginOptions):
       const format = pkg.type && pkg.type === 'module' && supportESM() ? 'es' : 'cjs'
 
       const defaultConfig = {
-        resolve: {
-          browserField: false,
-          mainFields: ['module', 'jsnext:main', 'jsnext'],
-          conditions: ['node']
-        },
         build: {
           outDir: path.resolve(root, 'out', 'main'),
           target: nodeTarget,
@@ -80,7 +75,7 @@ export function electronMainConfigPresetPlugin(options?: ElectronPluginOptions):
           reportCompressedSize: false,
           minify: false
         }
-      }
+      } satisfies UserConfig
 
       const build = config.build || {}
       const rolldownOptions = build.rolldownOptions || {}
@@ -105,8 +100,6 @@ export function electronMainConfigPresetPlugin(options?: ElectronPluginOptions):
 
       const buildConfig = mergeConfig(defaultConfig.build, build)
       config.build = buildConfig
-
-      config.resolve = mergeConfig(defaultConfig.resolve, config.resolve || {})
 
       config.define = config.define || {}
       config.define = { ...processEnvDefine(), ...config.define }
@@ -213,7 +206,7 @@ export function electronPreloadConfigPresetPlugin(options?: ElectronPluginOption
           reportCompressedSize: false,
           minify: false
         }
-      }
+      } satisfies UserConfig
 
       const build = config.build || {}
       const rolldownOptions = build.rolldownOptions || {}
@@ -372,7 +365,7 @@ export function electronRendererConfigPresetPlugin(options?: ElectronPluginOptio
           minify: false,
           emptyOutDir: emptyOutDir()
         }
-      }
+      } satisfies UserConfig
 
       if (config.build?.outDir) {
         config.build.outDir = path.resolve(root, config.build.outDir)
