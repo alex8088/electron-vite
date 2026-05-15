@@ -1,7 +1,9 @@
 import path from 'node:path'
 import fs from 'node:fs'
 import { createRequire } from 'node:module'
-import { type ChildProcess, spawn } from 'node:child_process'
+import { type ChildProcess, spawn, spawnSync } from 'node:child_process'
+import colors from 'picocolors'
+import { createLogger } from 'vite'
 import { loadPackageData } from './utils'
 
 const _require = createRequire(import.meta.url)
@@ -46,20 +48,39 @@ export function supportImportMetaPaths(): boolean {
   return parseInt(majorVer) >= 30
 }
 
+function installElectronBinary(electronModulePath: string): void {
+  const installScript = path.join(electronModulePath, 'install.js')
+  if (!fs.existsSync(installScript)) {
+    throw new Error(`electron install script not found at ${installScript}, please reinstall the electron package`)
+  }
+  createLogger().info(colors.green('Electron binary not found, installing...'))
+  const result = spawnSync(process.execPath, [installScript], {
+    stdio: 'inherit',
+    cwd: electronModulePath
+  })
+  if (result.status !== 0) {
+    throw new Error('Failed to install electron binary')
+  }
+}
+
 export function getElectronPath(): string {
   let electronExecPath = process.env.ELECTRON_EXEC_PATH || ''
   if (!electronExecPath) {
     const electronModulePath = path.dirname(_require.resolve('electron'))
     const pathFile = path.join(electronModulePath, 'path.txt')
-    let executablePath
-    if (fs.existsSync(pathFile)) {
-      executablePath = fs.readFileSync(pathFile, 'utf-8')
+    const readPathFile = (): string | undefined =>
+      fs.existsSync(pathFile) ? fs.readFileSync(pathFile, 'utf-8') : undefined
+    let executablePath = readPathFile()
+    if (!executablePath && parseInt(getElectronMajorVer()) >= 42) {
+      // Electron 42+ no longer downloads its binary via postinstall (supply-chain hardening).
+      installElectronBinary(electronModulePath)
+      executablePath = readPathFile()
     }
     if (executablePath) {
       electronExecPath = path.join(electronModulePath, 'dist', executablePath)
       process.env.ELECTRON_EXEC_PATH = electronExecPath
     } else {
-      throw new Error('Electron uninstall')
+      throw new Error('Electron is not installed')
     }
   }
   return electronExecPath
@@ -69,6 +90,7 @@ export function getElectronNodeTarget(): string {
   const electronVer = getElectronMajorVer()
 
   const nodeVer = {
+    '42': '24.15',
     '41': '24.14',
     '40': '24.14',
     '39': '22.20',
@@ -102,6 +124,7 @@ export function getElectronChromeTarget(): string {
   const electronVer = getElectronMajorVer()
 
   const chromeVer = {
+    '42': '148',
     '41': '146',
     '40': '144',
     '39': '142',
