@@ -159,7 +159,10 @@ export function startElectron(root: string | undefined): ChildProcess {
   const entry = process.env.ELECTRON_ENTRY || '.'
 
   const ps = spawn(electronPath, [entry].concat(args), { stdio: 'inherit' })
-  ps.on('close', process.exit)
+  // `code` is null when the child was terminated by a signal, and `process.exit` ignores
+  // its second argument, so passing the listener directly would report every crash as a
+  // successful exit. Map a signal death to a non-zero status instead.
+  ps.on('close', (code, signal) => process.exit(code ?? (signal ? 1 : 0)))
 
   return ps
 }
