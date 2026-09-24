@@ -1,5 +1,5 @@
 import path from 'node:path'
-import { spawn } from 'node:child_process'
+import { randomBytes } from 'node:crypto'
 import { createRequire } from 'node:module'
 import colors from 'picocolors'
 import { type Plugin, type LibraryOptions, type Rolldown, normalizePath } from 'vite'
@@ -7,136 +7,67 @@ import * as babel from '@babel/core'
 import MagicString from 'magic-string'
 import { getElectronPath } from '../electron'
 import { toRelativePath } from '../utils'
+import { ElectronCompiler } from './electronCompiler'
 
 // Inspired by https://github.com/bytenode/bytenode
 
 const _require = createRequire(import.meta.url)
 
 function getBytecodeCompilerPath(): string {
-  return path.join(path.dirname(_require.resolve('electron-vite/package.json')), 'bin', 'electron-bytecode.cjs')
+  return path.join(path.dirname(_require.resolve('electron-vite/package.json')), 'bin', 'electron-bytecode-main.cjs')
 }
 
-function compileToBytecode(code: string): Promise<Buffer> {
-  return new Promise((resolve, reject) => {
-    let data = Buffer.from([])
-
-    const electronPath = getElectronPath()
-    const bytecodePath = getBytecodeCompilerPath()
-
-    const proc = spawn(electronPath, [bytecodePath], {
-      env: { ELECTRON_RUN_AS_NODE: '1' },
-      stdio: ['pipe', 'pipe', 'pipe', 'ipc']
-    })
-
-    if (proc.stdin) {
-      proc.stdin.write(code)
-      proc.stdin.end()
-    }
-
-    if (proc.stdout) {
-      proc.stdout.on('data', chunk => {
-        data = Buffer.concat([data, chunk])
-      })
-      proc.stdout.on('error', err => {
-        console.error(err)
-      })
-      proc.stdout.on('end', () => {
-        resolve(data)
-      })
-    }
-
-    if (proc.stderr) {
-      proc.stderr.on('data', chunk => {
-        console.error('Error: ', chunk.toString())
-      })
-      proc.stderr.on('error', err => {
-        console.error('Error: ', err)
-      })
-    }
-
-    proc.addListener('message', message => console.log(message))
-    proc.addListener('error', err => console.error(err))
-
-    proc.on('error', err => reject(err))
-    proc.on('exit', () => {
-      resolve(data)
-    })
-  })
+// Versioned envelope: magic/version (8), UTF-16 source length (4), module ID (16), V8 cache.
+// Keep our metadata separate from the private V8 cache header.
+async function compileToBytecode(compiler: ElectronCompiler, code: string): Promise<Buffer> {
+  const id = randomBytes(16)
+  // Reserve enough source space for an untruncated, per-artifact placeholder identity.
+  const source = code + '\n/*' + id.toString('hex') + '*/'
+  const result = await compiler.compile(source)
+  const header = Buffer.alloc(28)
+  header.write('EVBC0001', 0, 'ascii')
+  header.writeUInt32LE(result.sourceLength, 8)
+  id.copy(header, 12)
+  return Buffer.concat([header, Buffer.from(result.cachedData, 'base64')])
 }
 
 const bytecodeModuleLoaderCode = [
-  `"use strict";`,
-  `const fs = require("fs");`,
-  `const path = require("path");`,
-  `const vm = require("vm");`,
-  `const v8 = require("v8");`,
-  `const Module = require("module");`,
-  `v8.setFlagsFromString("--no-lazy");`,
-  `v8.setFlagsFromString("--no-flush-bytecode");`,
-  `const FLAG_HASH_OFFSET = 12;`,
-  `const SOURCE_HASH_OFFSET = 8;`,
-  `let dummyBytecode;`,
-  `function setFlagHashHeader(bytecodeBuffer) {`,
-  `  if (!dummyBytecode) {`,
-  `    const script = new vm.Script("", {`,
-  `      produceCachedData: true`,
-  `    });`,
-  `    dummyBytecode = script.createCachedData();`,
-  `  }`,
-  `  dummyBytecode.slice(FLAG_HASH_OFFSET, FLAG_HASH_OFFSET + 4).copy(bytecodeBuffer, FLAG_HASH_OFFSET);`,
-  `};`,
-  `function getSourceHashHeader(bytecodeBuffer) {`,
-  `  return bytecodeBuffer.slice(SOURCE_HASH_OFFSET, SOURCE_HASH_OFFSET + 4);`,
-  `};`,
-  `function buffer2Number(buffer) {`,
-  `  let ret = 0;`,
-  `  ret |= buffer[3] << 24;`,
-  `  ret |= buffer[2] << 16;`,
-  `  ret |= buffer[1] << 8;`,
-  `  ret |= buffer[0];`,
-  `  return ret;`,
-  `};`,
-  `Module._extensions[".jsc"] = Module._extensions[".cjsc"] = function (module, filename) {`,
-  `  const bytecodeBuffer = fs.readFileSync(filename);`,
-  `  if (!Buffer.isBuffer(bytecodeBuffer)) {`,
-  `    throw new Error("BytecodeBuffer must be a buffer object.");`,
-  `  }`,
-  `  setFlagHashHeader(bytecodeBuffer);`,
-  `  const length = buffer2Number(getSourceHashHeader(bytecodeBuffer));`,
-  `  let dummyCode = "";`,
-  `  if (length > 1) {`,
-  `    dummyCode = "\\"" + "\\u200b".repeat(length - 2) + "\\"";`,
-  `  }`,
-  `  const script = new vm.Script(dummyCode, {`,
-  `    filename: filename,`,
-  `    lineOffset: 0,`,
-  `    displayErrors: true,`,
-  `    cachedData: bytecodeBuffer`,
-  `  });`,
-  `  if (script.cachedDataRejected) {`,
-  `    throw new Error("Invalid or incompatible cached data (cachedDataRejected)");`,
-  `  }`,
-  `  const require = function (id) {`,
-  `    return module.require(id);`,
-  `  };`,
-  `  require.resolve = function (request, options) {`,
-  `    return Module._resolveFilename(request, module, false, options);`,
-  `  };`,
-  `  if (process.mainModule) {`,
-  `    require.main = process.mainModule;`,
-  `  }`,
-  `  require.extensions = Module._extensions;`,
-  `  require.cache = Module._cache;`,
-  `  const compiledWrapper = script.runInThisContext({`,
-  `    filename: filename,`,
-  `    lineOffset: 0,`,
-  `    columnOffset: 0,`,
-  `    displayErrors: true`,
-  `  });`,
-  `  const dirname = path.dirname(filename);`,
-  `  const args = [module.exports, require, module, filename, dirname, process, global];`,
-  `  return compiledWrapper.apply(module.exports, args);`,
-  `};`
+  '"use strict";',
+  'const fs = require("node:fs");',
+  'const path = require("node:path");',
+  'const vm = require("node:vm");',
+  'const v8 = require("node:v8");',
+  'const Module = require("node:module");',
+  'v8.setFlagsFromString("--no-lazy");',
+  'v8.setFlagsFromString("--no-flush-bytecode");',
+  'const params = ["exports", "require", "module", "__filename", "__dirname"];',
+  'Module._extensions[".jsc"] = Module._extensions[".cjsc"] = function (module, filename) {',
+  '  const data = fs.readFileSync(filename);',
+  '  if (data.length <= 28 || data.toString("ascii", 0, 8) !== "EVBC0001") {',
+  '    throw new Error("Invalid electron-vite bytecode format; rebuild the application: " + filename);',
+  '  }',
+  '  const length = data.readUInt32LE(8);',
+  '  const tag = "/*" + data.subarray(12, 28).toString("hex") + "*/";',
+  '  if (length < tag.length || length > 0x1fffffff) {',
+  '    throw new Error("Invalid bytecode source length: " + filename);',
+  '  }',
+  '  const placeholder = tag + " ".repeat(length - tag.length);',
+  '  const compiledWrapper = vm.compileFunction(placeholder, params, {',
+  '    filename,',
+  '    cachedData: data.subarray(28)',
+  '  });',
+  '  if (compiledWrapper.cachedDataRejected) {',
+  '    throw new Error("Invalid or incompatible cached data (cachedDataRejected): " + filename);',
+  '  }',
+  '  const require = function (id) { return module.require(id); };',
+  '  require.resolve = function (request, options) {',
+  '    return Module._resolveFilename(request, module, false, options);',
+  '  };',
+  '  if (process.mainModule) require.main = process.mainModule;',
+  '  require.extensions = Module._extensions;',
+  '  require.cache = Module._cache;',
+  '  return compiledWrapper.call(module.exports, module.exports, require, module, filename, path.dirname(filename));',
+  '};'
 ]
 
 const bytecodeChunkExtensionRE = /.(jsc|cjsc)$/
@@ -190,6 +121,7 @@ export function bytecodePlugin(options: BytecodeOptions = {}): Plugin | null {
   const bytecodeModuleLoader = 'bytecode-loader.cjs'
 
   let supported = false
+  let isPreload = false
 
   return {
     name: 'vite:bytecode',
@@ -199,7 +131,8 @@ export function bytecodePlugin(options: BytecodeOptions = {}): Plugin | null {
       if (supported) {
         return
       }
-      const useInRenderer = config.plugins.some(p => p.name === 'vite:electron-renderer-preset-config')
+      isPreload = config.plugins.some(p => p.name === 'vite:electron-preload-config-preset')
+      const useInRenderer = config.plugins.some(p => p.name === 'vite:electron-renderer-config-preset')
       if (useInRenderer) {
         config.logger.warn(colors.yellow('bytecodePlugin does not support renderer.'))
         return
@@ -253,8 +186,14 @@ export function bytecodePlugin(options: BytecodeOptions = {}): Plugin | null {
 
       const bundles = Object.keys(output)
 
-      await Promise.all(
-        bundles.map(async name => {
+      const compiler = new ElectronCompiler({
+        path: getElectronPath(),
+        args: [getBytecodeCompilerPath()],
+        env: { ELECTRON_VITE_RENDERER: isPreload ? '1' : '0' }
+      })
+      try {
+        await compiler.start()
+        for (const name of bundles) {
           const chunk = output[name]
           if (chunk.type === 'chunk') {
             let _code = chunk.code
@@ -274,7 +213,7 @@ export function bytecodePlugin(options: BytecodeOptions = {}): Plugin | null {
               }
             }
             if (bytecodeChunks.includes(name)) {
-              const bytecodeBuffer = await compileToBytecode(_code)
+              const bytecodeBuffer = await compileToBytecode(compiler, _code)
               this.emitFile({
                 type: 'asset',
                 fileName: name + 'c',
@@ -312,18 +251,21 @@ export function bytecodePlugin(options: BytecodeOptions = {}): Plugin | null {
                     for (const importerId of dynamicImporters) idsToHandle.add(importerId)
                   }
                 }
-                _code = hasBytecodeMoudle
-                  ? _code.replace(
-                      /("use strict";)|('use strict';)/,
-                      `${useStrict}\n${getBytecodeLoaderBlock(chunk.fileName)}`
-                    )
-                  : _code
+                if (hasBytecodeMoudle) {
+                  const loader = getBytecodeLoaderBlock(chunk.fileName)
+                  const strictRE = /^(#![^\n]*\n)?(["'])use strict\2;/
+                  _code = strictRE.test(_code)
+                    ? _code.replace(strictRE, `$&\n${loader}`)
+                    : _code.replace(/^(#![^\n]*\n)?/, `$&${loader}\n`)
+                }
               }
               chunk.code = _code
             }
           }
-        })
-      )
+        }
+      } finally {
+        await compiler.stop()
+      }
 
       if (bytecodeChunkCount && !_chunks.some(ass => ass.type === 'asset' && ass.fileName === bytecodeModuleLoader)) {
         this.emitFile({
