@@ -28,7 +28,7 @@ import modulePathPlugin from './plugins/modulePath'
 import isolateEntriesPlugin from './plugins/isolateEntries'
 import { type ExternalOptions, externalizeDepsPlugin } from './plugins/externalizeDeps'
 import { type BytecodeOptions, bytecodePlugin } from './plugins/bytecode'
-import { isObject, isFilePathESM, deepClone, asyncFlatten } from './utils'
+import { isObject, isFilePathESM, cloneConfig, asyncFlatten } from './utils'
 import { findConfigFile, bundleConfigFile, loadConfigFormBundledFile } from './load'
 
 export { defineConfig as defineViteConfig } from 'vite'
@@ -229,7 +229,7 @@ export abstract class ConfigFactory<T extends MainViteConfig | PreloadViteConfig
 
   async build(cleanMode?: boolean): Promise<T> {
     /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
-    const config = mergeConfig(deepClone(this.baseConfig) as any, deepClone(this.inlineConfig)) as T
+    const config = mergeConfig(cloneConfig(this.baseConfig) as any, cloneConfig(this.inlineConfig)) as T
 
     config.mode = this.inlineConfig.mode || config.mode || process.env.NODE_ENV
 

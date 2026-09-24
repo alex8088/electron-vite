@@ -112,6 +112,59 @@ export function deepClone<T>(value: T): DeepWritable<T> {
   return value as DeepWritable<T>
 }
 
+/**
+ * Isolate configuration data without cloning plugins or runtime instances.
+ * Plugins may capture their own object in hooks, so their identity must survive.
+ */
+export function cloneConfig<T>(config: T): T {
+  const seen = new WeakMap<object, unknown>()
+  const pluginArrays = new WeakMap<object, unknown>()
+
+  function clone(value: unknown, plugins = false): unknown {
+    if (value === null || typeof value !== 'object') return value
+
+    const cache = plugins ? pluginArrays : seen
+    if (cache.has(value)) return cache.get(value)
+
+    if (Array.isArray(value)) {
+      const result: unknown[] = new Array(value.length)
+      cache.set(value, result)
+      value.forEach((item, index) => {
+        result[index] = clone(item, plugins)
+      })
+      return result
+    }
+
+    // Preserve plugin objects, promises and other opaque plugin options.
+    if (plugins) return value
+
+    if (value instanceof RegExp) {
+      const result = new RegExp(value)
+      result.lastIndex = value.lastIndex
+      cache.set(value, result)
+      return result
+    }
+
+    const prototype = Object.getPrototypeOf(value)
+    if (prototype !== Object.prototype && prototype !== null) return value
+
+    const result = Object.create(prototype) as Record<PropertyKey, unknown>
+    cache.set(value, result)
+    for (const key of Reflect.ownKeys(value)) {
+      if (!Object.prototype.propertyIsEnumerable.call(value, key)) continue
+      Object.defineProperty(result, key, {
+        value: clone((value as Record<PropertyKey, unknown>)[key], key === 'plugins'),
+        enumerable: true,
+        configurable: true,
+        writable: true
+      })
+    }
+    return result
+  }
+
+  return clone(config) as T
+}
+
 type AsyncFlatten<T extends unknown[]> = T extends (infer U)[] ? Exclude<Awaited<U>, U[]>[] : never
 
 export async function asyncFlatten<T extends unknown[]>(arr: T): Promise<AsyncFlatten<T>> {
