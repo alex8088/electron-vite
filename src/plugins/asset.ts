@@ -1,6 +1,5 @@
 import path from 'node:path'
 import fs from 'node:fs/promises'
-import type { SourceMapInput } from 'rollup'
 import { type Plugin, type Environment, normalizePath } from 'vite'
 import MagicString from 'magic-string'
 import { cleanUrl, getHash, toRelativePath } from '../utils'
@@ -106,7 +105,7 @@ export default function assetPlugin(): Plugin {
         export default importObject => loadWasm(${referenceId}, importObject)`
       }
     },
-    renderChunk(code, chunk, { sourcemap, dir }): { code: string; map: SourceMapInput } | null {
+    renderChunk(code, chunk, { sourcemap, dir }) {
       let match: RegExpExecArray | null
       let s: MagicString | undefined
 

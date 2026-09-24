@@ -5,7 +5,6 @@
  */
 
 import MagicString from 'magic-string'
-import type { SourceMapInput } from 'rollup'
 import type { Plugin } from 'vite'
 
 import { supportImportMetaPaths } from '../electron'
@@ -52,7 +51,7 @@ export default function esmShimPlugin(): Plugin {
     name: 'vite:esm-shim',
     apply: 'build',
     enforce: 'post',
-    renderChunk(code, _chunk, { format, sourcemap }): { code: string; map?: SourceMapInput } | null {
+    renderChunk(code, _chunk, { format, sourcemap }) {
       if (format === 'es') {
         if (code.includes(CJSShim) || !CJSyntaxRe.test(code)) {
           return null

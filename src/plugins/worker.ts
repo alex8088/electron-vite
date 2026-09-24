@@ -1,5 +1,4 @@
 import type { Plugin } from 'vite'
-import type { SourceMapInput } from 'rollup'
 import MagicString from 'magic-string'
 import { cleanUrl, toRelativePath } from '../utils'
 
@@ -36,7 +35,7 @@ export default function workerPlugin(): Plugin {
         }
       }
     },
-    renderChunk(code, chunk, { sourcemap }): { code: string; map: SourceMapInput } | null {
+    renderChunk(code, chunk, { sourcemap }) {
       let match: RegExpExecArray | null
       let s: MagicString | undefined
 
