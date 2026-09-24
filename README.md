@@ -45,6 +45,8 @@
 npm i electron-vite -D
 ```
 
+> **Note:** Starting with [Electron 42](https://www.electronjs.org/blog/electron-42-0), the `electron` package no longer downloads its binary via `postinstall`. You do not need to add an `install-electron` postinstall script — `electron-vite` will download the binary on demand the first time you run `dev`, `build`, or `preview`, mirroring the behavior of `npx electron`.
+
 ### Development & Build
 
 In a project where `electron-vite` is installed, you can use `electron-vite` binary directly with `npx electron-vite` or add the npm scripts to your `package.json` file like this:
