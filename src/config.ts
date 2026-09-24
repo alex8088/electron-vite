@@ -118,11 +118,7 @@ export type ElectronViteConfigFnPromise = (env: ConfigEnv) => Promise<UserConfig
 export type ElectronViteConfigFn = (env: ConfigEnv) => UserConfig | Promise<UserConfig>
 
 export type ElectronViteConfigExport =
-  | UserConfig
-  | Promise<UserConfig>
-  | ElectronViteConfigFnObject
-  | ElectronViteConfigFnPromise
-  | ElectronViteConfigFn
+  UserConfig | Promise<UserConfig> | ElectronViteConfigFnObject | ElectronViteConfigFnPromise | ElectronViteConfigFn
 
 /**
  * Type helper to make it easier to use `electron.vite.config.*`
