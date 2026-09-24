@@ -23,7 +23,7 @@ const ensureElectronEntryFile = (root = process.cwd()): void => {
   }
 }
 
-const getElectronMajorVer = (): string => {
+export const getElectronMajorVer = (): string => {
   let majorVer = process.env.ELECTRON_MAJOR_VER || ''
   if (!majorVer) {
     const pkg = _require.resolve('electron/package.json')
@@ -49,18 +49,11 @@ export function supportImportMetaPaths(): boolean {
 export function getElectronPath(): string {
   let electronExecPath = process.env.ELECTRON_EXEC_PATH || ''
   if (!electronExecPath) {
-    const electronModulePath = path.dirname(_require.resolve('electron'))
-    const pathFile = path.join(electronModulePath, 'path.txt')
-    let executablePath
-    if (fs.existsSync(pathFile)) {
-      executablePath = fs.readFileSync(pathFile, 'utf-8')
-    }
-    if (executablePath) {
-      electronExecPath = path.join(electronModulePath, 'dist', executablePath)
-      process.env.ELECTRON_EXEC_PATH = electronExecPath
-    } else {
+    electronExecPath = _require('electron')
+    if (typeof electronExecPath !== 'string' || !fs.existsSync(electronExecPath)) {
       throw new Error('Electron uninstall')
     }
+    process.env.ELECTRON_EXEC_PATH = electronExecPath
   }
   return electronExecPath
 }
@@ -69,6 +62,8 @@ export function getElectronNodeTarget(): string {
   const electronVer = getElectronMajorVer()
 
   const nodeVer = {
+    '43': '24.18',
+    '42': '24.16',
     '41': '24.14',
     '40': '24.14',
     '39': '22.20',
@@ -102,6 +97,8 @@ export function getElectronChromeTarget(): string {
   const electronVer = getElectronMajorVer()
 
   const chromeVer = {
+    '43': '150',
+    '42': '148',
     '41': '146',
     '40': '144',
     '39': '142',
