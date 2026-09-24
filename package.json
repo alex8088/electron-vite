@@ -95,14 +95,13 @@
     "@babel/core": "^7.29.0",
     "@babel/plugin-transform-arrow-functions": "^7.27.1",
     "cac": "^7.0.0",
-    "esbuild": "^0.25.11",
     "magic-string": "^0.30.21",
-    "picocolors": "^1.1.1"
+    "picocolors": "^1.1.1",
+    "rolldown": "~1.2.10"
   },
   "pnpm": {
     "onlyBuiltDependencies": [
       "@swc/core",
-      "esbuild",
       "simple-git-hooks"
     ]
   }
