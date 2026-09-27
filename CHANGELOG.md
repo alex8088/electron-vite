@@ -1,3 +1,7 @@
+### v6.0.0-beta.3 (_2026-09-27_)
+
+- fix(deps)!: downgraded @babel/* to v7 due to Node requirements
+
 ### v6.0.0-beta.2 (_2026-09-27_)
 
 - refactor: use rolldown instead of esbuild to bundle config file
