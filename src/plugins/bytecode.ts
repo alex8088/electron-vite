@@ -104,7 +104,7 @@ export function bytecodePlugin(options: BytecodeOptions = {}): Plugin | null {
   }
 
   if (protectedStrings.length > 0) {
-    plugins.push([protectStringsPlugin, { protectedStrings: new Set(protectedStrings) }])
+    plugins.push([protectStringsPlugin as babel.PluginTarget, { protectedStrings: new Set(protectedStrings) }])
   }
 
   const shouldTransformBytecodeChunk = plugins.length !== 0
@@ -113,8 +113,8 @@ export function bytecodePlugin(options: BytecodeOptions = {}): Plugin | null {
     code: string,
     sourceMaps: boolean = false
   ): { code: string; map?: Rolldown.SourceMapInput } | null => {
-    const re = babel.transform(code, { plugins, sourceMaps })
-    return re ? { code: re.code || '', map: re.map } : null
+    const re = babel.transformSync(code, { plugins, sourceMaps })
+    return re ? { code: re.code || '', map: re.map as Rolldown.SourceMapInput } : null
   }
 
   const useStrict = '"use strict";'
@@ -300,7 +300,7 @@ interface ProtectStringsPluginState extends babel.PluginPass {
   opts: { protectedStrings: Set<string> }
 }
 
-function protectStringsPlugin(api: typeof babel & babel.ConfigAPI): babel.PluginObj<ProtectStringsPluginState> {
+function protectStringsPlugin(api: babel.PluginAPI): babel.PluginObject<ProtectStringsPluginState> {
   const { types: t } = api
 
   function createFromCharCodeFunction(value: string): babel.types.CallExpression {

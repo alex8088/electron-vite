@@ -92,8 +92,8 @@
     "vite": "^8.3.1"
   },
   "dependencies": {
-    "@babel/core": "^7.29.0",
-    "@babel/plugin-transform-arrow-functions": "^7.27.1",
+    "@babel/core": "^8.0.6",
+    "@babel/plugin-transform-arrow-functions": "^8.0.1",
     "cac": "^7.0.0",
     "magic-string": "^1.4.2",
     "picocolors": "^1.1.1",
