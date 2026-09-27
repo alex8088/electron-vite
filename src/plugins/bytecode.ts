@@ -300,7 +300,7 @@ interface ProtectStringsPluginState extends babel.PluginPass {
   opts: { protectedStrings: Set<string> }
 }
 
-function protectStringsPlugin(api: babel.PluginAPI): babel.PluginObject<ProtectStringsPluginState> {
+function protectStringsPlugin(api: typeof babel & babel.ConfigAPI): babel.PluginObj<ProtectStringsPluginState> {
   const { types: t } = api
 
   function createFromCharCodeFunction(value: string): babel.types.CallExpression {
