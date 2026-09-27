@@ -1,4 +1,18 @@
-### v6.0.0-beta.0 (_2026-04-12_)
+### v6.0.0-beta.2 (_2026-09-27_)
+
+- refactor: use rolldown instead of esbuild to bundle config file
+- refactor: compile bytecode using the Electron main process or renderer process rather then via the `ELECTRON_RUN_AS_NODE`
+- perf: setup rollupOption compatibility via config factory
+- perf: build compatibility target for Electron 42, 43, 44
+- fix: remove useless preset config
+- fix(swcPlugin): also disable oxc on Vite 8 ([#920](https://github.com/alex8088/electron-vite/issues/920))
+- fix: clone config without plugins [#902](https://github.com/alex8088/electron-vite/issues/902)
+- fix(deps)!: update magic-string to v1
+- fix(deps)!: update @babel/* to v8
+- chore(deps): update all non-major dependencies
+- chore(deps): update lint-staged to v17
+
+### v6.0.0-beta.1 (_2026-04-12_)
 
 - refactor!: simplify resolve config and isolate user config for sub-builds
 - fix!: compatible with rollupOptions and rolldownOptions
