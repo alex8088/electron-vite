@@ -1,3 +1,7 @@
+### v6.0.0-beta.4 (_2026-09-28_)
+
+- fix(esmShim)!: use `this.parse` to find the last static import ([#906](https://github.com/alex8088/electron-vite/issues/906))
+
 ### v6.0.0-beta.3 (_2026-09-27_)
 
 - fix(deps)!: downgraded @babel/* to v7 due to Node requirements
