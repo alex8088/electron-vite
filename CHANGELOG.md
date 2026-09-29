@@ -1,3 +1,11 @@
+### v6.0.0-beta.5 (_2026-09-29_)
+
+- feat(bytecode): support RegExp for chunkAlias option ([#885](https://github.com/alex8088/electron-vite/issues/885))
+- fix(dev): exit non-zero when Electron is killed by a signal ([#918](https://github.com/alex8088/electron-vite/issues/918))
+- fix(dev): forward termination signals to Electron child ([#900](https://github.com/alex8088/electron-vite/issues/900))
+- fix(dev): improve Electron process signal handling
+- fix(bytecode): set the regular expression's `lastIndex` to 0 to perform a global match for chunkAlias option
+
 ### v6.0.0-beta.4 (_2026-09-28_)
 
 - fix(esmShim)!: use `this.parse` to find the last static import ([#906](https://github.com/alex8088/electron-vite/issues/906))
