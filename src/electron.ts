@@ -170,32 +170,31 @@ export function startElectron(root: string | undefined): ChildProcess {
   // successful exit. Map a signal death to a non-zero status instead.
   ps.on('close', (code, signal) => process.exit(code ?? (signal ? 1 : 0)))
 
-  forwardTerminationSignals(ps)
+  setupElectronSignalHandlers(ps)
 
   return ps
 }
 
-let signalHandlersInstalled = false
-let currentElectronPs: ChildProcess | undefined
+let electronPs: ChildProcess | undefined
+let signalHandlersRegistered = false
 
-// Forward termination signals to the Electron child, matching electron's own
-// CLI wrapper (node_modules/electron/cli.js). Without this, Ctrl-C kills the
-// parent immediately and the Electron child can get stuck on macOS when a
-// before-quit handler calls preventDefault then later app.quit(). See #899.
-function forwardTerminationSignals(ps: ChildProcess): void {
-  currentElectronPs = ps
-  if (signalHandlersInstalled) return
-  signalHandlersInstalled = true
-  for (const signal of ['SIGINT', 'SIGTERM', 'SIGHUP'] as const) {
+function setupElectronSignalHandlers(child: ChildProcess): void {
+  electronPs = child
+
+  if (signalHandlersRegistered) return
+
+  const signals: NodeJS.Signals[] =
+    process.platform === 'win32' ? ['SIGINT', 'SIGTERM'] : ['SIGINT', 'SIGTERM', 'SIGHUP', 'SIGUSR2']
+
+  for (const signal of signals) {
     process.on(signal, () => {
-      const target = currentElectronPs
-      if (target && target.exitCode === null && !target.killed) {
-        try {
-          target.kill(signal)
-        } catch {
-          // already gone
-        }
-      }
+      const child = electronPs
+      if (!child?.pid || child.exitCode !== null || child.signalCode !== null) return
+
+      // A previously sent signal does not mean the child has exited.
+      child.kill(signal)
     })
   }
+
+  signalHandlersRegistered = true
 }
