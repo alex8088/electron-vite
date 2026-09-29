@@ -94,6 +94,7 @@ export function bytecodePlugin(options: BytecodeOptions = {}): Plugin | null {
 
   const isBytecodeChunk = (chunkName: string): boolean => {
     if (_chunkAlias instanceof RegExp) {
+      _chunkAlias.lastIndex = 0
       return _chunkAlias.test(chunkName)
     }
     return _chunkAlias.length === 0 || _chunkAlias.some(alias => alias === chunkName)
