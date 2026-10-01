@@ -68,7 +68,7 @@ interface BytecodeMixin {
    * Options pass on to `bytecode` plugin in electron-vite.
    * https://electron-vite.org/guide/source-code-protection#options
    *
-   * Compile source code to v8 bytecode.
+   * Compiles source code to v8 bytecode and works only in the `build` command.
    */
   bytecode?: boolean | BytecodeOptions
 }
