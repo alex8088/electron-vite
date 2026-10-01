@@ -34,6 +34,7 @@ export class ElectronCompiler {
   private starting?: Promise<void>
   private stopping?: Promise<void>
   private ready = false
+  private stderr = ''
 
   constructor(readonly options: ElectronCompilerOptions) {
     for (const timeout of [options.timeout, options.shutdownTimeout]) {
@@ -57,12 +58,19 @@ export class ElectronCompiler {
   private async initialize(): Promise<void> {
     const env: NodeJS.ProcessEnv = { ...process.env, ...this.options.env, ELECTRON_VITE_RPC: 'true' }
     delete env.ELECTRON_RUN_AS_NODE
+    this.stderr = ''
     const ps = spawn(this.options.path, this.options.args, {
-      stdio: ['ignore', 'inherit', 'inherit', 'ipc'],
+      stdio: ['ignore', 'ignore', 'pipe', 'ipc'],
       windowsHide: true,
       env
     })
     this.ps = ps
+    if (ps.stderr) {
+      ps.stderr.setEncoding('utf8')
+      ps.stderr.on('data', (chunk: string) => {
+        if (this.ps === ps) this.stderr = (this.stderr + chunk).slice(-64 * 1024)
+      })
+    }
     ps.on('message', (message: ElectronResponse) => {
       if (this.ps !== ps || !message || message.type !== 'response') return
       const pending = this.rpcMap.get(message.invocationId)
@@ -120,7 +128,7 @@ export class ElectronCompiler {
         if (!pending) return
         clearTimeout(pending.timer)
         this.rpcMap.delete(invocationId)
-        reject(error)
+        reject(this.withStderr(error))
       }
       const timer = setTimeout(() => fail(new Error('Electron RPC timed out: ' + cmd)), this.options.timeout ?? 30000)
       this.rpcMap.set(invocationId, { resolve, reject, timer })
@@ -136,11 +144,22 @@ export class ElectronCompiler {
 
   private rejectPending(error: Error): void {
     this.ready = false
+    if (this.rpcMap.size) this.withStderr(error)
     for (const pending of this.rpcMap.values()) {
       clearTimeout(pending.timer)
       pending.reject(error)
     }
     this.rpcMap.clear()
+  }
+
+  private withStderr(error: Error): Error {
+    const stderr = this.stderr.trim()
+    if (stderr) {
+      const stack = error.stack
+      error.message += '\n' + stderr
+      if (stack) error.stack = stack + '\n' + stderr
+    }
+    return error
   }
 
   stop(): Promise<void> {
