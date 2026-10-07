@@ -1,29 +1,22 @@
 import path from 'node:path'
 import { randomBytes } from 'node:crypto'
-import { createRequire } from 'node:module'
 import colors from 'picocolors'
 import { type Plugin, type LibraryOptions, type Rolldown, normalizePath } from 'vite'
 import * as babel from '@babel/core'
 import MagicString from 'magic-string'
-import { getElectronPath } from '../electron'
 import { toRelativePath } from '../utils'
-import { ElectronCompiler } from './electronCompiler'
+import { type BytecodeBuild, getBytecodeBuild } from '../bytecode/build'
+import { type BytecodeTarget } from '../bytecode/compiler'
 
 // Inspired by https://github.com/bytenode/bytenode
 
-const _require = createRequire(import.meta.url)
-
-function getBytecodeCompilerPath(): string {
-  return path.join(path.dirname(_require.resolve('electron-vite/package.json')), 'bin', 'electron-bytecode-main.cjs')
-}
-
 // Versioned envelope: magic/version (8), UTF-16 source length (4), module ID (16), V8 cache.
 // Keep our metadata separate from the private V8 cache header.
-async function compileToBytecode(compiler: ElectronCompiler, code: string): Promise<Buffer> {
+async function compileToBytecode(builder: BytecodeBuild, target: BytecodeTarget, code: string): Promise<Buffer> {
   const id = randomBytes(16)
   // Reserve enough source space for an untruncated, per-artifact placeholder identity.
   const source = code + '\n/*' + id.toString('hex') + '*/'
-  const result = await compiler.compile(source)
+  const result = await builder.compile(target, source)
   const header = Buffer.alloc(28)
   header.write('EVBC0001', 0, 'ascii')
   header.writeUInt32LE(result.sourceLength, 8)
@@ -189,85 +182,79 @@ export function bytecodePlugin(options: BytecodeOptions = {}): Plugin | null {
 
       const bundles = Object.keys(output)
 
-      const compiler = new ElectronCompiler({
-        path: getElectronPath(),
-        args: [getBytecodeCompilerPath()],
-        env: { ELECTRON_VITE_RENDERER: isPreload ? '1' : '0' }
-      })
-      try {
-        await compiler.start()
-        for (const name of bundles) {
-          const chunk = output[name]
-          if (chunk.type === 'chunk') {
-            let _code = chunk.code
-            if (bytecodeRE) {
-              let match: RegExpExecArray | null
-              let s: MagicString | undefined
-              while ((match = bytecodeRE.exec(_code))) {
-                s ||= new MagicString(_code)
-                const [prefix, chunkName] = match
-                const len = prefix.length + chunkName.length
-                s.overwrite(match.index, match.index + len, prefix + chunkName + 'c', {
-                  contentOnly: true
-                })
-              }
-              if (s) {
-                _code = s.toString()
-              }
-            }
-            if (bytecodeChunks.includes(name)) {
-              const bytecodeBuffer = await compileToBytecode(compiler, _code)
-              this.emitFile({
-                type: 'asset',
-                fileName: name + 'c',
-                source: bytecodeBuffer
+      const compiler = getBytecodeBuild()
+      if (!compiler) {
+        throw new Error('Bytecode compilation requires an electron-vite build session')
+      }
+      for (const name of bundles) {
+        const chunk = output[name]
+        if (chunk.type === 'chunk') {
+          let _code = chunk.code
+          if (bytecodeRE) {
+            let match: RegExpExecArray | null
+            let s: MagicString | undefined
+            while ((match = bytecodeRE.exec(_code))) {
+              s ||= new MagicString(_code)
+              const [prefix, chunkName] = match
+              const len = prefix.length + chunkName.length
+              s.overwrite(match.index, match.index + len, prefix + chunkName + 'c', {
+                contentOnly: true
               })
-              if (!removeBundleJS) {
-                this.emitFile({
-                  type: 'asset',
-                  fileName: '_' + chunk.fileName,
-                  source: chunk.code
-                })
-              }
-              if (chunk.isEntry) {
-                const bytecodeLoaderBlock = getBytecodeLoaderBlock(chunk.fileName)
-                const bytecodeModuleBlock = `require("./${path.basename(name) + 'c'}");`
-                const code = `${useStrict}\n${bytecodeLoaderBlock}\n${bytecodeModuleBlock}\n`
-                chunk.code = code
-              } else {
-                delete output[chunk.fileName]
-              }
-              bytecodeChunkCount += 1
-            } else {
-              if (chunk.isEntry) {
-                let hasBytecodeMoudle = false
-                const idsToHandle = new Set([...chunk.imports, ...chunk.dynamicImports])
-                for (const moduleId of idsToHandle) {
-                  if (bytecodeChunks.includes(moduleId)) {
-                    hasBytecodeMoudle = true
-                    break
-                  }
-                  const moduleInfo = this.getModuleInfo(moduleId)
-                  if (moduleInfo) {
-                    const { importers, dynamicImporters } = moduleInfo
-                    for (const importerId of importers) idsToHandle.add(importerId)
-                    for (const importerId of dynamicImporters) idsToHandle.add(importerId)
-                  }
-                }
-                if (hasBytecodeMoudle) {
-                  const loader = getBytecodeLoaderBlock(chunk.fileName)
-                  const strictRE = /^(#![^\n]*\n)?(["'])use strict\2;/
-                  _code = strictRE.test(_code)
-                    ? _code.replace(strictRE, `$&\n${loader}`)
-                    : _code.replace(/^(#![^\n]*\n)?/, `$&${loader}\n`)
-                }
-              }
-              chunk.code = _code
+            }
+            if (s) {
+              _code = s.toString()
             }
           }
+          if (bytecodeChunks.includes(name)) {
+            const bytecodeBuffer = await compileToBytecode(compiler, isPreload ? 'preload' : 'main', _code)
+            this.emitFile({
+              type: 'asset',
+              fileName: name + 'c',
+              source: bytecodeBuffer
+            })
+            if (!removeBundleJS) {
+              this.emitFile({
+                type: 'asset',
+                fileName: '_' + chunk.fileName,
+                source: chunk.code
+              })
+            }
+            if (chunk.isEntry) {
+              const bytecodeLoaderBlock = getBytecodeLoaderBlock(chunk.fileName)
+              const bytecodeModuleBlock = `require("./${path.basename(name) + 'c'}");`
+              const code = `${useStrict}\n${bytecodeLoaderBlock}\n${bytecodeModuleBlock}\n`
+              chunk.code = code
+            } else {
+              delete output[chunk.fileName]
+            }
+            bytecodeChunkCount += 1
+          } else {
+            if (chunk.isEntry) {
+              let hasBytecodeMoudle = false
+              const idsToHandle = new Set([...chunk.imports, ...chunk.dynamicImports])
+              for (const moduleId of idsToHandle) {
+                if (bytecodeChunks.includes(moduleId)) {
+                  hasBytecodeMoudle = true
+                  break
+                }
+                const moduleInfo = this.getModuleInfo(moduleId)
+                if (moduleInfo) {
+                  const { importers, dynamicImporters } = moduleInfo
+                  for (const importerId of importers) idsToHandle.add(importerId)
+                  for (const importerId of dynamicImporters) idsToHandle.add(importerId)
+                }
+              }
+              if (hasBytecodeMoudle) {
+                const loader = getBytecodeLoaderBlock(chunk.fileName)
+                const strictRE = /^(#![^\n]*\n)?(["'])use strict\2;/
+                _code = strictRE.test(_code)
+                  ? _code.replace(strictRE, `$&\n${loader}`)
+                  : _code.replace(/^(#![^\n]*\n)?/, `$&${loader}\n`)
+              }
+            }
+            chunk.code = _code
+          }
         }
-      } finally {
-        await compiler.stop()
       }
 
       if (bytecodeChunkCount && !_chunks.some(ass => ass.type === 'asset' && ass.fileName === bytecodeModuleLoader)) {

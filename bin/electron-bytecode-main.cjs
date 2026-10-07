@@ -11,6 +11,7 @@ const channel = 'electron-vite:bytecode:rpc'
 const readyChannel = 'electron-vite:bytecode:ready'
 let win
 let rendererRPC
+let rendererStarting
 let stopping = false
 
 function fail(error) {
@@ -74,17 +75,18 @@ function createRenderer() {
   })
 }
 
-// Register readiness immediately, but only resolve it after the selected backend is usable.
-const initialized = app.whenReady().then(async () => {
-  if (process.env.ELECTRON_VITE_RENDERER === '1' || process.env.ELECTRON_VITE_RENDERER === 'true') {
-    await createRenderer()
-    parentRPC.register('compile', (...args) => rendererRPC.request('compile', ...args))
-  } else {
-    parentRPC.register('compile', compile)
-  }
-  return true
-})
+const initialized = app.whenReady().then(() => true)
 parentRPC.register('ready', () => initialized)
+parentRPC.register('compile', async (target, code) => {
+  await initialized
+  if (target === 'main') return compile(code)
+  if (target === 'preload') {
+    rendererStarting ||= createRenderer()
+    await rendererStarting
+    return rendererRPC.request('compile', code)
+  }
+  throw new Error(`Invalid bytecode target: ${target}`)
+})
 initialized.catch(fail)
 
 process.on('message', message => {

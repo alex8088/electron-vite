@@ -1,12 +1,11 @@
 import { type ChildProcess, spawn } from 'node:child_process'
+import path from 'node:path'
+import { createRequire } from 'node:module'
+import { getElectronPath } from '../electron'
 
-export type ElectronCompilerOptions = {
-  path: string
-  args: string[]
-  env?: NodeJS.ProcessEnv
-  timeout?: number
-  shutdownTimeout?: number
-}
+const require = createRequire(import.meta.url)
+const RPC_TIMEOUT = 30_000
+const SHUTDOWN_TIMEOUT = 3_000
 
 export type BytecodeCompileResult = {
   sourceLength: number
@@ -14,7 +13,9 @@ export type BytecodeCompileResult = {
   cachedData: string
 }
 
-type ElectronResponse = {
+export type BytecodeTarget = 'main' | 'preload'
+
+type CompilerResponse = {
   type: 'response'
   invocationId: number
   result?: unknown
@@ -27,7 +28,7 @@ type PendingRequest = {
   timer: ReturnType<typeof setTimeout>
 }
 
-export class ElectronCompiler {
+export class BytecodeCompiler {
   private ps?: ChildProcess
   private rpcMap = new Map<number, PendingRequest>()
   private invocationId = 0
@@ -36,16 +37,8 @@ export class ElectronCompiler {
   private ready = false
   private stderr = ''
 
-  constructor(readonly options: ElectronCompilerOptions) {
-    for (const timeout of [options.timeout, options.shutdownTimeout]) {
-      if (timeout !== undefined && (!Number.isFinite(timeout) || timeout <= 0)) {
-        throw new RangeError('ElectronCompiler timeouts must be positive finite numbers')
-      }
-    }
-  }
-
   start(): Promise<void> {
-    if (this.stopping) return Promise.reject(new Error('ElectronCompiler is stopping'))
+    if (this.stopping) return Promise.reject(new Error('BytecodeCompiler is stopping'))
     if (this.starting) return this.starting
     if (this.ready) return Promise.resolve()
     if (this.ps) return Promise.reject(new Error('Previous Electron process has not closed; await stop() first'))
@@ -56,10 +49,15 @@ export class ElectronCompiler {
   }
 
   private async initialize(): Promise<void> {
-    const env: NodeJS.ProcessEnv = { ...process.env, ...this.options.env, ELECTRON_VITE_RPC: 'true' }
+    const env: NodeJS.ProcessEnv = { ...process.env, ELECTRON_VITE_RPC: 'true' }
     delete env.ELECTRON_RUN_AS_NODE
     this.stderr = ''
-    const ps = spawn(this.options.path, this.options.args, {
+    const compilerPath = path.join(
+      path.dirname(require.resolve('electron-vite/package.json')),
+      'bin',
+      'electron-bytecode-main.cjs'
+    )
+    const ps = spawn(getElectronPath(), [compilerPath], {
       stdio: ['ignore', 'ignore', 'pipe', 'ipc'],
       windowsHide: true,
       env
@@ -71,7 +69,7 @@ export class ElectronCompiler {
         if (this.ps === ps) this.stderr = (this.stderr + chunk).slice(-64 * 1024)
       })
     }
-    ps.on('message', (message: ElectronResponse) => {
+    ps.on('message', (message: CompilerResponse) => {
       if (this.ps !== ps || !message || message.type !== 'response') return
       const pending = this.rpcMap.get(message.invocationId)
       if (!pending) return
@@ -109,12 +107,12 @@ export class ElectronCompiler {
     }
   }
 
-  compile(code: string): Promise<BytecodeCompileResult> {
-    return this.request<BytecodeCompileResult>('compile', code)
+  compile(target: BytecodeTarget, code: string): Promise<BytecodeCompileResult> {
+    return this.request<BytecodeCompileResult>('compile', target, code)
   }
 
   async request<T = unknown>(cmd: string, ...args: unknown[]): Promise<T> {
-    if (!this.ready || this.stopping) throw new Error('ElectronCompiler is not ready; await start() first')
+    if (!this.ready || this.stopping) throw new Error('BytecodeCompiler is not ready; await start() first')
     return this.sendRequest(cmd, args) as Promise<T>
   }
 
@@ -130,7 +128,7 @@ export class ElectronCompiler {
         this.rpcMap.delete(invocationId)
         reject(this.withStderr(error))
       }
-      const timer = setTimeout(() => fail(new Error('Electron RPC timed out: ' + cmd)), this.options.timeout ?? 30000)
+      const timer = setTimeout(() => fail(new Error('Electron RPC timed out: ' + cmd)), RPC_TIMEOUT)
       this.rpcMap.set(invocationId, { resolve, reject, timer })
       try {
         ps.send({ type: 'request', invocationId, cmd, args }, error => {
@@ -164,11 +162,11 @@ export class ElectronCompiler {
 
   stop(): Promise<void> {
     if (this.stopping) return this.stopping
-    this.rejectPending(new Error('ElectronCompiler stopped'))
+    this.rejectPending(new Error('BytecodeCompiler stopped'))
     const ps = this.ps
     if (!ps) return Promise.resolve()
     this.stopping = new Promise<void>(resolve => {
-      const timer = setTimeout(() => ps.kill('SIGKILL'), this.options.shutdownTimeout ?? 3000)
+      const timer = setTimeout(() => ps.kill('SIGKILL'), SHUTDOWN_TIMEOUT)
       ps.once('close', () => {
         clearTimeout(timer)
         resolve()
