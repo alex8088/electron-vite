@@ -1,3 +1,7 @@
+### v6.0.0-beta.7 (_2026-10-08_)
+
+- fix(bytecode): unable to obtain the bytecode build session in Node.js 24
+
 ### v6.0.0-beta.6 (_2026-10-07_)
 
 - refactor!: invoke the bytecode compiler only once to compile all code
