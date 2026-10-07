@@ -1,8 +1,7 @@
-import { AsyncLocalStorage } from 'node:async_hooks'
+import { type Plugin } from 'vite'
 import { BytecodeCompiler, type BytecodeCompileResult, type BytecodeTarget } from './compiler'
 
-// Nested isolated-entry builds inherit the compilation session from the parent build.
-const activeBuild = new AsyncLocalStorage<BytecodeBuild>()
+export const bytecodeBuildPluginName = 'vite:electron-bytecode-build'
 
 export class BytecodeBuild {
   private readonly compiler = new BytecodeCompiler()
@@ -20,10 +19,7 @@ export class BytecodeBuild {
   }
 }
 
-export function runWithBytecodeBuild<T>(build: BytecodeBuild, callback: () => Promise<T>): Promise<T> {
-  return activeBuild.run(build, callback)
-}
-
-export function getBytecodeBuild(): BytecodeBuild | undefined {
-  return activeBuild.getStore()
+export function getBytecodeBuild(plugins: readonly Plugin[]): BytecodeBuild | undefined {
+  const plugin = plugins.find(plugin => plugin.name === bytecodeBuildPluginName)
+  return (plugin?.api as { build?: BytecodeBuild } | undefined)?.build
 }

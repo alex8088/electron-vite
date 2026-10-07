@@ -1,6 +1,6 @@
-import { build as viteBuild } from 'vite'
+import { build as viteBuild, mergeConfig } from 'vite'
 import { type InlineConfig, type MainViteConfig, type PreloadViteConfig, resolveConfig } from './config'
-import { BytecodeBuild, runWithBytecodeBuild } from './bytecode/build'
+import { BytecodeBuild, bytecodeBuildPluginName } from './bytecode/build'
 import { asyncFlatten } from './utils'
 
 async function useBytecode(config?: MainViteConfig | PreloadViteConfig): Promise<boolean> {
@@ -14,7 +14,15 @@ async function useBytecode(config?: MainViteConfig | PreloadViteConfig): Promise
  */
 export async function build(inlineConfig: InlineConfig = {}): Promise<void> {
   process.env.NODE_ENV_ELECTRON_VITE = 'production'
-  const config = await resolveConfig(inlineConfig, 'build', 'production')
+
+  const bytecodeBuild = new BytecodeBuild()
+  const config = await resolveConfig(
+    mergeConfig(inlineConfig, {
+      plugins: [{ name: bytecodeBuildPluginName, api: { build: bytecodeBuild } }]
+    }),
+    'build',
+    'production'
+  )
 
   if (!config.config) {
     return
@@ -22,7 +30,7 @@ export async function build(inlineConfig: InlineConfig = {}): Promise<void> {
 
   const mainBytecode = await useBytecode(config.config.main)
   const preloadBytecode = await useBytecode(config.config.preload)
-  const bytecodeBuild = mainBytecode || preloadBytecode ? new BytecodeBuild() : undefined
+  const hasBytecode = mainBytecode || preloadBytecode
 
   const buildTargets = async (): Promise<void> => {
     // Build targets in order: main -> preload -> renderer
@@ -38,11 +46,11 @@ export async function build(inlineConfig: InlineConfig = {}): Promise<void> {
     }
   }
 
-  if (!bytecodeBuild) return buildTargets()
+  if (!hasBytecode) return buildTargets()
 
   try {
     await bytecodeBuild.start()
-    await runWithBytecodeBuild(bytecodeBuild, buildTargets)
+    await buildTargets()
   } finally {
     await bytecodeBuild.stop()
   }
