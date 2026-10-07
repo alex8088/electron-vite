@@ -1,3 +1,9 @@
+### v6.0.0-beta.6 (_2026-10-07_)
+
+- refactor!: invoke the bytecode compiler only once to compile all code
+- refactor: use pipe stdio for spawn Electron bytecode compliler and append stderr error
+- chore: improve jsdoc for bytecode options (#898)
+
 ### v6.0.0-beta.5 (_2026-09-29_)
 
 - feat(bytecode): support RegExp for chunkAlias option ([#885](https://github.com/alex8088/electron-vite/issues/885))
