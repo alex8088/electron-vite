@@ -1,7 +1,7 @@
 import { type ChildProcess, spawn } from 'node:child_process'
 import path from 'node:path'
 import { createRequire } from 'node:module'
-import { getElectronPath } from '../electron'
+import { getElectronPath } from './electron'
 
 const require = createRequire(import.meta.url)
 const RPC_TIMEOUT = 30_000

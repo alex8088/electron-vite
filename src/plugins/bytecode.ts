@@ -5,18 +5,23 @@ import { type Plugin, type LibraryOptions, type Rolldown, normalizePath } from '
 import * as babel from '@babel/core'
 import MagicString from 'magic-string'
 import { toRelativePath } from '../utils'
-import { type BytecodeBuild, getBytecodeBuild } from '../bytecode/build'
-import { type BytecodeTarget } from '../bytecode/compiler'
+import type { BytecodeCompiler, BytecodeTarget } from '../bytecodeCompiler'
+import { BYTECODE_BUILD_PLUGIN_NAME } from '../constants'
 
 // Inspired by https://github.com/bytenode/bytenode
 
+function getBytecodeCompiler(plugins: readonly Plugin[]): BytecodeCompiler | undefined {
+  const plugin = plugins.find(plugin => plugin.name === BYTECODE_BUILD_PLUGIN_NAME)
+  return (plugin?.api as { compiler?: BytecodeCompiler } | undefined)?.compiler
+}
+
 // Versioned envelope: magic/version (8), UTF-16 source length (4), module ID (16), V8 cache.
 // Keep our metadata separate from the private V8 cache header.
-async function compileToBytecode(build: BytecodeBuild, target: BytecodeTarget, code: string): Promise<Buffer> {
+async function compileToBytecode(compiler: BytecodeCompiler, target: BytecodeTarget, code: string): Promise<Buffer> {
   const id = randomBytes(16)
   // Reserve enough source space for an untruncated, per-artifact placeholder identity.
   const source = code + '\n/*' + id.toString('hex') + '*/'
-  const result = await build.compile(target, source)
+  const result = await compiler.compile(target, source)
   const header = Buffer.alloc(28)
   header.write('EVBC0001', 0, 'ascii')
   header.writeUInt32LE(result.sourceLength, 8)
@@ -118,14 +123,14 @@ export function bytecodePlugin(options: BytecodeOptions = {}): Plugin | null {
 
   let supported = false
   let isPreload = false
-  let bytecodeBuild: BytecodeBuild | undefined
+  let bytecodeCompiler: BytecodeCompiler | undefined
 
   return {
     name: 'vite:bytecode',
     apply: 'build',
     enforce: 'post',
     configResolved(config): void {
-      bytecodeBuild = getBytecodeBuild(config.plugins)
+      bytecodeCompiler = getBytecodeCompiler(config.plugins)
       if (supported) {
         return
       }
@@ -184,8 +189,8 @@ export function bytecodePlugin(options: BytecodeOptions = {}): Plugin | null {
 
       const bundles = Object.keys(output)
 
-      if (!bytecodeBuild) {
-        throw new Error('Bytecode compilation requires an electron-vite build session')
+      if (!bytecodeCompiler) {
+        throw new Error('Bytecode compilation requires an electron-vite build')
       }
       for (const name of bundles) {
         const chunk = output[name]
@@ -207,7 +212,7 @@ export function bytecodePlugin(options: BytecodeOptions = {}): Plugin | null {
             }
           }
           if (bytecodeChunks.includes(name)) {
-            const bytecodeBuffer = await compileToBytecode(bytecodeBuild, isPreload ? 'preload' : 'main', _code)
+            const bytecodeBuffer = await compileToBytecode(bytecodeCompiler, isPreload ? 'preload' : 'main', _code)
             this.emitFile({
               type: 'asset',
               fileName: name + 'c',
