@@ -3,7 +3,7 @@ import path from 'node:path'
 import fs from 'node:fs'
 import { createHash } from 'node:crypto'
 import { createRequire } from 'node:module'
-import { loadEnv as viteLoadEnv } from 'vite'
+import { type LibraryOptions, type Rolldown, loadEnv as viteLoadEnv } from 'vite'
 
 export function isObject(value: unknown): value is Record<string, unknown> {
   return Object.prototype.toString.call(value) === '[object Object]'
@@ -30,6 +30,23 @@ export function getHash(text: Buffer | string): string {
 export function toRelativePath(filename: string, importer: string): string {
   const relPath = path.posix.relative(path.dirname(importer), filename)
   return relPath.startsWith('.') ? relPath : `./${relPath}`
+}
+
+/**
+ * Resolve configured build outputs into an array.
+ */
+export function resolveBuildOutputs(
+  outputs: Rolldown.OutputOptions | Rolldown.OutputOptions[] | undefined,
+  libOptions: LibraryOptions | false | undefined
+): Rolldown.OutputOptions[] {
+  if (Array.isArray(outputs)) {
+    return outputs
+  }
+  if (libOptions) {
+    const libFormats = libOptions.formats || []
+    return libFormats.map(format => ({ ...outputs, format }))
+  }
+  return outputs ? [outputs] : []
 }
 
 /**

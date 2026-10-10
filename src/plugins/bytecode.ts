@@ -1,10 +1,10 @@
 import path from 'node:path'
 import { randomBytes } from 'node:crypto'
 import colors from 'picocolors'
-import { type Plugin, type LibraryOptions, type Rolldown, normalizePath } from 'vite'
+import { type Plugin, type Rolldown, normalizePath } from 'vite'
 import * as babel from '@babel/core'
 import MagicString from 'magic-string'
-import { toRelativePath } from '../utils'
+import { toRelativePath, resolveBuildOutputs } from '../utils'
 import type { BytecodeCompiler, BytecodeTarget } from '../bytecodeCompiler'
 
 // Inspired by https://github.com/bytenode/bytenode
@@ -140,10 +140,9 @@ export function bytecodePlugin(options: BytecodeOptions = {}): Plugin | null {
         return
       }
       const build = config.build
-      const resolvedOutputs = resolveBuildOutputs(build.rolldownOptions.output, build.lib)
-      if (resolvedOutputs) {
-        const outputs = Array.isArray(resolvedOutputs) ? resolvedOutputs : [resolvedOutputs]
-        const output = outputs[0]
+      const outputs = resolveBuildOutputs(build.rolldownOptions.output, build.lib)
+      const output = outputs[0]
+      if (output) {
         if (output.format === 'es') {
           config.logger.warn(
             colors.yellow(
@@ -278,17 +277,6 @@ export function bytecodePlugin(options: BytecodeOptions = {}): Plugin | null {
       }
     }
   }
-}
-
-function resolveBuildOutputs(
-  outputs: Rolldown.OutputOptions | Rolldown.OutputOptions[] | undefined,
-  libOptions: LibraryOptions | false
-): Rolldown.OutputOptions | Rolldown.OutputOptions[] | undefined {
-  if (libOptions && !Array.isArray(outputs)) {
-    const libFormats = libOptions.formats || []
-    return libFormats.map(format => ({ ...outputs, format }))
-  }
-  return outputs
 }
 
 interface ProtectStringsPluginState extends babel.PluginPass {
