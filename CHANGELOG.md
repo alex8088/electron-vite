@@ -1,12 +1,22 @@
+### v6.0.0-beta.8 (_2026-10-11_)
+
+- refactor: share and normalize build output resolution
+- refactor: inline bytecode build plugin name
+- perf(swcPlugin): skip redundant minification when using Oxc ([#922](https://github.com/alex8088/electron-vite/issues/922))
+- perf: skip Babel loading in development and builds without bytecode
+- perf: short-circuit bytecode detection in builds
+- fix(asset): use consistent file paths for asset cache lookups
+- chore: simplify bytecode compiler initialization
+
 ### v6.0.0-beta.7 (_2026-10-08_)
 
-- fix(bytecode): unable to obtain the bytecode build session in Node.js 24
+- fix(bytecode): unable to obtain the bytecode build session in Node.js 24 ([#928](https://github.com/alex8088/electron-vite/issues/928))
 
 ### v6.0.0-beta.6 (_2026-10-07_)
 
 - refactor!: invoke the bytecode compiler only once to compile all code
 - refactor: use pipe stdio for spawn Electron bytecode compliler and append stderr error
-- chore: improve jsdoc for bytecode options (#898)
+- chore: improve jsdoc for bytecode options ([#898](https://github.com/alex8088/electron-vite/issues/898))
 
 ### v6.0.0-beta.5 (_2026-09-29_)
 
