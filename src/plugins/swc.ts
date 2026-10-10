@@ -105,7 +105,7 @@ export function swcPlugin(options: SwcOptions = {}): Plugin {
       }
     },
     async renderChunk(code, chunk): Promise<null | { code: string; map: SourceMap }> {
-      if (!minify || minify === 'terser') {
+      if (!minify || minify === 'terser' || minify === 'oxc') {
         return null
       }
       const result = await transformWithSWC(code, chunk.fileName, {
