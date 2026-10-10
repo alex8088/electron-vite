@@ -67,7 +67,7 @@ export default function assetPlugin(): Plugin {
         referenceId = `__VITE_NODE_PUBLIC_ASSET__${hash}__`
       } else {
         const cache = assetCache.get(this.environment)!
-        const cached = cache.get(id)
+        const cached = cache.get(file)
         if (cached) {
           referenceId = cached
         } else {
