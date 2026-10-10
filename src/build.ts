@@ -4,8 +4,9 @@ import { BytecodeCompiler } from './bytecodeCompiler'
 import { BYTECODE_BUILD_PLUGIN_NAME } from './constants'
 import { asyncFlatten } from './utils'
 
-async function useBytecode(config?: MainViteConfig | PreloadViteConfig): Promise<boolean> {
+async function usesBytecode(config?: MainViteConfig | PreloadViteConfig): Promise<boolean> {
   if (!config) return false
+  if (config.build?.bytecode) return true
   const plugins = await asyncFlatten(config.plugins || [])
   return plugins.some(plugin => plugin && typeof plugin === 'object' && plugin.name === 'vite:bytecode')
 }
@@ -29,9 +30,7 @@ export async function build(inlineConfig: InlineConfig = {}): Promise<void> {
     return
   }
 
-  const mainBytecode = await useBytecode(config.config.main)
-  const preloadBytecode = await useBytecode(config.config.preload)
-  const hasBytecode = mainBytecode || preloadBytecode
+  const hasBytecode = (await usesBytecode(config.config.main)) || (await usesBytecode(config.config.preload))
 
   const buildTargets = async (): Promise<void> => {
     // Build targets in order: main -> preload -> renderer
