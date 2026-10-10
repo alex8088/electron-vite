@@ -1,13 +1,17 @@
 import path from 'node:path'
 import { randomBytes } from 'node:crypto'
+import { createRequire } from 'node:module'
 import colors from 'picocolors'
 import { type Plugin, type Rolldown, normalizePath } from 'vite'
-import * as babel from '@babel/core'
+import type * as Babel from '@babel/core'
 import MagicString from 'magic-string'
 import { toRelativePath, resolveBuildOutputs } from '../utils'
 import type { BytecodeCompiler, BytecodeTarget } from '../bytecodeCompiler'
 
 // Inspired by https://github.com/bytenode/bytenode
+
+const require = createRequire(import.meta.url)
+let babel: typeof Babel | undefined
 
 function getBytecodeCompiler(plugins: readonly Plugin[]): BytecodeCompiler | undefined {
   const plugin = plugins.find(plugin => plugin.name === 'vite:electron-bytecode-build')
@@ -97,14 +101,14 @@ export function bytecodePlugin(options: BytecodeOptions = {}): Plugin | null {
     return _chunkAlias.length === 0 || _chunkAlias.some(alias => alias === chunkName)
   }
 
-  const plugins: babel.PluginItem[] = []
+  const plugins: Babel.PluginItem[] = []
 
   if (transformArrowFunctions) {
     plugins.push('@babel/plugin-transform-arrow-functions')
   }
 
   if (protectedStrings.length > 0) {
-    plugins.push([protectStringsPlugin as babel.PluginTarget, { protectedStrings: new Set(protectedStrings) }])
+    plugins.push([protectStringsPlugin as Babel.PluginTarget, { protectedStrings: new Set(protectedStrings) }])
   }
 
   const shouldTransformBytecodeChunk = plugins.length !== 0
@@ -113,6 +117,7 @@ export function bytecodePlugin(options: BytecodeOptions = {}): Plugin | null {
     code: string,
     sourceMaps: boolean = false
   ): { code: string; map?: Rolldown.SourceMapInput } | null => {
+    babel ??= require('@babel/core') as typeof Babel
     const re = babel.transformSync(code, { plugins, sourceMaps })
     return re ? { code: re.code || '', map: re.map as Rolldown.SourceMapInput } : null
   }
@@ -279,14 +284,14 @@ export function bytecodePlugin(options: BytecodeOptions = {}): Plugin | null {
   }
 }
 
-interface ProtectStringsPluginState extends babel.PluginPass {
+interface ProtectStringsPluginState extends Babel.PluginPass {
   opts: { protectedStrings: Set<string> }
 }
 
-function protectStringsPlugin(api: typeof babel & babel.ConfigAPI): babel.PluginObj<ProtectStringsPluginState> {
+function protectStringsPlugin(api: typeof Babel & Babel.ConfigAPI): Babel.PluginObj<ProtectStringsPluginState> {
   const { types: t } = api
 
-  function createFromCharCodeFunction(value: string): babel.types.CallExpression {
+  function createFromCharCodeFunction(value: string): Babel.types.CallExpression {
     const charCodes = Array.from(value).map(s => s.charCodeAt(0))
     const charCodeLiterals = charCodes.map(code => t.numericLiteral(code))
 
