@@ -6,12 +6,11 @@ import * as babel from '@babel/core'
 import MagicString from 'magic-string'
 import { toRelativePath } from '../utils'
 import type { BytecodeCompiler, BytecodeTarget } from '../bytecodeCompiler'
-import { BYTECODE_BUILD_PLUGIN_NAME } from '../constants'
 
 // Inspired by https://github.com/bytenode/bytenode
 
 function getBytecodeCompiler(plugins: readonly Plugin[]): BytecodeCompiler | undefined {
-  const plugin = plugins.find(plugin => plugin.name === BYTECODE_BUILD_PLUGIN_NAME)
+  const plugin = plugins.find(plugin => plugin.name === 'vite:electron-bytecode-build')
   return (plugin?.api as { compiler?: BytecodeCompiler } | undefined)?.compiler
 }
 

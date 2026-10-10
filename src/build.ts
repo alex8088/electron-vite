@@ -1,7 +1,6 @@
 import { build as viteBuild, mergeConfig } from 'vite'
 import { type InlineConfig, type MainViteConfig, type PreloadViteConfig, resolveConfig } from './config'
 import { BytecodeCompiler } from './bytecodeCompiler'
-import { BYTECODE_BUILD_PLUGIN_NAME } from './constants'
 import { asyncFlatten } from './utils'
 
 async function usesBytecode(config?: MainViteConfig | PreloadViteConfig): Promise<boolean> {
@@ -20,7 +19,7 @@ export async function build(inlineConfig: InlineConfig = {}): Promise<void> {
   const bytecodeCompiler = new BytecodeCompiler()
   const config = await resolveConfig(
     mergeConfig(inlineConfig, {
-      plugins: [{ name: BYTECODE_BUILD_PLUGIN_NAME, api: { compiler: bytecodeCompiler } }]
+      plugins: [{ name: 'vite:electron-bytecode-build', api: { compiler: bytecodeCompiler } }]
     }),
     'build',
     'production'
