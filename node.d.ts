@@ -10,6 +10,12 @@ declare module '*?modulePath' {
   export default src
 }
 
+// raw asset
+declare module '*?raw' {
+  const src: string
+  export default src
+}
+
 // node asset
 declare module '*?asset' {
   const src: string
