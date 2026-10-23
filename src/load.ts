@@ -122,9 +122,12 @@ export async function loadConfigFormBundledFile<T>(fileName: string, bundledCode
         defaultLoader(module, filename)
       }
     }
-    delete _require.cache[_require.resolve(fileName)]
-    const raw = _require(fileName)
-    _require.extensions[loaderExt] = defaultLoader
-    return raw.__esModule ? raw.default : raw
+    try {
+      delete _require.cache[_require.resolve(fileName)]
+      const raw = _require(fileName)
+      return raw.__esModule ? raw.default : raw
+    } finally {
+      _require.extensions[loaderExt] = defaultLoader
+    }
   }
 }
