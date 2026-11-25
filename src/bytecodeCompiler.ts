@@ -57,7 +57,10 @@ export class BytecodeCompiler {
       'bin',
       'electron-bytecode-main.cjs'
     )
-    const ps = spawn(getElectronPath(), [compilerPath], {
+    // Linux CI has no display or usable Chromium sandbox, and the compiler only runs build code, so it needs neither
+    const args =
+      process.platform === 'linux' ? ['--no-sandbox', '--ozone-platform=headless', compilerPath] : [compilerPath]
+    const ps = spawn(getElectronPath(), args, {
       stdio: ['ignore', 'ignore', 'pipe', 'ipc'],
       windowsHide: true,
       env
